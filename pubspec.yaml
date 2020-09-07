@@ -15,6 +15,11 @@ dependencies:
   cupertino_icons: ^0.1.3
   http: ^0.12.2
   json_annotation: ^2.0.0
+  recase: ^3.0.0
+  country_code_picker: ^1.4.0
+  material_design_icons_flutter: ^4.0.5555
+  ff_navigation_bar: ^0.1.5
+  google_fonts: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -31,13 +36,31 @@ flutter:
   fonts:
     - family: ComicSans
       fonts:
-        - asset: assets/fonts/ComicSansMS3.ttf
-        - asset: assets/fonts/design.graffiti.comicsansmsgras.ttf
+        - asset: assets/fonts/comic sans/ComicSansMS3.ttf
+        - asset: assets/fonts/comic sans/design.graffiti.comicsansmsgras.ttf
           weight: 700
 
     - family: Segoe UI
       fonts:
-        - asset: assets/fonts/Segoe UI.ttf
-        - asset: assets/fonts/Segoe UI Bold.ttf
+        - asset: assets/fonts/segoe ui/Segoe UI.ttf
+        - asset: assets/fonts/segoe ui/Segoe UI Bold.ttf
           weight: 700
+
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/roboto/Roboto-Medium.ttf
+        - asset: assets/fonts/roboto/Roboto-Bold.ttf
+          weight: 700
+
+    - family: Raleway
+      fonts:
+        - asset: assets/fonts/raleway/Raleway-Medium.ttf
+        - asset: assets/fonts/raleway/Raleway-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/raleway/Raleway-Bold.ttf
+          weight: 700
+
+    - family: CustomIcons
+      fonts:
+        - asset: assets/icons/custom-icons.ttf
 

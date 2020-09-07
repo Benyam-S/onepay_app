@@ -31,7 +31,7 @@ class LoadingButton extends StatelessWidget {
           : child,
       shape: shape,
       padding: padding,
-      onPressed: onPressed,
+      onPressed: loading ? null : onPressed,
       color: color,
       disabledColor: Theme.of(context).colorScheme.primaryVariant,
     );

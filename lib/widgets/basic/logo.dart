@@ -38,7 +38,7 @@ class OPLogoAW extends AnimatedWidget {
           child: Text(
             "OnePay",
             style: TextStyle(
-              fontFamily: "ComicSans",
+              fontFamily: "Raleway",
               fontWeight: FontWeight.w700,
               fontSize: 40 * sizeAnimation.value,
               color: Colors.white,

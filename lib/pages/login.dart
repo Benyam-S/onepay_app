@@ -3,10 +3,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:onepay_app/widgets/basic/dashed.border.dart';
+import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/response/access.token.dart';
+import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/widgets/basic/logo.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
+import 'package:onepay_app/widgets/text/error.dart';
+import 'package:recase/recase.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -18,12 +23,17 @@ class _Login extends State<Login> with TickerProviderStateMixin {
   AnimationController _fadeController1;
   AnimationController _fadeController2;
   AnimationController _slideController;
+
   Tween<double> _sizeTween;
   Tween<Offset> _slideTween;
+
   FocusNode _identifierFocusNode;
   FocusNode _passwordFocusNode;
+  FocusNode _signUpFocusNode;
+
   TextEditingController _identifierController;
   TextEditingController _passwordController;
+
   bool _errorFlag = false;
   String _errorText = "";
   bool _loading = false;
@@ -34,7 +44,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     super.initState();
     _rotateController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 1),
+      duration: Duration(milliseconds: 500),
     );
 
     _fadeController1 = AnimationController(
@@ -52,7 +62,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       duration: Duration(seconds: 1),
     );
 
-    _slideTween = Tween<Offset>(begin: Offset(0, 0.2), end: Offset(0, -1.2));
+    _slideTween = Tween<Offset>(begin: Offset(0, 0.7), end: Offset(0, -0.2));
     _sizeTween = Tween<double>(begin: 1, end: 0.7);
 
     _fadeController1.addStatusListener((status) {
@@ -64,6 +74,8 @@ class _Login extends State<Login> with TickerProviderStateMixin {
 
     _passwordFocusNode = FocusNode();
     _identifierFocusNode = FocusNode();
+    _signUpFocusNode = FocusNode();
+
     _identifierController = TextEditingController();
     _passwordController = TextEditingController();
 
@@ -72,6 +84,11 @@ class _Login extends State<Login> with TickerProviderStateMixin {
   }
 
   void login() async {
+    // Cancelling if loading
+    if (_loading) {
+      return;
+    }
+
     if (_passwordController.text.isEmpty ||
         _identifierController.text.isEmpty) {
       setState(() {
@@ -86,28 +103,55 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     });
 
     print("Making request ........");
+    var requester = HttpRequester(path: "/oauth/login/app.json");
 
     try {
       var response =
-          await http.get(Uri.encodeFull("https://randomuser.me/api/"));
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'identifier': _identifierController.text,
+        'password': _passwordController.text,
+      });
+
       if (response.statusCode == 200) {
         var jsonData = json.decode(response.body);
-        print(response.body);
+        var accessToken = AccessToken.fromJson(jsonData);
+
+        OnePay.of(context).appStateController.add(accessToken);
+
         setState(() {
           _loading = false;
           _errorFlag = false;
         });
       } else {
+        String error = "";
+        switch (response.statusCode) {
+          case 400:
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+            var jsonData = json.decode(response.body);
+            error = jsonData["error"];
+            break;
+          case 500:
+            error = response.body;
+            break;
+          case 403:
+            error = response.body;
+            break;
+          default:
+            error = "Oops something went wrong";
+        }
+
         setState(() {
           _loading = false;
-          _errorText = "Invalid password or identifier";
+          _errorText = ReCase(error).sentenceCase;
           _errorFlag = true;
         });
       }
     } on SocketException {
       setState(() {
         _loading = false;
-        _errorText = "Unable to connect";
+        _errorText = ReCase("Unable to connect").sentenceCase;
         _errorFlag = true;
       });
     }
@@ -132,7 +176,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                   children: [
                     Flexible(
                       child: Container(
-                        alignment: Alignment.bottomCenter,
+                        alignment: Alignment.center,
                         child: SlideTransition(
                           position: _slideTween.animate(_slideController),
                           child: OPLogoAW(
@@ -169,109 +213,94 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                 Form(
                                   key: _formKey,
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        15, 25, 15, 15),
                                     child: Column(
                                       children: [
                                         Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 10),
+                                          child: TextFormField(
+                                              focusNode: _identifierFocusNode,
+                                              controller: _identifierController,
+                                              decoration: InputDecoration(
+                                                floatingLabelBehavior:
+                                                    FloatingLabelBehavior
+                                                        .always,
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                labelStyle: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .primaryColor),
+                                                labelText: "Phone number",
+                                              ),
+                                              onFieldSubmitted: (_) =>
+                                                  FocusScope.of(context)
+                                                      .nextFocus(),
+                                              textInputAction:
+                                                  TextInputAction.next),
+                                        ),
+                                        Padding(
                                           padding: const EdgeInsets.only(
-                                              top: 10, bottom: 10, right: 15),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 8),
-                                                child:
-                                                    Icon(Icons.phone_android),
-                                              ),
-                                              Expanded(
-                                                child: TextFormField(
-                                                    focusNode:
-                                                        _identifierFocusNode,
-                                                    controller:
-                                                        _identifierController,
-                                                    style:
-                                                        TextStyle(fontSize: 18),
-                                                    decoration: InputDecoration(
-                                                      border:
-                                                          const DashedInputBorder(),
-                                                      labelStyle: TextStyle(
-                                                          color: Theme.of(
-                                                                  context)
-                                                              .primaryColor),
-                                                      labelText: "Phone number",
-                                                    ),
-                                                    onFieldSubmitted: (_) =>
-                                                        FocusScope.of(context)
-                                                            .nextFocus(),
-                                                    textInputAction:
-                                                        TextInputAction.next),
-                                              ),
-                                            ],
+                                            top: 10,
+                                            bottom: 10,
+                                          ),
+                                          child: PasswordFormField(
+                                            focusNode: _passwordFocusNode,
+                                            controller: _passwordController,
+                                            onFieldSubmitted: (_) => login(),
                                           ),
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.only(
-                                              top: 10, bottom: 10, right: 15),
-                                          child: Row(
+                                              left: 10, bottom: 15),
+                                          child: Column(
                                             crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 8.0),
-                                                child: Icon(Icons.vpn_key),
-                                              ),
-                                              Expanded(
-                                                child: PasswordFormField(
-                                                  focusNode: _passwordFocusNode,
-                                                  controller:
-                                                      _passwordController,
-                                                  onSubmit: (_) => login(),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10,
-                                              top: 10,
-                                              bottom: 20,
-                                              right: 15),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
+                                                CrossAxisAlignment.stretch,
                                             children: [
                                               Visibility(
-                                                child: Text(
-                                                  _errorText,
-                                                  style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .errorColor),
-                                                ),
+                                                child: ErrorText(_errorText),
                                                 visible: _errorFlag,
                                               ),
-                                              GestureDetector(
-                                                child: Text(
-                                                  "Forgot Password",
-                                                  style: TextStyle(
-                                                      color: Theme.of(context)
-                                                          .primaryColor),
+                                              Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: FlatButton(
+                                                  child: Text(
+                                                    "Forgot Password",
+                                                    style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .primaryColor,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        fontSize:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .bodyText2
+                                                                .fontSize),
+                                                  ),
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  padding: EdgeInsets.zero,
+                                                  onPressed: _loading
+                                                      ? null
+                                                      : () {
+                                                          Navigator.of(context)
+                                                              .pushNamed(AppRoutes
+                                                                  .forgotPasswordRoute);
+                                                          FocusScope.of(context)
+                                                              .requestFocus(
+                                                                  _signUpFocusNode);
+                                                        },
                                                 ),
-                                                onTap: _loading
-                                                    ? null
-                                                    : () => print(
-                                                        "Forgot Password"),
                                               )
                                             ],
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              top: 10, bottom: 25),
+                                          padding:
+                                              const EdgeInsets.only(top: 10),
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.stretch,
@@ -285,45 +314,59 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                     "Log In",
                                                     style: TextStyle(
                                                       color: Colors.white,
-                                                      fontSize: 20,
+                                                      fontSize: 18,
                                                     ),
                                                   ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10.0),
-                                                  ),
-                                                  onPressed:
-                                                      _loading ? null : login,
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
+                                                  onPressed: login,
                                                   padding: EdgeInsets.symmetric(
-                                                      vertical: 15),
+                                                      vertical: 13),
                                                 ),
                                               ),
                                               Padding(
                                                 padding: const EdgeInsets.only(
-                                                    top: 10.0),
+                                                    top: 5),
                                                 child: Row(
+                                                  textBaseline:
+                                                      TextBaseline.alphabetic,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
+                                                      CrossAxisAlignment
+                                                          .baseline,
                                                   mainAxisAlignment:
                                                       MainAxisAlignment.center,
                                                   children: [
                                                     Text(
                                                         "Don't have Account? "),
-                                                    GestureDetector(
-                                                      onTap: _loading
-                                                          ? null
-                                                          : () =>
-                                                              print("Sign Up"),
-                                                      child: Text(
-                                                        "Sign Up.",
-                                                        style: TextStyle(
-                                                            color: Theme.of(
-                                                                    context)
-                                                                .primaryColor,
-                                                            fontSize: 17),
+                                                    ButtonTheme(
+                                                      materialTapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      padding: EdgeInsets.zero,
+                                                      minWidth: 0,
+                                                      child: FlatButton(
+                                                        child: Text(
+                                                          "Sign Up.",
+                                                          style: TextStyle(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .primaryColor,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .normal,
+                                                              fontSize: 15),
+                                                        ),
+                                                        onPressed: _loading
+                                                            ? null
+                                                            : () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pushNamed(
+                                                                        AppRoutes
+                                                                            .singUpRoute);
+                                                                FocusScope.of(
+                                                                        context)
+                                                                    .requestFocus(
+                                                                        _signUpFocusNode);
+                                                              },
                                                       ),
                                                     )
                                                   ],
