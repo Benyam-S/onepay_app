@@ -145,12 +145,7 @@ class _SignUpVerify extends State<SignUpVerify> {
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     labelText: "OTP",
-                    labelStyle:
-                        TextStyle(color: Theme.of(context).primaryColor),
                     errorText: _otpErrorText,
-                    errorStyle: TextStyle(
-                        fontSize:
-                            Theme.of(context).textTheme.overline.fontSize),
                   ),
                   onChanged: (_) => this.setState(() {
                     _otpErrorText = null;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/response/access.token.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/widgets/basic/logo.dart';
@@ -12,6 +13,7 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -67,8 +69,15 @@ class _Login extends State<Login> with TickerProviderStateMixin {
 
     _fadeController1.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _slideController.forward();
-        _fadeController2.forward();
+        isLoggedIn().then((value) {
+          if (value) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.homeRoute, (Route<dynamic> route) => false);
+          } else {
+            _slideController.forward();
+            _fadeController2.forward();
+          }
+        });
       }
     });
 
@@ -79,8 +88,10 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     _identifierController = TextEditingController();
     _passwordController = TextEditingController();
 
-    _rotateController.forward();
-    _fadeController1.forward();
+    Future.delayed(Duration(seconds: 1)).then((value) {
+      _rotateController.forward();
+      _fadeController1.forward();
+    });
   }
 
   void login() async {
@@ -102,7 +113,6 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       _errorFlag = false;
     });
 
-    print("Making request ........");
     var requester = HttpRequester(path: "/oauth/login/app.json");
 
     try {
@@ -120,10 +130,19 @@ class _Login extends State<Login> with TickerProviderStateMixin {
 
         OnePay.of(context).appStateController.add(accessToken);
 
+        // Saving data to shared preferences
+        await setLocalAccessToken(accessToken);
+        await setLoggedIn();
+
         setState(() {
           _loading = false;
           _errorFlag = false;
         });
+
+        Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.homeRoute, (Route<dynamic> route) => false);
+
+        return;
       } else {
         String error = "";
         switch (response.statusCode) {
@@ -160,7 +179,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Theme.of(context).colorScheme.primaryVariant,
       body: SafeArea(
         child: LayoutBuilder(builder:
             (BuildContext context, BoxConstraints viewportConstraints) {
@@ -227,13 +246,10 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                 floatingLabelBehavior:
                                                     FloatingLabelBehavior
                                                         .always,
-                                                border:
-                                                    const OutlineInputBorder(),
-                                                labelStyle: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .primaryColor),
                                                 labelText: "Phone number",
                                               ),
+                                              keyboardType:
+                                                  TextInputType.visiblePassword,
                                               onFieldSubmitted: (_) =>
                                                   FocusScope.of(context)
                                                       .nextFocus(),

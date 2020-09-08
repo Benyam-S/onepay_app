@@ -57,23 +57,32 @@ class _OnePay extends State<OnePay> {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+            inputDecorationTheme: InputDecorationTheme(
+              border: const OutlineInputBorder(),
+              labelStyle: TextStyle(color: Color.fromRGBO(4, 148, 255, 1)),
+              errorStyle: TextStyle(fontSize: 9, fontFamily: "Segoe UI"),
+            ),
             tabBarTheme: TabBarTheme(
                 labelPadding: EdgeInsets.zero,
                 unselectedLabelColor: Color.fromRGBO(4, 148, 255, 1),
-                labelStyle:
-                    TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: "Raleway"),
-                unselectedLabelStyle:
-                    TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: "Raleway")),
+                labelStyle: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Raleway"),
+                unselectedLabelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Raleway")),
             iconTheme: IconThemeData(color: Color.fromRGBO(120, 120, 120, 1)),
-            // primaryColor: Color.fromRGBO(6, 103, 208, 1),
             primaryColor: Color.fromRGBO(4, 148, 255, 1),
-            backgroundColor: Color.fromRGBO(249, 250, 254,1),
+            backgroundColor: Color.fromRGBO(249, 250, 254, 1),
             textTheme: TextTheme(
                 bodyText2: TextStyle(
                     fontSize: 11,
                     color: Colors.black87,
                     fontFamily: "Segoe UI"),
-                subtitle1: TextStyle(fontSize: 12),
+                subtitle1:
+                    TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
                 overline: TextStyle(fontSize: 9),
                 headline3: Theme.of(context)
                     .textTheme
@@ -89,19 +98,21 @@ class _OnePay extends State<OnePay> {
                     .copyWith(fontSize: 14, fontFamily: "Segoe UI")),
             buttonTheme: Theme.of(context).buttonTheme.copyWith(
                 buttonColor: Color.fromRGBO(4, 148, 255, 1),
+                disabledColor: Color.fromRGBO(4, 148, 255, 0.7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 )),
             colorScheme: Theme.of(context).colorScheme.copyWith(
                 primary: Color.fromRGBO(4, 148, 255, 1),
-                primaryVariant: Color.fromRGBO(4, 148, 255, 1),
+                primaryVariant: Color.fromRGBO(6, 103, 208, 1),
                 secondary: Color.fromRGBO(209, 87, 17, 1),
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Home(),
+          AppRoutes.logInRoute: (context) => Login(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
+          AppRoutes.homeRoute: (context) => Home(),
         },
       ),
     );

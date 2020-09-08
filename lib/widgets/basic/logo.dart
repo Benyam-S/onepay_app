@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:onepay_app/utils/custom_icons_icons.dart';
 
 class OPLogoAW extends AnimatedWidget {
   final Animation<double> rotateController;
@@ -22,13 +23,16 @@ class OPLogoAW extends AnimatedWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          child: RotationTransition(
-            alignment: Alignment.center,
-            turns: rotateController,
-            child: Image.asset(
-              "assets/images/circled_o_white.png",
-              width: 140 * sizeAnimation.value,
-              height: 140 * sizeAnimation.value,
+          child: FadeTransition(
+            opacity: fadeController,
+            child: RotationTransition(
+              alignment: Alignment.center,
+              turns: rotateController,
+              child: Icon(
+                CustomIcons.circled_0,
+                color: Colors.white,
+                size: 140 * sizeAnimation.value,
+              ),
             ),
           ),
           onTap: rotate,
@@ -40,7 +44,7 @@ class OPLogoAW extends AnimatedWidget {
             style: TextStyle(
               fontFamily: "Raleway",
               fontWeight: FontWeight.w700,
-              fontSize: 40 * sizeAnimation.value,
+              fontSize: 35 * sizeAnimation.value,
               color: Colors.white,
             ),
           ),

@@ -1,8 +1,15 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
 import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:onepay_app/main.dart';
 import 'package:onepay_app/pages/inside/send/send.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
+import 'package:onepay_app/utils/request.maker.dart';
 
 class Home extends StatefulWidget {
   _Home createState() => _Home();
@@ -11,27 +18,64 @@ class Home extends StatefulWidget {
 class _Home extends State<Home> {
   int _currentIndex = 1;
   String _appBarTitle = "";
-  Widget _currentSection;
   List<Widget> _listOfSections;
+  PageStorageBucket _bucket = PageStorageBucket();
+
+  void getUserProfile() async {
+    print("Making request ........");
+    var requester = HttpRequester(path: "/oauth/user/profile.json");
+
+    try {
+      var accessToken =
+          OnePay.of(context).accessToken ?? await getLocalAccessToken();
+
+      String basicAuth = 'Basic ' +
+          base64Encode(
+              utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
+      var response =
+          await http.get(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'authorization': basicAuth,
+      });
+
+      if (response.statusCode == 200) {
+        var jsonData = json.decode(response.body);
+      } else {
+        switch (response.statusCode) {
+          case 400:
+            break;
+          case 500:
+            break;
+          case 403:
+            break;
+          default:
+        }
+      }
+    } on SocketException {}
+  }
 
   @override
   void initState() {
     super.initState();
 
     _listOfSections = [
-      Container(),
+      Container(
+        key: PageStorageKey("exchange"),
+      ),
       Send(),
       Container(),
-      Container(),
-      Container()
+      Container(
+        key: PageStorageKey("wallet"),
+      ),
+      Container(
+        key: PageStorageKey("settings"),
+      )
     ];
-    _currentSection = _listOfSections[_currentIndex];
   }
 
   void changeSection(int index) {
     setState(() {
       _currentIndex = index;
-      _currentSection = _listOfSections[_currentIndex];
     });
   }
 
@@ -59,16 +103,17 @@ class _Home extends State<Home> {
       appBar: AppBar(
         title: Text(_appBarTitle),
       ),
-      body: _currentSection,
+      body: PageStorage(
+        child: _listOfSections[_currentIndex],
+        bucket: _bucket,
+      ),
       backgroundColor: Theme.of(context).backgroundColor,
       bottomNavigationBar: FFNavigationBar(
         theme: FFNavigationBarTheme(
             barBackgroundColor: Colors.white,
-            selectedItemBackgroundColor:
-                Theme.of(context).colorScheme.primaryVariant,
+            selectedItemBackgroundColor: Theme.of(context).primaryColor,
             selectedItemIconColor: Colors.white,
-            selectedItemLabelColor:
-                Theme.of(context).colorScheme.primaryVariant,
+            selectedItemLabelColor: Theme.of(context).primaryColor,
             unselectedItemIconColor: Theme.of(context).colorScheme.surface,
             unselectedItemLabelColor: Theme.of(context).colorScheme.surface,
             selectedItemTextStyle: TextStyle(fontSize: 11),

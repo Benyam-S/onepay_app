@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:onepay_app/pages/inside/send/via.qrcode.dart';
 
 class Send extends StatefulWidget {
+  Send({Key key}) : super(key: key);
+
   _Send createState() => _Send();
 }
 
@@ -27,6 +29,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
@@ -36,13 +39,12 @@ class _Send extends State<Send> with TickerProviderStateMixin {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(5),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.primaryVariant)),
+                border: Border.all(color: Theme.of(context).primaryColor)),
             child: TabBar(
               controller: _tabController,
               indicatorWeight: 0,
               indicator: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryVariant,
+                color: Theme.of(context).primaryColor,
               ),
               onTap: (index) => this.setState(() {
                 _startIndex = index;
@@ -52,8 +54,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     border: Border(
                       right: BorderSide(
-                          color: Theme.of(context).colorScheme.primaryVariant,
-                          width: 0.5),
+                          color: Theme.of(context).primaryColor, width: 0.5),
                     ),
                   ),
                   child: Row(
@@ -69,11 +70,9 @@ class _Send extends State<Send> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     border: Border(
                       left: BorderSide(
-                          color: Theme.of(context).colorScheme.primaryVariant,
-                          width: 0.5),
+                          color: Theme.of(context).primaryColor, width: 0.5),
                       right: BorderSide(
-                          color: Theme.of(context).colorScheme.primaryVariant,
-                          width: 0.5),
+                          color: Theme.of(context).primaryColor, width: 0.5),
                     ),
                   ),
                   child: Row(
@@ -89,8 +88,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     border: Border(
                       left: BorderSide(
-                          color: Theme.of(context).colorScheme.primaryVariant,
-                          width: 0.5),
+                          color: Theme.of(context).primaryColor, width: 0.5),
                     ),
                   ),
                   child: Row(

@@ -4,7 +4,6 @@ class PasswordFormField extends StatefulWidget {
   final FocusNode focusNode;
   final Function validator;
   final TextEditingController controller;
-  final InputDecoration decoration;
   final Function onChanged;
   final Function onFieldSubmitted;
   final TextInputAction textInputAction;
@@ -12,12 +11,13 @@ class PasswordFormField extends StatefulWidget {
   final bool autoValidate;
   final Widget prefix;
   final bool isDense;
+  final String labelText;
+  final String errorText;
 
   PasswordFormField({
     this.focusNode,
     this.validator,
     this.controller,
-    this.decoration,
     this.onChanged,
     this.onFieldSubmitted,
     this.textInputAction,
@@ -25,6 +25,8 @@ class PasswordFormField extends StatefulWidget {
     this.autoValidate,
     this.prefix,
     this.isDense,
+    this.labelText,
+    this.errorText,
   });
 
   _PasswordFormField createState() => _PasswordFormField();
@@ -44,25 +46,24 @@ class _PasswordFormField extends State<PasswordFormField> {
     return TextFormField(
       controller: widget.controller,
       focusNode: widget.focusNode,
-      decoration: widget.decoration ??
-          InputDecoration(
-              prefixIcon: widget.prefix,
-              border: const OutlineInputBorder(),
-              isDense: widget.isDense ?? false,
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              labelText: "Password",
-              floatingLabelBehavior: FloatingLabelBehavior.always,
-              suffixIcon: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    visible = !visible;
-                  });
-                },
-                child: Icon(
-                  visible ? Icons.visibility_off : Icons.visibility,
-                  size: widget.isDense ?? false ? 24 : null,
-                ),
-              )),
+      decoration: InputDecoration(
+          prefixIcon: widget.prefix,
+          border: const OutlineInputBorder(),
+          isDense: widget.isDense ?? false,
+          labelText: widget.labelText ?? "Password",
+          errorText: widget.errorText,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          suffixIcon: GestureDetector(
+            onTap: () {
+              setState(() {
+                visible = !visible;
+              });
+            },
+            child: Icon(
+              visible ? Icons.visibility_off : Icons.visibility,
+              size: widget.isDense ?? false ? 24 : null,
+            ),
+          )),
       obscureText: !visible,
       validator: widget.validator,
       onFieldSubmitted: widget.onFieldSubmitted,

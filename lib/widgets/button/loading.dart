@@ -33,7 +33,6 @@ class LoadingButton extends StatelessWidget {
       padding: padding,
       onPressed: loading ? null : onPressed,
       color: color,
-      disabledColor: Theme.of(context).colorScheme.primaryVariant,
     );
   }
 }

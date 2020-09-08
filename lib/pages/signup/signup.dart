@@ -17,6 +17,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
   AnimationController _step1Controller;
   AnimationController _step2Controller;
   AnimationController _step3Controller;
+  AnimationController _shakeController;
 
   int _currentStep = 1;
   int _pausedStep = 1;
@@ -57,6 +58,9 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       duration: Duration(microseconds: 700),
     );
 
+    _shakeController = AnimationController(
+        duration: const Duration(milliseconds: 500), vsync: this);
+
     _slideTween = Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0));
 
     _slideController.forward();
@@ -89,6 +93,9 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       ),
       SignUpFinish(
         isNewStream: _passwordIsNewController.stream,
+      ),
+      SignUpCompleted(
+        controller: _shakeController,
       )
     ];
   }
@@ -105,7 +112,10 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       SignUpVerify(
         nonceController: _passwordNonceController,
       ),
-      SignUpFinish()
+      SignUpFinish(),
+      SignUpCompleted(
+        controller: _shakeController,
+      ),
     ];
 
     // Changing size of previous step
@@ -190,7 +200,10 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       SignUpVerify(
         nonceController: _passwordNonceController,
       ),
-      SignUpFinish()
+      SignUpFinish(),
+      SignUpCompleted(
+        controller: _shakeController,
+      ),
     ];
 
     // Changing size of previous step
@@ -270,6 +283,16 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
         // Making is new
         _passwordIsNewController.add(true);
         break;
+
+      case 4:
+        _pausedStep = 4;
+        _progressValue = 1;
+        _shakeController.forward();
+        _listOfStepWidget[3] = SignUpCompleted(
+          controller: _shakeController,
+          visible: true,
+        );
+        break;
     }
 
     setState(() {
@@ -281,9 +304,10 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primaryVariant,
         title: Text("Sign Up"),
       ),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Theme.of(context).colorScheme.primaryVariant,
       body: SafeArea(
         child: SingleChildScrollView(
           child: SlideTransition(
@@ -352,7 +376,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
                                                     : Theme.of(context)
                                                         .accentColor,
                                               ),
-                                              onPressed: _pausedStep >= 1
+                                              onPressed: _pausedStep >= 1 && _pausedStep < 4
                                                   ? () => switchStep(1)
                                                   : null,
                                             ),
@@ -387,7 +411,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
                                                                 224,
                                                                 1),
                                               ),
-                                              onPressed: _pausedStep >= 2
+                                              onPressed: _pausedStep >= 2 && _pausedStep < 4
                                                   ? () => switchStep(2)
                                                   : null,
                                             ),
@@ -422,7 +446,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
                                                                 224,
                                                                 1),
                                               ),
-                                              onPressed: _pausedStep >= 3
+                                              onPressed: _pausedStep >= 3 && _pausedStep < 4
                                                   ? () => switchStep(3)
                                                   : null,
                                             ),
@@ -457,6 +481,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
     _step1Controller.dispose();
     _step2Controller.dispose();
     _step3Controller.dispose();
+    _shakeController.dispose();
     _verifyIsNewController.close();
     _passwordIsNewController.close();
     _verifyNonceController.close();

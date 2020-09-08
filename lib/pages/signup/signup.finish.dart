@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/response/access.token.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
@@ -190,6 +193,10 @@ class _SignUpFinish extends State<SignUpFinish> {
 
         OnePay.of(context).appStateController.add(accessToken);
 
+        // Saving data to shared preferences
+        await setLocalAccessToken(accessToken);
+        await setLoggedIn();
+
         setState(() {
           _loading = false;
           _errorFlag = false;
@@ -198,7 +205,11 @@ class _SignUpFinish extends State<SignUpFinish> {
         // This is only used for checking the step 3 icon
         widget.changeStep(4);
 
-        print(accessToken.accessToken);
+        // This delay is used to make the use comfortable with registration process
+        Future.delayed(Duration(seconds: 4)).then((value) =>
+            Navigator.of(context).pushNamedAndRemoveUntil(
+                AppRoutes.homeRoute, (Route<dynamic> route) => false));
+        return;
       } else {
         String error = "";
         switch (response.statusCode) {
@@ -277,15 +288,7 @@ class _SignUpFinish extends State<SignUpFinish> {
               child: PasswordFormField(
                 focusNode: _newPasswordFocusNode,
                 controller: _newPasswordController,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "Password",
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  errorText: _newPasswordErrorText,
-                  errorStyle: TextStyle(
-                      fontSize: Theme.of(context).textTheme.overline.fontSize),
-                ),
+                errorText: _newPasswordErrorText,
                 autoValidate: true,
                 validator: autoValidateNewPassword,
                 onChanged: (_) => this.setState(() {
@@ -304,11 +307,8 @@ class _SignUpFinish extends State<SignUpFinish> {
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: "Verify Password",
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   errorText: _verifyPasswordErrorText,
-                  errorStyle: TextStyle(
-                      fontSize: Theme.of(context).textTheme.overline.fontSize),
                 ),
                 onChanged: (_) => this.setState(() {
                   _verifyPasswordErrorText = null;
@@ -351,6 +351,67 @@ class _SignUpFinish extends State<SignUpFinish> {
                 )
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SignUpCompleted extends StatelessWidget {
+  final bool visible;
+  final AnimationController controller;
+
+  SignUpCompleted({this.visible, @required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final Animation<double> offsetAnimation = Tween(begin: 0.0, end: 24.0)
+        .chain(CurveTween(curve: Curves.elasticIn))
+        .animate(controller)
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              controller.reverse();
+            }
+          });
+
+    return Visibility(
+      visible: visible ?? false,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedBuilder(
+                animation: offsetAnimation,
+                builder: (buildContext, child) {
+                  return Container(
+                    padding: EdgeInsets.only(
+                        left: offsetAnimation.value + 24.0,
+                        right: 24.0 - offsetAnimation.value,
+                        bottom: 10),
+                    child: Center(
+                      child: Icon(
+                        CustomIcons.complete,
+                        size: 80,
+                        color: Colors.black,
+                      ),
+                    ),
+                  );
+                }),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                "Completed",
+                style: TextStyle(fontSize: 18, color: Colors.green),
+              ),
+            ),
+            Text(
+              "Congratulations, you have taken the first step towards better controlling your personal finances!",
+              textAlign: TextAlign.center,
+            )
           ],
         ),
       ),

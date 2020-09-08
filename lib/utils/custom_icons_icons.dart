@@ -11,7 +11,7 @@
 ///      fonts:
 ///       - asset: fonts/CustomIcons.ttf
 ///
-/// 
+///
 ///
 import 'package:flutter/widgets.dart';
 
@@ -38,4 +38,14 @@ class CustomIcons {
   static const IconData paper_plane = IconData(0xe907, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData deposit = IconData(0xe90d, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData barcode = IconData(0xe910, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData circled_0 = IconData(0xe911, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData mail_simple = IconData(0xe912, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData mail_secured = IconData(0xe945, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData phone_ringing = IconData(0xe935, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData phone_mail = IconData(0xe934, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData phone_sms = IconData(0xe933, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData phone_mail_secured = IconData(0xe928, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData clipboard = IconData(0xe915, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData complete = IconData(0xe914, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData survey = IconData(0xe913, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

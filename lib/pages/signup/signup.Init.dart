@@ -320,10 +320,7 @@ class _SignUpInit extends State<SignUpInit> {
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   labelText: "First Name",
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                   errorText: _firstNameErrorText,
-                  errorStyle: TextStyle(
-                      fontSize: Theme.of(context).textTheme.overline.fontSize),
                 ),
                 autovalidate: true,
                 validator: autoValidateFirstName,
@@ -346,9 +343,6 @@ class _SignUpInit extends State<SignUpInit> {
                   errorText: _lastNameErrorText,
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
-                  errorStyle: TextStyle(
-                      fontSize: Theme.of(context).textTheme.overline.fontSize),
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
                 ),
                 autovalidate: true,
                 validator: autoValidateLastName,
@@ -380,9 +374,6 @@ class _SignUpInit extends State<SignUpInit> {
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   labelText: "Email",
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  errorStyle: TextStyle(
-                      fontSize: Theme.of(context).textTheme.overline.fontSize),
                   errorText: _emailErrorText,
                 ),
                 onChanged: (_) => this.setState(() {
@@ -410,12 +401,7 @@ class _SignUpInit extends State<SignUpInit> {
                     border: const OutlineInputBorder(),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
                     labelText: "Phone number",
-                    labelStyle:
-                        TextStyle(color: Theme.of(context).primaryColor),
                     hintText: "9 * * * * * * * *",
-                    errorStyle: TextStyle(
-                        fontSize:
-                            Theme.of(context).textTheme.overline.fontSize),
                     errorText: _phoneNumberErrorText,
                     errorMaxLines: 2,
                   ),

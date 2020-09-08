@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:http/http.dart' as http;
@@ -220,9 +221,10 @@ class _ForgotPassword extends State<ForgotPassword> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primaryVariant,
         title: Text("Reset"),
       ),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Theme.of(context).colorScheme.primaryVariant,
       body: SafeArea(
         child: Container(
           alignment: Alignment.center,
@@ -242,17 +244,15 @@ class _ForgotPassword extends State<ForgotPassword> {
                           padding: const EdgeInsets.only(bottom: 20),
                           child: Icon(
                             _currentType == "email"
-                                ? Icons.alternate_email
-                                : Icons.phone_iphone,
-                            color:
-                                Theme.of(context).colorScheme.secondaryVariant,
-                            size: 70,
+                                ? CustomIcons.mail_secured
+                                : CustomIcons.phone_mail_secured,
+                            color: Colors.black,
+                            size: 100,
                           ),
                         ),
                         Text(
                           "We have sent a rest link to your ${_currentType == "email" ? "email address" : "phone number"}. "
                           "use the link to reset your password, please don't share the reset link with any one!",
-
                         ),
                       ],
                     ),
@@ -289,20 +289,11 @@ class _ForgotPassword extends State<ForgotPassword> {
                                       focusNode: _emailFocusNode,
                                       controller: _emailController,
                                       decoration: InputDecoration(
-                                        border: const OutlineInputBorder(),
-                                        floatingLabelBehavior:
-                                            FloatingLabelBehavior.always,
                                         labelText: "Email",
-                                        labelStyle: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor),
                                         errorText: _emailErrorText,
                                         errorMaxLines: 2,
-                                        errorStyle: TextStyle(
-                                            fontSize: Theme.of(context)
-                                                .textTheme
-                                                .overline
-                                                .fontSize),
+                                        floatingLabelBehavior:
+                                            FloatingLabelBehavior.always,
                                       ),
                                       onChanged: (_) => this.setState(() {
                                         _emailErrorText = null;
@@ -356,7 +347,6 @@ class _ForgotPassword extends State<ForgotPassword> {
                                     padding: const EdgeInsets.only(
                                         top: 5, bottom: 10),
                                     child: TextFormField(
-                                      // autofocus: true,
                                       style: TextStyle(fontSize: 13),
                                       focusNode: _phoneNumberFocusNode,
                                       controller: _phoneNumberController,
@@ -376,16 +366,8 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         floatingLabelBehavior:
                                             FloatingLabelBehavior.always,
                                         labelText: "Phone number",
-                                        labelStyle: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor),
                                         errorText: _phoneNumberErrorText,
                                         errorMaxLines: 2,
-                                        errorStyle: TextStyle(
-                                            fontSize: Theme.of(context)
-                                                .textTheme
-                                                .overline
-                                                .fontSize),
                                         hintText: "9 * * * * * * * *",
                                       ),
                                       onChanged: (_) => this.setState(() {
