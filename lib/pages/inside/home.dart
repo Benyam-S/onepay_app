@@ -6,6 +6,7 @@ import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/pages/inside/send/send.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -22,7 +23,6 @@ class _Home extends State<Home> {
   PageStorageBucket _bucket = PageStorageBucket();
 
   void getUserProfile() async {
-    print("Making request ........");
     var requester = HttpRequester(path: "/oauth/user/profile.json");
 
     try {
@@ -38,18 +38,18 @@ class _Home extends State<Home> {
         'authorization': basicAuth,
       });
 
+      // If the request is not authorized then exit
+      if (!requester.isAuthorized(context, response, false)) {
+        return;
+      }
+
       if (response.statusCode == 200) {
         var jsonData = json.decode(response.body);
-      } else {
-        switch (response.statusCode) {
-          case 400:
-            break;
-          case 500:
-            break;
-          case 403:
-            break;
-          default:
-        }
+        var opUser = User.fromJson(jsonData);
+
+        // Add current user to the stream and shared preference
+        OnePay.of(context).appStateController.add(opUser);
+        setLocalUserProfile(opUser);
       }
     } on SocketException {}
   }
@@ -71,6 +71,14 @@ class _Home extends State<Home> {
         key: PageStorageKey("settings"),
       )
     ];
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    //  Fetching data on background
+    getUserProfile();
   }
 
   void changeSection(int index) {

@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/response/access.token.dart';
+import 'package:onepay_app/models/user.dart';
+import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/models/access.token.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
 import 'package:onepay_app/pages/inside/home.dart';
 import 'package:onepay_app/pages/login.dart';
@@ -36,17 +37,27 @@ class _AppState extends InheritedWidget {
 class _OnePay extends State<OnePay> {
   StreamController _appStateController = StreamController.broadcast();
   Stream _accessTokenStream;
+  Stream _userStream;
   AccessToken accessToken;
+  User currentUser;
 
   Stream get accessTokenStream => this._accessTokenStream;
+  Stream get userStream => this._userStream;
   StreamController get appStateController => this._appStateController;
 
   _OnePay() {
     this._accessTokenStream =
         _appStateController.stream.where((event) => event is AccessToken);
 
+    this._userStream =
+        _appStateController.stream.where((event) => event is User);
+
     this._accessTokenStream.listen((accessToken) {
       this.accessToken = accessToken as AccessToken;
+    });
+
+    this._userStream.listen((user) {
+      this.currentUser = user as User;
     });
   }
 
@@ -62,6 +73,7 @@ class _OnePay extends State<OnePay> {
               labelStyle: TextStyle(color: Color.fromRGBO(4, 148, 255, 1)),
               errorStyle: TextStyle(fontSize: 9, fontFamily: "Segoe UI"),
             ),
+            appBarTheme: AppBarTheme(color: Color.fromRGBO(6, 103, 208, 1)),
             tabBarTheme: TabBarTheme(
                 labelPadding: EdgeInsets.zero,
                 unselectedLabelColor: Color.fromRGBO(4, 148, 255, 1),
@@ -109,7 +121,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Login(),
+          AppRoutes.logInRoute: (context) => Home(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.homeRoute: (context) => Home(),

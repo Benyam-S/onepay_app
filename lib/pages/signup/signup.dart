@@ -304,7 +304,6 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primaryVariant,
         title: Text("Sign Up"),
       ),
       backgroundColor: Theme.of(context).colorScheme.primaryVariant,

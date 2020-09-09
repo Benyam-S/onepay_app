@@ -8,11 +8,16 @@ import 'package:onepay_app/main.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 
 class ViaQRCode extends StatefulWidget {
+  final Stream<bool> clearErrorStream;
+
+  ViaQRCode({@required this.clearErrorStream});
+
   _ViaQRCode createState() => _ViaQRCode();
 }
 
@@ -20,6 +25,7 @@ class _ViaQRCode extends State<ViaQRCode> {
   TextEditingController _amountController;
   FocusNode _amountFocusNode;
   String _amountErrorText;
+  String _amountText;
   bool _loading = false;
 
   @override
@@ -29,11 +35,23 @@ class _ViaQRCode extends State<ViaQRCode> {
     _amountFocusNode = FocusNode();
     _amountController = TextEditingController();
 
-    // Setting on change handler for the textField
     _amountController.addListener(() {
-      setState(() {
-        _amountErrorText = null;
-      });
+      // If there is no text change don't consider as change
+      if (_amountText != _amountController.text) {
+        setState(() {
+          _amountErrorText = null;
+        });
+      }
+
+      _amountText = _amountController.text;
+    });
+
+    widget.clearErrorStream.listen((clean) {
+      if (clean) {
+        setState(() {
+          _amountErrorText = null;
+        });
+      }
     });
   }
 
@@ -83,7 +101,7 @@ class _ViaQRCode extends State<ViaQRCode> {
       if (amountDouble < 1) {
         setState(() {
           _amountErrorText =
-              ReCase("Amount is less than transaction base limit").sentenceCase;
+              ReCase("amount is less than transaction base limit").sentenceCase;
         });
         return;
       }
@@ -97,13 +115,16 @@ class _ViaQRCode extends State<ViaQRCode> {
     // Start loading process
     setState(() {
       _loading = true;
+      _amountErrorText = null;
     });
 
-    print("Making request ........");
+    showLoaderDialog(context);
+
     var requester = HttpRequester(path: "/oauth/send/code.json");
 
     try {
-      var accessToken = OnePay.of(context).accessToken ?? await getLocalAccessToken();
+      var accessToken =
+          OnePay.of(context).accessToken ?? await getLocalAccessToken();
 
       String basicAuth = 'Basic ' +
           base64Encode(
@@ -116,11 +137,21 @@ class _ViaQRCode extends State<ViaQRCode> {
         'amount': amount,
       });
 
+      // Removing the loading indicator
+      setState(() {
+        _loading = false;
+      });
+
+      if (!requester.isAuthorized(context, response, true)) {
+        return;
+      }
+
       if (response.statusCode == 200) {
+        // Removing loadingDialog
+        Navigator.of(context).pop();
+
         var jsonData = json.decode(response.body);
-        setState(() {
-          _loading = false;
-        });
+        showQrCodeDialog(context, jsonData["code"]);
       } else {
         String error = "";
         switch (response.statusCode) {
@@ -130,22 +161,26 @@ class _ViaQRCode extends State<ViaQRCode> {
             error = jsonData["error"];
             break;
           case 500:
-            error = response.body;
-            break;
-          case 403:
-            error = response.body;
+            error = "unable to perform operation";
             break;
           default:
             error = "Oops something went wrong";
         }
 
-        setState(() {
-          _loading = false;
+        // Removing loadingDialog
+        Navigator.of(context).pop();
+
+        this.setState(() {
+          _amountErrorText = ReCase(error).sentenceCase;
         });
       }
     } on SocketException {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
       setState(() {
         _loading = false;
+        _amountErrorText = ReCase("Unable to connect").sentenceCase;
       });
     }
   }
@@ -161,9 +196,7 @@ class _ViaQRCode extends State<ViaQRCode> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: _amountErrorText != null
-                ? EdgeInsets.only(left: 25, right: 25, bottom: 15)
-                : EdgeInsets.only(left: 25, right: 25, bottom: 25),
+            padding: EdgeInsets.only(left: 25, right: 25),
             child: Column(
               children: [
                 Row(
@@ -203,30 +236,27 @@ class _ViaQRCode extends State<ViaQRCode> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(
+                      Container(
                         width: 200,
+                        height: 70,
                         child: TextFormField(
-                          focusNode: _amountFocusNode,
-                          controller: _amountController,
-                          autofocus: true,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(fontSize: 15, letterSpacing: 4),
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                              isDense: true,
-                              hintText: "100.00",
-                              suffixText: "ETB",
-                              errorMaxLines: 2,
-                              errorStyle: TextStyle(
-                                  color: Theme.of(context).errorColor,
-                                  fontSize: Theme.of(context)
-                                      .textTheme
-                                      .overline
-                                      .fontSize),
-                              errorText: _amountErrorText,
-                              border: DashedInputBorder()),
-                          readOnly: true,
-                        ),
+                            focusNode: _amountFocusNode,
+                            controller: _amountController,
+                            autofocus: true,
+                            keyboardType: TextInputType.number,
+                            style: TextStyle(fontSize: 15, letterSpacing: 4),
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                                isDense: true,
+                                hintText: "100.00",
+                                suffixText: "ETB",
+                                errorMaxLines: 2,
+                                errorText: _amountErrorText,
+                                border: DashedInputBorder()),
+                            readOnly: true,
+                            onChanged: (_) => this.setState(() {
+                                  _amountErrorText = null;
+                                })),
                       ),
                     ],
                   ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:onepay_app/pages/inside/send/via.qrcode.dart';
@@ -11,6 +13,8 @@ class Send extends StatefulWidget {
 class _Send extends State<Send> with TickerProviderStateMixin {
   TabController _tabController;
   int _startIndex = 0;
+  // This stream controller is used to notify the tabs when the tab change
+  StreamController<bool> _clearErrorStreamController;
 
   @override
   void initState() {
@@ -18,11 +22,21 @@ class _Send extends State<Send> with TickerProviderStateMixin {
 
     _tabController =
         TabController(vsync: this, length: 3, initialIndex: _startIndex);
+
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        return;
+      }
+      _clearErrorStreamController.add(true);
+    });
+
+    _clearErrorStreamController = StreamController.broadcast();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _clearErrorStreamController.close();
     super.dispose();
   }
 
@@ -108,7 +122,9 @@ class _Send extends State<Send> with TickerProviderStateMixin {
           child: TabBarView(
             controller: _tabController,
             children: [
-              ViaQRCode(),
+              ViaQRCode(
+                clearErrorStream: _clearErrorStreamController.stream,
+              ),
               Center(
                 child: Text("Container 2"),
               ),

@@ -72,6 +72,7 @@ class _SignUpVerify extends State<SignUpVerify> {
     // Removing the final error at the start
     setState(() {
       _loading = true;
+      _otpErrorText = null;
     });
 
     var requester = HttpRequester(path: "/oauth/user/register/verify");

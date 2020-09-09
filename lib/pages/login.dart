@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
-import 'package:onepay_app/models/response/access.token.dart';
+import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/models/access.token.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -13,7 +13,6 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -132,7 +131,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
 
         // Saving data to shared preferences
         await setLocalAccessToken(accessToken);
-        await setLoggedIn();
+        await setLoggedIn(true);
 
         setState(() {
           _loading = false;

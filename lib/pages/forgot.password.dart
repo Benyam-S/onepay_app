@@ -221,7 +221,6 @@ class _ForgotPassword extends State<ForgotPassword> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primaryVariant,
         title: Text("Reset"),
       ),
       backgroundColor: Theme.of(context).colorScheme.primaryVariant,
