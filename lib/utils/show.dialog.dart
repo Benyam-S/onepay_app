@@ -11,7 +11,10 @@ void showDEValidationDialog(BuildContext context) {
     barrierLabel: MaterialLocalizations.of(context).dialogLabel,
     barrierColor: Colors.black.withOpacity(0.5),
     pageBuilder: (context, _, __) {
-      return DEValidationDialog();
+      return Scaffold(
+        body: DEValidationDialog(),
+        backgroundColor: Colors.transparent,
+      );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       return SlideTransition(
@@ -33,15 +36,20 @@ void showLoaderDialog(BuildContext context) {
     context: context,
     barrierDismissible: false,
     barrierColor: Colors.black.withOpacity(0.5),
-    child: WillPopScope(child: LoaderDialog(), onWillPop: (){},),
+    child: WillPopScope(
+      child: LoaderDialog(),
+      onWillPop: () {},
+    ),
   );
 }
 
-void showQrCodeDialog(BuildContext context, String code) {
+void showQrCodeDialog(BuildContext context, String code, String type) {
   showDialog(
     context: context,
     barrierDismissible: false,
     // barrierColor: Colors.black.withOpacity(0.5),
-    child: QrCodeDialog(code),
+    child: type == "send"
+        ? QrCodeDialog.forSend(code)
+        : QrCodeDialog.forPayment(code),
   );
 }

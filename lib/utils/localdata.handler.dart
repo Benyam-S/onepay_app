@@ -1,4 +1,4 @@
-import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/models/access.token.dart';
+import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

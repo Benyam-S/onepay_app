@@ -3,14 +3,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share/share.dart';
 
 class QrCodeDialog extends StatelessWidget {
   final String code;
+  final String type;
 
-  QrCodeDialog(this.code);
+  QrCodeDialog.forSend(this.code, {this.type = "send"});
+
+  QrCodeDialog.forPayment(this.code, {this.type = "payment"});
+
+  void share(String code) {
+    String msg = "";
+    String subject = "";
+
+    if (type == "send") {
+      msg =
+          "OnePay\n\nThe code: $code can be used to claim a credit provided by the sender.";
+      subject = "OnePay Qr Code Value";
+    } else {}
+
+    Share.share(msg, subject: subject);
+  }
 
   @override
   Widget build(BuildContext context) {
+    String displayMessage = "";
+    if (type == "send") {
+      displayMessage =
+          "** The provided code can be collected by scanning the QR code or using the text code. ** ";
+    } else {}
+
     return AlertDialog(
       title: Text(
         "Generated Code",
@@ -64,7 +87,7 @@ class QrCodeDialog extends StatelessWidget {
             ),
           ),
           Text(
-            "** The provided code can be collected by scanning the QR code or using the text code. ** ",
+            displayMessage,
             style: TextStyle(fontFamily: "Segoe UI"),
           ),
         ],
@@ -78,6 +101,7 @@ class QrCodeDialog extends StatelessWidget {
               color: Theme.of(context).primaryColor,
             ),
           ),
+          onPressed: this.code != null ? () => share(this.code) : null,
         ),
         CupertinoButton(
           child: Text(

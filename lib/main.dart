@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/user.dart';
-import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/models/access.token.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
 import 'package:onepay_app/pages/inside/home.dart';
 import 'package:onepay_app/pages/login.dart';
@@ -73,6 +73,9 @@ class _OnePay extends State<OnePay> {
               labelStyle: TextStyle(color: Color.fromRGBO(4, 148, 255, 1)),
               errorStyle: TextStyle(fontSize: 9, fontFamily: "Segoe UI"),
             ),
+            snackBarTheme: SnackBarThemeData(
+                backgroundColor: Color.fromRGBO(78, 78, 78, 1),
+                contentTextStyle: TextStyle(fontSize: 11)),
             appBarTheme: AppBarTheme(color: Color.fromRGBO(6, 103, 208, 1)),
             tabBarTheme: TabBarTheme(
                 labelPadding: EdgeInsets.zero,

@@ -29,7 +29,7 @@ class OPLogoAW extends AnimatedWidget {
               alignment: Alignment.center,
               turns: rotateController,
               child: Icon(
-                CustomIcons.circled_0,
+                CustomIcons.onepay_logo,
                 color: Colors.white,
                 size: 140 * sizeAnimation.value,
               ),

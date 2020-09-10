@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
@@ -102,7 +103,7 @@ class _ForgotPassword extends State<ForgotPassword> {
     return phoneNumber;
   }
 
-  Future<void> send() async {
+  Future<void> send(BuildContext context) async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -197,10 +198,10 @@ class _ForgotPassword extends State<ForgotPassword> {
             }
             break;
           case 500:
-            error = "Unable to perform operation";
+            error = FailedOperationError;
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
 
         setState(() {
@@ -211,9 +212,12 @@ class _ForgotPassword extends State<ForgotPassword> {
     } on SocketException {
       setState(() {
         _loading = false;
-        _errorText = ReCase("Unable to connect").sentenceCase;
-        _errorFlag = true;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -224,218 +228,225 @@ class _ForgotPassword extends State<ForgotPassword> {
         title: Text("Reset"),
       ),
       backgroundColor: Theme.of(context).colorScheme.primaryVariant,
-      body: SafeArea(
-        child: Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Card(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0)),
-            child: _success
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(25, 20, 25, 40),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Icon(
-                            _currentType == "email"
-                                ? CustomIcons.mail_secured
-                                : CustomIcons.phone_mail_secured,
-                            color: Colors.black,
-                            size: 100,
-                          ),
-                        ),
-                        Text(
-                          "We have sent a rest link to your ${_currentType == "email" ? "email address" : "phone number"}. "
-                          "use the link to reset your password, please don't share the reset link with any one!",
-                        ),
-                      ],
-                    ),
-                  )
-                : Form(
-                    child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+      body: Builder(builder: (BuildContext context) {
+        return SafeArea(
+          child: Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0)),
+              child: _success
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(25, 20, 25, 40),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Visibility(
-                            visible: _currentType == "email",
-                            child: Container(
-                              margin: EdgeInsets.only(bottom: 15),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 15, bottom: 15),
-                                    child: Text(
-                                      "For resetting your password insert your account's email address, "
-                                      "a rest link will be sent to you.",
-                                      style:
-                                          Theme.of(context).textTheme.headline3,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 5, bottom: 10),
-                                    child: TextFormField(
-                                      style: TextStyle(fontSize: 13),
-                                      focusNode: _emailFocusNode,
-                                      controller: _emailController,
-                                      decoration: InputDecoration(
-                                        labelText: "Email",
-                                        errorText: _emailErrorText,
-                                        errorMaxLines: 2,
-                                        floatingLabelBehavior:
-                                            FloatingLabelBehavior.always,
-                                      ),
-                                      onChanged: (_) => this.setState(() {
-                                        _emailErrorText = null;
-                                      }),
-                                      onFieldSubmitted: (_) => send(),
-                                      keyboardType: TextInputType.emailAddress,
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: FlatButton(
-                                      child: Text(
-                                        "Can't access email address?",
-                                        style: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            fontWeight: FontWeight.normal,
-                                            fontSize: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2
-                                                .fontSize),
-                                      ),
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      padding: EdgeInsets.zero,
-                                      onPressed:
-                                          _loading ? null : () => switchType(),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: Icon(
+                              _currentType == "email"
+                                  ? CustomIcons.mail_secured
+                                  : CustomIcons.phone_mail_secured,
+                              color: Colors.black,
+                              size: 100,
                             ),
                           ),
-                          Visibility(
-                            visible: _currentType == "phone",
-                            child: Container(
-                              margin: EdgeInsets.only(bottom: 15),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 15, bottom: 15),
-                                    child: Text(
-                                        "For resetting your password insert your account's phone number, "
+                          Text(
+                            "We have sent a rest link to your ${_currentType == "email" ? "email address" : "phone number"}. "
+                            "use the link to reset your password, please don't share the reset link with any one!",
+                          ),
+                        ],
+                      ),
+                    )
+                  : Form(
+                      child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Visibility(
+                              visible: _currentType == "email",
+                              child: Container(
+                                margin: EdgeInsets.only(bottom: 15),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 15, bottom: 15),
+                                      child: Text(
+                                        "For resetting your password insert your account's email address, "
                                         "a rest link will be sent to you.",
                                         style: Theme.of(context)
                                             .textTheme
-                                            .headline3),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 5, bottom: 10),
-                                    child: TextFormField(
-                                      style: TextStyle(fontSize: 13),
-                                      focusNode: _phoneNumberFocusNode,
-                                      controller: _phoneNumberController,
-                                      decoration: InputDecoration(
-                                        prefixIcon: CountryCodePicker(
-                                          textStyle: TextStyle(fontSize: 11),
-                                          initialSelection: '+251',
-                                          favorite: ['+251'],
-                                          onChanged:
-                                              (CountryCode countryCode) =>
-                                                  _areaCode =
-                                                      countryCode.dialCode,
-                                          alignLeft: false,
+                                            .headline3,
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 5, bottom: 10),
+                                      child: TextFormField(
+                                        style: TextStyle(fontSize: 13),
+                                        focusNode: _emailFocusNode,
+                                        controller: _emailController,
+                                        decoration: InputDecoration(
+                                          labelText: "Email",
+                                          errorText: _emailErrorText,
+                                          errorMaxLines: 2,
+                                          floatingLabelBehavior:
+                                              FloatingLabelBehavior.always,
                                         ),
-                                        // isDense: true,
-                                        border: const OutlineInputBorder(),
-                                        floatingLabelBehavior:
-                                            FloatingLabelBehavior.always,
-                                        labelText: "Phone number",
-                                        errorText: _phoneNumberErrorText,
-                                        errorMaxLines: 2,
-                                        hintText: "9 * * * * * * * *",
+                                        onChanged: (_) => this.setState(() {
+                                          _emailErrorText = null;
+                                        }),
+                                        onFieldSubmitted: (_) => send(context),
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                       ),
-                                      onChanged: (_) => this.setState(() {
-                                        _phoneNumberErrorText = null;
-                                      }),
-                                      onFieldSubmitted: (_) => send(),
-                                      keyboardType: TextInputType.phone,
                                     ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: FlatButton(
-                                      child: Text(
-                                        "Can't access phone number?",
-                                        style: TextStyle(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                            fontWeight: FontWeight.normal,
-                                            fontSize: Theme.of(context)
-                                                .textTheme
-                                                .bodyText2
-                                                .fontSize),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: FlatButton(
+                                        child: Text(
+                                          "Can't access email address?",
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2
+                                                  .fontSize),
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        padding: EdgeInsets.zero,
+                                        onPressed: _loading
+                                            ? null
+                                            : () => switchType(),
                                       ),
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      padding: EdgeInsets.zero,
-                                      onPressed:
-                                          _loading ? null : () => switchType(),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Visibility(
-                            visible: _errorFlag,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 15),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: ErrorText(_errorText),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            fit: FlexFit.loose,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              child: LoadingButton(
-                                loading: _loading,
-                                child: Text(
-                                  "Send",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                  ),
+                                  ],
                                 ),
-                                onPressed: send,
-                                padding: EdgeInsets.symmetric(vertical: 13),
                               ),
                             ),
-                          )
-                        ],
+                            Visibility(
+                              visible: _currentType == "phone",
+                              child: Container(
+                                margin: EdgeInsets.only(bottom: 15),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 15, bottom: 15),
+                                      child: Text(
+                                          "For resetting your password insert your account's phone number, "
+                                          "a rest link will be sent to you.",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headline3),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 5, bottom: 10),
+                                      child: TextFormField(
+                                        style: TextStyle(fontSize: 13),
+                                        focusNode: _phoneNumberFocusNode,
+                                        controller: _phoneNumberController,
+                                        decoration: InputDecoration(
+                                          prefixIcon: CountryCodePicker(
+                                            textStyle: TextStyle(fontSize: 11),
+                                            initialSelection: '+251',
+                                            favorite: ['+251'],
+                                            onChanged:
+                                                (CountryCode countryCode) =>
+                                                    _areaCode =
+                                                        countryCode.dialCode,
+                                            alignLeft: false,
+                                          ),
+                                          // isDense: true,
+                                          border: const OutlineInputBorder(),
+                                          floatingLabelBehavior:
+                                              FloatingLabelBehavior.always,
+                                          labelText: "Phone number",
+                                          errorText: _phoneNumberErrorText,
+                                          errorMaxLines: 2,
+                                          hintText: "9 * * * * * * * *",
+                                        ),
+                                        onChanged: (_) => this.setState(() {
+                                          _phoneNumberErrorText = null;
+                                        }),
+                                        onFieldSubmitted: (_) => send(context),
+                                        keyboardType: TextInputType.phone,
+                                      ),
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: FlatButton(
+                                        child: Text(
+                                          "Can't access phone number?",
+                                          style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyText2
+                                                  .fontSize),
+                                        ),
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        padding: EdgeInsets.zero,
+                                        onPressed: _loading
+                                            ? null
+                                            : () => switchType(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Visibility(
+                              visible: _errorFlag,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 15),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ErrorText(_errorText),
+                                ),
+                              ),
+                            ),
+                            Flexible(
+                              fit: FlexFit.loose,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 15),
+                                child: LoadingButton(
+                                  loading: _loading,
+                                  child: Text(
+                                    "Send",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  onPressed: () => send(context),
+                                  padding: EdgeInsets.symmetric(vertical: 13),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }

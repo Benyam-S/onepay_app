@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:onepay_app/pages/inside/send/via.id.dart';
 import 'package:onepay_app/pages/inside/send/via.qrcode.dart';
 
 class Send extends StatefulWidget {
@@ -12,22 +13,22 @@ class Send extends StatefulWidget {
 
 class _Send extends State<Send> with TickerProviderStateMixin {
   TabController _tabController;
-  int _startIndex = 0;
+  int _currentIndex = 1;
   // This stream controller is used to notify the tabs when the tab change
-  StreamController<bool> _clearErrorStreamController;
+  StreamController<int> _clearErrorStreamController;
 
   @override
   void initState() {
     super.initState();
 
     _tabController =
-        TabController(vsync: this, length: 3, initialIndex: _startIndex);
+        TabController(vsync: this, length: 3, initialIndex: _currentIndex);
 
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         return;
       }
-      _clearErrorStreamController.add(true);
+      _clearErrorStreamController.add(_tabController.index);
     });
 
     _clearErrorStreamController = StreamController.broadcast();
@@ -61,7 +62,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
                 color: Theme.of(context).primaryColor,
               ),
               onTap: (index) => this.setState(() {
-                _startIndex = index;
+                _currentIndex = index;
               }),
               tabs: [
                 Container(
@@ -125,8 +126,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
               ViaQRCode(
                 clearErrorStream: _clearErrorStreamController.stream,
               ),
-              Center(
-                child: Text("Container 2"),
+              ViaOnePayID(clearErrorStream: _clearErrorStreamController.stream,
               ),
               Center(
                 child: Text("Container 3"),

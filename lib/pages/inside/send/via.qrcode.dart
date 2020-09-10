@@ -1,20 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
-import 'package:onepay_app/utils/localdata.handler.dart';
+import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 
 class ViaQRCode extends StatefulWidget {
-  final Stream<bool> clearErrorStream;
+  final Stream<int> clearErrorStream;
 
   ViaQRCode({@required this.clearErrorStream});
 
@@ -46,8 +45,8 @@ class _ViaQRCode extends State<ViaQRCode> {
       _amountText = _amountController.text;
     });
 
-    widget.clearErrorStream.listen((clean) {
-      if (clean) {
+    widget.clearErrorStream.listen((index) {
+      if (index == 0 && mounted) {
         setState(() {
           _amountErrorText = null;
         });
@@ -59,6 +58,37 @@ class _ViaQRCode extends State<ViaQRCode> {
   void dispose() {
     _amountController.dispose();
     super.dispose();
+  }
+
+  String autoValidateAmount(String amount) {
+    if (amount.isEmpty) {
+      return null;
+    }
+
+    return validateAmount(amount);
+  }
+
+  String validateAmount(String amount) {
+    try {
+      // Removing comma before parsing
+      if (amount.contains(",")) {
+        if (RegExp(r"^(\d{1,3}(,\d{3})*(\.\d*)?|\.\d*)$").hasMatch(amount)) {
+          amount = amount.replaceAll(",", "");
+        } else {
+          return ReCase(InvalidAmountError).sentenceCase;
+        }
+      }
+
+      var amountDouble = double.parse(amount);
+      if (amountDouble < 1) {
+        return ReCase(TransactionBaseLimitError)
+            .sentenceCase;
+      }
+    } catch (e) {
+      return ReCase(InvalidAmountError).sentenceCase;
+    }
+
+    return null;
   }
 
   void typeToField(String value) {
@@ -91,23 +121,10 @@ class _ViaQRCode extends State<ViaQRCode> {
       return;
     }
 
-    try {
-      var amountDouble = double.parse(amount);
-      if (amountDouble == 0) {
-        FocusScope.of(context).requestFocus(_amountFocusNode);
-        return;
-      }
-
-      if (amountDouble < 1) {
-        setState(() {
-          _amountErrorText =
-              ReCase("amount is less than transaction base limit").sentenceCase;
-        });
-        return;
-      }
-    } catch (e) {
+    var amountError = validateAmount(amount);
+    if (amountError != null) {
       setState(() {
-        _amountErrorText = ReCase("invalid amount").sentenceCase;
+        _amountErrorText = amountError;
       });
       return;
     }
@@ -123,17 +140,7 @@ class _ViaQRCode extends State<ViaQRCode> {
     var requester = HttpRequester(path: "/oauth/send/code.json");
 
     try {
-      var accessToken =
-          OnePay.of(context).accessToken ?? await getLocalAccessToken();
-
-      String basicAuth = 'Basic ' +
-          base64Encode(
-              utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'authorization': basicAuth,
-      }, body: <String, String>{
+      var response = await requester.post(context, {
         'amount': amount,
       });
 
@@ -142,16 +149,16 @@ class _ViaQRCode extends State<ViaQRCode> {
         _loading = false;
       });
 
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
       if (!requester.isAuthorized(context, response, true)) {
         return;
       }
 
       if (response.statusCode == 200) {
-        // Removing loadingDialog
-        Navigator.of(context).pop();
-
         var jsonData = json.decode(response.body);
-        showQrCodeDialog(context, jsonData["code"]);
+        showQrCodeDialog(context, jsonData["code"], "send");
       } else {
         String error = "";
         switch (response.statusCode) {
@@ -161,14 +168,11 @@ class _ViaQRCode extends State<ViaQRCode> {
             error = jsonData["error"];
             break;
           case 500:
-            error = "unable to perform operation";
+            error = FailedOperationError;
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
-
-        // Removing loadingDialog
-        Navigator.of(context).pop();
 
         this.setState(() {
           _amountErrorText = ReCase(error).sentenceCase;
@@ -180,8 +184,20 @@ class _ViaQRCode extends State<ViaQRCode> {
 
       setState(() {
         _loading = false;
-        _amountErrorText = ReCase("Unable to connect").sentenceCase;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
+    } on AccessTokenNotFoundException {
+      setState(() {
+        _loading = false;
+      });
+
+      // Logging the use out
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.logInRoute, (Route<dynamic> route) => false);
     }
   }
 
@@ -243,6 +259,8 @@ class _ViaQRCode extends State<ViaQRCode> {
                             focusNode: _amountFocusNode,
                             controller: _amountController,
                             autofocus: true,
+                            autovalidate: true,
+                            validator: autoValidateAmount,
                             keyboardType: TextInputType.number,
                             style: TextStyle(fontSize: 15, letterSpacing: 4),
                             textAlign: TextAlign.center,

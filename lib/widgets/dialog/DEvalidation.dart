@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/main.dart';
-import 'package:onepay_app/utils/localdata.handler.dart';
+import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/routes.dart';
 import 'package:recase/recase.dart';
 
 class DEValidationDialog extends StatefulWidget {
@@ -53,18 +53,17 @@ class _DEValidationDialog extends State<DEValidationDialog> {
 
     var requester = HttpRequester(path: "/oauth/refresh.json");
     try {
-      var accessToken =
-          OnePay.of(context).accessToken ?? await getLocalAccessToken();
-
-      String basicAuth = 'Basic ' +
-          base64Encode(
-              utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'authorization': basicAuth,
-      }, body: <String, String>{
+      var response = await requester.post(context, <String, String>{
         'password': password,
+      });
+
+      // Since the dialog can be cancelled checking for availability on the tree
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loading = false;
       });
 
       // Since it is in the validation dialog we don't have to get another dialog
@@ -84,19 +83,30 @@ class _DEValidationDialog extends State<DEValidationDialog> {
             error = jsonData["error"];
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
 
         setState(() {
-          _loading = false;
           _passwordErrorText = ReCase(error).sentenceCase;
         });
       }
     } on SocketException {
       setState(() {
         _loading = false;
-        _passwordErrorText = ReCase("Unable to connect").sentenceCase;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
+    } on AccessTokenNotFoundException {
+      setState(() {
+        _loading = false;
+      });
+
+      // Logging the use out
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.logInRoute, (Route<dynamic> route) => false);
     }
   }
 
@@ -145,7 +155,17 @@ class _DEValidationDialog extends State<DEValidationDialog> {
                             obscureText: true,
                             focusNode: _passwordFocusNode,
                             controller: _passwordController,
+                            autofocus: true,
                             decoration: InputDecoration(
+                              suffix: _loading
+                                  ? Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ))
+                                  : null,
+                              enabled: !_loading,
                               labelText: "Password",
                               errorText: _passwordErrorText,
                               border: OutlineInputBorder(),

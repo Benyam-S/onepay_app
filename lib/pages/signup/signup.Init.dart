@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:country_code_picker/country_code.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/text/error.dart';
@@ -125,14 +126,14 @@ class _SignUpInit extends State<SignUpInit> {
 
   String validateEmail(String value) {
     if (value.isEmpty) {
-      return ReCase("entry should be filled").sentenceCase;
+      return ReCase(EmptyEntryError).sentenceCase;
     }
 
     var exp = RegExp(
         r'^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
 
     if (!exp.hasMatch(value)) {
-      return ReCase("invalid email address used").sentenceCase;
+      return ReCase(InvalidEmailAddressError).sentenceCase;
     }
 
     return null;
@@ -140,7 +141,7 @@ class _SignUpInit extends State<SignUpInit> {
 
   String validatePhoneNumber(String value) {
     if (value.isEmpty) {
-      return ReCase("entry should be filled").sentenceCase;
+      return ReCase(EmptyEntryError).sentenceCase;
     }
 
     // Means it is local phone number
@@ -153,7 +154,7 @@ class _SignUpInit extends State<SignUpInit> {
     var exp = RegExp(r'^(\+\d{11,12})$|(0\d{9})$');
 
     if (!exp.hasMatch(value)) {
-      return ReCase("invalid phone number used").sentenceCase;
+      return ReCase(InvalidPhoneNumberError).sentenceCase;
     }
 
     return null;
@@ -187,7 +188,7 @@ class _SignUpInit extends State<SignUpInit> {
 
     if (firstName.isEmpty) {
       setState(() {
-        _firstNameErrorText = ReCase("entry should be filled").sentenceCase;
+        _firstNameErrorText = ReCase(EmptyEntryError).sentenceCase;
       });
     } else if (firstNameError != null) {
       setState(() {
@@ -282,10 +283,10 @@ class _SignUpInit extends State<SignUpInit> {
 
             return;
           case 500:
-            error = "unable to perform operation";
+            error = FailedOperationError;
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
 
         setState(() {
@@ -296,9 +297,12 @@ class _SignUpInit extends State<SignUpInit> {
     } on SocketException {
       setState(() {
         _loading = false;
-        _errorText = ReCase("Unable to connect").sentenceCase;
-        _errorFlag = true;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
     }
   }
 

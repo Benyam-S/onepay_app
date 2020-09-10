@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
-import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/models/access.token.dart';
+import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -93,7 +94,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     });
   }
 
-  void login() async {
+  void login(BuildContext context) async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -157,7 +158,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
             error = response.body;
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
 
         setState(() {
@@ -169,9 +170,12 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     } on SocketException {
       setState(() {
         _loading = false;
-        _errorText = ReCase("Unable to connect").sentenceCase;
-        _errorFlag = true;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -179,234 +183,247 @@ class _Login extends State<Login> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.primaryVariant,
-      body: SafeArea(
-        child: LayoutBuilder(builder:
-            (BuildContext context, BoxConstraints viewportConstraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(minHeight: viewportConstraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Flexible(
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: SlideTransition(
-                          position: _slideTween.animate(_slideController),
-                          child: OPLogoAW(
-                            rotateController: _rotateController,
-                            fadeController: _fadeController1,
-                            sizeController:
-                                _sizeTween.animate(_slideController),
-                            rotate: () {
-                              _rotateController.dispose();
-                              _rotateController = AnimationController(
-                                vsync: this,
-                                duration: Duration(seconds: 1),
-                              );
-                              setState(() {
-                                _rotateController.forward();
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: FadeTransition(
-                        opacity: _fadeController2,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0)),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Form(
-                                  key: _formKey,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        15, 25, 15, 15),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 10),
-                                          child: TextFormField(
-                                              focusNode: _identifierFocusNode,
-                                              controller: _identifierController,
-                                              decoration: InputDecoration(
-                                                floatingLabelBehavior:
-                                                    FloatingLabelBehavior
-                                                        .always,
-                                                labelText: "Phone number",
-                                              ),
-                                              keyboardType:
-                                                  TextInputType.visiblePassword,
-                                              onFieldSubmitted: (_) =>
-                                                  FocusScope.of(context)
-                                                      .nextFocus(),
-                                              textInputAction:
-                                                  TextInputAction.next),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 10,
-                                            bottom: 10,
-                                          ),
-                                          child: PasswordFormField(
-                                            focusNode: _passwordFocusNode,
-                                            controller: _passwordController,
-                                            onFieldSubmitted: (_) => login(),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, bottom: 15),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.stretch,
-                                            children: [
-                                              Visibility(
-                                                child: ErrorText(_errorText),
-                                                visible: _errorFlag,
-                                              ),
-                                              Align(
-                                                alignment:
-                                                    Alignment.centerRight,
-                                                child: FlatButton(
-                                                  child: Text(
-                                                    "Forgot Password",
-                                                    style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
-                                                        fontWeight:
-                                                            FontWeight.normal,
-                                                        fontSize:
-                                                            Theme.of(context)
-                                                                .textTheme
-                                                                .bodyText2
-                                                                .fontSize),
-                                                  ),
-                                                  materialTapTargetSize:
-                                                      MaterialTapTargetSize
-                                                          .shrinkWrap,
-                                                  padding: EdgeInsets.zero,
-                                                  onPressed: _loading
-                                                      ? null
-                                                      : () {
-                                                          Navigator.of(context)
-                                                              .pushNamed(AppRoutes
-                                                                  .forgotPasswordRoute);
-                                                          FocusScope.of(context)
-                                                              .requestFocus(
-                                                                  _signUpFocusNode);
-                                                        },
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 10),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.stretch,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Flexible(
-                                                fit: FlexFit.loose,
-                                                child: LoadingButton(
-                                                  loading: _loading,
-                                                  child: Text(
-                                                    "Log In",
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 18,
-                                                    ),
-                                                  ),
-                                                  onPressed: login,
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical: 13),
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 5),
-                                                child: Row(
-                                                  textBaseline:
-                                                      TextBaseline.alphabetic,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .baseline,
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    Text(
-                                                        "Don't have Account? "),
-                                                    ButtonTheme(
-                                                      materialTapTargetSize:
-                                                          MaterialTapTargetSize
-                                                              .shrinkWrap,
-                                                      padding: EdgeInsets.zero,
-                                                      minWidth: 0,
-                                                      child: FlatButton(
-                                                        child: Text(
-                                                          "Sign Up.",
-                                                          style: TextStyle(
-                                                              color: Theme.of(
-                                                                      context)
-                                                                  .primaryColor,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .normal,
-                                                              fontSize: 15),
-                                                        ),
-                                                        onPressed: _loading
-                                                            ? null
-                                                            : () {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pushNamed(
-                                                                        AppRoutes
-                                                                            .singUpRoute);
-                                                                FocusScope.of(
-                                                                        context)
-                                                                    .requestFocus(
-                                                                        _signUpFocusNode);
-                                                              },
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              )
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              ],
+      body: Builder(builder: (BuildContext context) {
+        return SafeArea(
+          child: LayoutBuilder(builder:
+              (BuildContext context, BoxConstraints viewportConstraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints:
+                    BoxConstraints(minHeight: viewportConstraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Flexible(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: SlideTransition(
+                            position: _slideTween.animate(_slideController),
+                            child: OPLogoAW(
+                              rotateController: _rotateController,
+                              fadeController: _fadeController1,
+                              sizeController:
+                                  _sizeTween.animate(_slideController),
+                              rotate: () {
+                                _rotateController.dispose();
+                                _rotateController = AnimationController(
+                                  vsync: this,
+                                  duration: Duration(seconds: 1),
+                                );
+                                setState(() {
+                                  _rotateController.forward();
+                                });
+                              },
                             ),
                           ),
                         ),
                       ),
-                    )
-                  ],
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: FadeTransition(
+                          opacity: _fadeController2,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Card(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0)),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Form(
+                                    key: _formKey,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          15, 25, 15, 15),
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 10),
+                                            child: TextFormField(
+                                                focusNode: _identifierFocusNode,
+                                                controller:
+                                                    _identifierController,
+                                                decoration: InputDecoration(
+                                                  floatingLabelBehavior:
+                                                      FloatingLabelBehavior
+                                                          .always,
+                                                  labelText: "Phone number",
+                                                ),
+                                                keyboardType: TextInputType
+                                                    .visiblePassword,
+                                                onFieldSubmitted: (_) =>
+                                                    FocusScope.of(context)
+                                                        .nextFocus(),
+                                                textInputAction:
+                                                    TextInputAction.next),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 10,
+                                              bottom: 10,
+                                            ),
+                                            child: PasswordFormField(
+                                              focusNode: _passwordFocusNode,
+                                              controller: _passwordController,
+                                              onFieldSubmitted: (_) =>
+                                                  login(context),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 10, bottom: 15),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                Visibility(
+                                                  child: ErrorText(_errorText),
+                                                  visible: _errorFlag,
+                                                ),
+                                                Align(
+                                                  alignment:
+                                                      Alignment.centerRight,
+                                                  child: FlatButton(
+                                                    child: Text(
+                                                      "Forgot Password",
+                                                      style: TextStyle(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .primaryColor,
+                                                          fontWeight:
+                                                              FontWeight.normal,
+                                                          fontSize:
+                                                              Theme.of(context)
+                                                                  .textTheme
+                                                                  .bodyText2
+                                                                  .fontSize),
+                                                    ),
+                                                    materialTapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                    padding: EdgeInsets.zero,
+                                                    onPressed: _loading
+                                                        ? null
+                                                        : () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pushNamed(AppRoutes
+                                                                    .forgotPasswordRoute);
+                                                            FocusScope.of(
+                                                                    context)
+                                                                .requestFocus(
+                                                                    _signUpFocusNode);
+                                                          },
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 10),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Flexible(
+                                                  fit: FlexFit.loose,
+                                                  child: LoadingButton(
+                                                    loading: _loading,
+                                                    child: Text(
+                                                      "Log In",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 18,
+                                                      ),
+                                                    ),
+                                                    onPressed: () =>
+                                                        login(context),
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            vertical: 13),
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          top: 5),
+                                                  child: Row(
+                                                    textBaseline:
+                                                        TextBaseline.alphabetic,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .baseline,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                          "Don't have Account? "),
+                                                      ButtonTheme(
+                                                        materialTapTargetSize:
+                                                            MaterialTapTargetSize
+                                                                .shrinkWrap,
+                                                        padding:
+                                                            EdgeInsets.zero,
+                                                        minWidth: 0,
+                                                        child: FlatButton(
+                                                          child: Text(
+                                                            "Sign Up.",
+                                                            style: TextStyle(
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .primaryColor,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .normal,
+                                                                fontSize: 15),
+                                                          ),
+                                                          onPressed: _loading
+                                                              ? null
+                                                              : () {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pushNamed(
+                                                                          AppRoutes
+                                                                              .singUpRoute);
+                                                                  FocusScope.of(
+                                                                          context)
+                                                                      .requestFocus(
+                                                                          _signUpFocusNode);
+                                                                },
+                                                        ),
+                                                      )
+                                                    ],
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }),
-      ),
+            );
+          }),
+        );
+      }),
     );
   }
 

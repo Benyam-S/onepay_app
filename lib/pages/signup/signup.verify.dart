@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
@@ -101,7 +102,7 @@ class _SignUpVerify extends State<SignUpVerify> {
             error = "invalid code used";
             break;
           default:
-            error = "Oops something went wrong";
+            error = SomethingWentWrongError;
         }
 
         setState(() {
@@ -111,8 +112,12 @@ class _SignUpVerify extends State<SignUpVerify> {
     } on SocketException {
       setState(() {
         _loading = false;
-        _otpErrorText = ReCase("Unable to connect").sentenceCase;
       });
+
+      final snackBar = SnackBar(
+        content: Text(ReCase(UnableToConnectError).sentenceCase),
+      );
+      Scaffold.of(context).showSnackBar(snackBar);
     }
   }
 

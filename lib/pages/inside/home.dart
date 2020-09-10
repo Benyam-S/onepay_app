@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:http/http.dart' as http;
 import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +8,10 @@ import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/pages/inside/send/send.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/routes.dart';
 
 class Home extends StatefulWidget {
   _Home createState() => _Home();
@@ -26,17 +27,7 @@ class _Home extends State<Home> {
     var requester = HttpRequester(path: "/oauth/user/profile.json");
 
     try {
-      var accessToken =
-          OnePay.of(context).accessToken ?? await getLocalAccessToken();
-
-      String basicAuth = 'Basic ' +
-          base64Encode(
-              utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
-      var response =
-          await http.get(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'authorization': basicAuth,
-      });
+      var response = await requester.get(context);
 
       // If the request is not authorized then exit
       if (!requester.isAuthorized(context, response, false)) {
@@ -51,7 +42,11 @@ class _Home extends State<Home> {
         OnePay.of(context).appStateController.add(opUser);
         setLocalUserProfile(opUser);
       }
-    } on SocketException {}
+    } on SocketException {} on AccessTokenNotFoundException {
+      // Logging the use out
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    }
   }
 
   @override
