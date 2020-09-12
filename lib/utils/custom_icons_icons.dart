@@ -38,7 +38,8 @@ class CustomIcons {
   static const IconData paper_plane = IconData(0xe907, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData deposit = IconData(0xe90d, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData barcode = IconData(0xe910, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-  static const IconData onepay_logo = IconData(0xe911, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData onepay_logo = IconData(0xe916, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData onepay_logo_filled = IconData(0xe911, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData mail_simple = IconData(0xe912, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData mail_secured = IconData(0xe945, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData phone_ringing = IconData(0xe935, fontFamily: _kFontFam, fontPackage: _kFontPkg);

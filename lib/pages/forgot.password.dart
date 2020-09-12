@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
-import 'package:onepay_app/widgets/text/error.dart';
 import 'package:http/http.dart' as http;
 import 'package:recase/recase.dart';
 
@@ -25,8 +25,6 @@ class _ForgotPassword extends State<ForgotPassword> {
   String _emailErrorText;
   String _phoneNumberErrorText;
   String _areaCode = '+251';
-  String _errorText = "";
-  bool _errorFlag = false;
 
   bool _loading = false;
   String _currentType = "email";
@@ -52,8 +50,6 @@ class _ForgotPassword extends State<ForgotPassword> {
   }
 
   void switchType() {
-    _errorFlag = false;
-
     if (_currentType == "email") {
       setState(() {
         _currentType = "phone";
@@ -147,8 +143,6 @@ class _ForgotPassword extends State<ForgotPassword> {
     // Removing the final error at the start
     setState(() {
       _loading = true;
-      _errorFlag = false;
-      _errorText = "";
       _emailErrorText = null;
       _phoneNumberErrorText = null;
     });
@@ -170,7 +164,7 @@ class _ForgotPassword extends State<ForgotPassword> {
         _loading = false;
       });
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         setState(() {
           _success = true;
         });
@@ -178,9 +172,10 @@ class _ForgotPassword extends State<ForgotPassword> {
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             var jsonData = json.decode(response.body);
-            if (jsonData["error"] == "invalid identifier used") {
+            error = jsonData["error"];
+            if (error == InvalidIdentifierErrorB) {
               setState(() {
                 if (_currentType == "email") {
                   _emailErrorText = ReCase(
@@ -193,31 +188,42 @@ class _ForgotPassword extends State<ForgotPassword> {
                 }
               });
               return;
-            } else {
-              error = jsonData["error"];
             }
-            break;
-          case 500:
+
+            setState(() {
+              if (_currentType == "email") {
+                _emailErrorText =
+                    ReCase("unable to send email to the provided address")
+                        .sentenceCase;
+              } else if (_currentType == "phone") {
+                _phoneNumberErrorText = ReCase(
+                        "unable to send message to the provided phone number")
+                    .sentenceCase;
+              }
+            });
+            return;
+
+          case HttpStatus.internalServerError:
             error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        setState(() {
-          _errorText = ReCase(error).sentenceCase;
-          _errorFlag = true;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 
@@ -407,16 +413,6 @@ class _ForgotPassword extends State<ForgotPassword> {
                                       ),
                                     ),
                                   ],
-                                ),
-                              ),
-                            ),
-                            Visibility(
-                              visible: _errorFlag,
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 15),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: ErrorText(_errorText),
                                 ),
                               ),
                             ),

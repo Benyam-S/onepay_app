@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -62,10 +63,11 @@ class HttpRequester {
 
   /// isAuthorized is used for the checking if the request used a valid access token depending on the status response
   bool isAuthorized(
-      BuildContext context, http.Response response, bool showDialog) {
+      BuildContext context, http.Response response, bool showDialog,
+      [Function currentCallback]) {
     switch (response.statusCode) {
-      case 403:
-      case 401:
+      case HttpStatus.unauthorized:
+      case HttpStatus.forbidden:
         setLoggedIn(false);
         setLocalAccessToken(null);
 
@@ -73,12 +75,12 @@ class HttpRequester {
         Navigator.of(context).pushNamedAndRemoveUntil(
             AppRoutes.logInRoute, (Route<dynamic> route) => false);
         return false;
-      case 400:
+      case HttpStatus.badRequest:
         if (showDialog) {
           var jsonData = json.decode(response.body);
           if (jsonData["error"] ==
               "access token has exceeded it daily expiration time") {
-            showDEValidationDialog(context);
+            showDEValidationDialog(context, currentCallback);
             return false;
           }
         }

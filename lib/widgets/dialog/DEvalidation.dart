@@ -3,13 +3,19 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:recase/recase.dart';
 
 class DEValidationDialog extends StatefulWidget {
+  // Since the DEValidationDialog interrupts a certain request flow we have to resume that flow if the validation is successful
+  final Function callback;
+
+  DEValidationDialog(this.callback);
+
   _DEValidationDialog createState() => _DEValidationDialog();
 }
 
@@ -73,32 +79,40 @@ class _DEValidationDialog extends State<DEValidationDialog> {
 
       if (response.statusCode == 200) {
         Navigator.of(context).pop();
+
+        // Resuming the previous request flow
+        if (widget.callback != null) {
+          widget.callback();
+        }
         return;
       } else {
-        String error = "";
-        switch (response.statusCode) {
-          case 400:
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
+        if (response.statusCode == HttpStatus.badRequest) {
+          String error = "";
 
-        setState(() {
-          _passwordErrorText = ReCase(error).sentenceCase;
-        });
+          FocusScope.of(context).requestFocus(_passwordFocusNode);
+          var jsonData = json.decode(response.body);
+          error = jsonData["error"];
+          switch (error) {
+            case TooManyAttemptsErrorB:
+              error = TooManyAttemptsError;
+              break;
+            case InvalidPasswordErrorB:
+              error = InvalidPasswordError;
+              break;
+          }
+          setState(() {
+            _passwordErrorText = ReCase(error).sentenceCase;
+          });
+        } else {
+          showServerError(context, SomethingWentWrongError);
+        }
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
     } on AccessTokenNotFoundException {
       setState(() {
         _loading = false;
@@ -107,6 +121,12 @@ class _DEValidationDialog extends State<DEValidationDialog> {
       // Logging the use out
       Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 

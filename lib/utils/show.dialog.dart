@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
+import 'package:onepay_app/widgets/dialog/receiver.verification.dart';
+import 'package:onepay_app/widgets/dialog/success.dart';
 
-void showDEValidationDialog(BuildContext context) {
+void showDEValidationDialog(BuildContext context, Function currentCallback) {
   showGeneralDialog(
     context: context,
     barrierDismissible: false,
@@ -12,7 +15,7 @@ void showDEValidationDialog(BuildContext context) {
     barrierColor: Colors.black.withOpacity(0.5),
     pageBuilder: (context, _, __) {
       return Scaffold(
-        body: DEValidationDialog(),
+        body: DEValidationDialog(currentCallback),
         backgroundColor: Colors.transparent,
       );
     },
@@ -51,5 +54,22 @@ void showQrCodeDialog(BuildContext context, String code, String type) {
     child: type == "send"
         ? QrCodeDialog.forSend(code)
         : QrCodeDialog.forPayment(code),
+  );
+}
+
+void showReceiverVerificationDialog(
+    BuildContext context, String amount, User user, Function callback) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    child: ReceiverVerificationDialog(amount, user, callback),
+  );
+}
+
+void showSuccessDialog(BuildContext context, String successMsg) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    child: SuccessDialog(successMsg),
   );
 }

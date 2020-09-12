@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:flutter/services.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
+import 'package:onepay_app/utils/formatter.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
@@ -23,6 +26,7 @@ class ViaQRCode extends StatefulWidget {
 class _ViaQRCode extends State<ViaQRCode> {
   TextEditingController _amountController;
   FocusNode _amountFocusNode;
+  FocusNode _buttonFocusNode;
   String _amountErrorText;
   String _amountText;
   bool _loading = false;
@@ -32,6 +36,7 @@ class _ViaQRCode extends State<ViaQRCode> {
     super.initState();
 
     _amountFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
     _amountController = TextEditingController();
 
     _amountController.addListener(() {
@@ -43,12 +48,25 @@ class _ViaQRCode extends State<ViaQRCode> {
       }
 
       _amountText = _amountController.text;
+      setState(() {
+        _amountController.text =
+            CurrencyInputFormatter().transformAmount(_amountController.text);
+      });
     });
 
     widget.clearErrorStream.listen((index) {
       if (index == 0 && mounted) {
         setState(() {
           _amountErrorText = null;
+        });
+      }
+    });
+
+    _amountFocusNode.addListener(() {
+      if (!_amountFocusNode.hasFocus) {
+        setState(() {
+          _amountController.text =
+              CurrencyInputFormatter().toCurrency(_amountController.text);
         });
       }
     });
@@ -81,8 +99,7 @@ class _ViaQRCode extends State<ViaQRCode> {
 
       var amountDouble = double.parse(amount);
       if (amountDouble < 1) {
-        return ReCase(TransactionBaseLimitError)
-            .sentenceCase;
+        return ReCase(TransactionBaseLimitError).sentenceCase;
       }
     } catch (e) {
       return ReCase(InvalidAmountError).sentenceCase;
@@ -92,6 +109,11 @@ class _ViaQRCode extends State<ViaQRCode> {
   }
 
   void typeToField(String value) {
+
+    if (!_amountFocusNode.hasFocus){
+      FocusScope.of(context).requestFocus(_amountFocusNode);
+    }
+
     String currentValue = _amountController.text ?? "";
     if (value == "<") {
       currentValue = currentValue != ""
@@ -102,6 +124,8 @@ class _ViaQRCode extends State<ViaQRCode> {
     } else {
       currentValue += value;
     }
+
+    HapticFeedback.mediumImpact();
 
     setState(() {
       _amountController.addListener(() {});
@@ -141,7 +165,7 @@ class _ViaQRCode extends State<ViaQRCode> {
 
     try {
       var response = await requester.post(context, {
-        'amount': amount,
+        'amount': CurrencyInputFormatter().toDouble(amount),
       });
 
       // Removing the loading indicator
@@ -152,31 +176,48 @@ class _ViaQRCode extends State<ViaQRCode> {
       // Removing loadingDialog
       Navigator.of(context).pop();
 
-      if (!requester.isAuthorized(context, response, true)) {
+      if (!requester.isAuthorized(context, response, true, create)) {
         return;
       }
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         showQrCodeDialog(context, jsonData["code"], "send");
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             FocusScope.of(context).requestFocus(_amountFocusNode);
             var jsonData = json.decode(response.body);
             error = jsonData["error"];
-            break;
-          case 500:
+
+            switch (error) {
+              case AmountParsingErrorB:
+                error = InvalidAmountError;
+                break;
+              case TransactionBaseLimitErrorB:
+                error = TransactionBaseLimitError;
+                break;
+              case DailyTransactionLimitErrorB:
+                error = DailyTransactionLimitError;
+                break;
+              case InsufficientBalanceErrorB:
+                error = InsufficientBalanceError;
+                break;
+            }
+
+            this.setState(() {
+              _amountErrorText = ReCase(error).sentenceCase;
+            });
+            return;
+          case HttpStatus.internalServerError:
             error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        this.setState(() {
-          _amountErrorText = ReCase(error).sentenceCase;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       // Removing loadingDialog
@@ -186,10 +227,7 @@ class _ViaQRCode extends State<ViaQRCode> {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
     } on AccessTokenNotFoundException {
       setState(() {
         _loading = false;
@@ -198,6 +236,15 @@ class _ViaQRCode extends State<ViaQRCode> {
       // Logging the use out
       Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 
@@ -205,7 +252,8 @@ class _ViaQRCode extends State<ViaQRCode> {
   Widget build(BuildContext context) {
     var vh = MediaQuery.of(context).size.height;
     var verticalKeyPadding = vh * 0.014;
-    var keyPaddingFontSize = vh * 0.039;
+    var keyPadFontSize = vh * 0.039;
+    var keyPadColor = Theme.of(context).primaryColor;
 
     return SingleChildScrollView(
       child: Column(
@@ -221,7 +269,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                   children: [
                     Icon(
                       CustomIcons.barcode,
-                      color: Colors.black,
+                      color: Theme.of(context).primaryColor,
                       // size: 40,
                       size: vh * 0.054,
                     ),
@@ -272,6 +320,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                                 errorText: _amountErrorText,
                                 border: DashedInputBorder()),
                             readOnly: true,
+                            enableInteractiveSelection: false,
                             onChanged: (_) => this.setState(() {
                                   _amountErrorText = null;
                                 })),
@@ -301,9 +350,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "1",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 // fontSize: 30,
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                                 fontFamily: "Raleway",
                               ),
                             )),
@@ -319,9 +368,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "2",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -336,9 +385,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "3",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -354,9 +403,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "4",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -370,9 +419,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "5",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -386,9 +435,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "6",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -404,9 +453,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "7",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -420,9 +469,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "8",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -436,9 +485,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                             child: Text(
                               "9",
                               style: TextStyle(
-                                fontSize: keyPaddingFontSize,
+                                fontSize: keyPadFontSize,
                                 fontFamily: "Raleway",
-                                color: Theme.of(context).primaryColor,
+                                color: keyPadColor,
                               ),
                             )),
                       ),
@@ -455,9 +504,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                               child: Text(
                                 ".",
                                 style: TextStyle(
-                                  fontSize: keyPaddingFontSize,
+                                  fontSize: keyPadFontSize,
                                   fontFamily: "Raleway",
-                                  color: Theme.of(context).primaryColor,
+                                  color: keyPadColor,
                                 ),
                               )),
                         ),
@@ -471,9 +520,9 @@ class _ViaQRCode extends State<ViaQRCode> {
                               child: Text(
                                 "0",
                                 style: TextStyle(
-                                  fontSize: keyPaddingFontSize,
+                                  fontSize: keyPadFontSize,
                                   fontFamily: "Raleway",
-                                  color: Theme.of(context).primaryColor,
+                                  color: keyPadColor,
                                 ),
                               )),
                         ),
@@ -494,8 +543,8 @@ class _ViaQRCode extends State<ViaQRCode> {
                                         vertical: verticalKeyPadding),
                                     child: Icon(
                                       Icons.keyboard_arrow_left,
-                                      size: keyPaddingFontSize,
-                                      color: Theme.of(context).primaryColor,
+                                      size: keyPadFontSize,
+                                      color: keyPadColor,
                                     )),
                               ),
                             ),
@@ -517,6 +566,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                 Flexible(
                   fit: FlexFit.loose,
                   child: LoadingButton(
+                    focusNode: _buttonFocusNode,
                     loading: false,
                     child: Text(
                       "Create",
@@ -525,7 +575,13 @@ class _ViaQRCode extends State<ViaQRCode> {
                         fontSize: 18,
                       ),
                     ),
-                    onPressed: _loading ? null : create,
+                    onPressed: _loading
+                        ? null
+                        : () {
+                            FocusScope.of(context)
+                                .requestFocus(_buttonFocusNode);
+                            create();
+                          },
                     padding: EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),

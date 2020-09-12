@@ -7,6 +7,7 @@ class LoadingButton extends StatelessWidget {
   final Color color;
   final EdgeInsets padding;
   final bool loading;
+  final FocusNode focusNode;
 
   LoadingButton(
       {this.child,
@@ -14,11 +15,13 @@ class LoadingButton extends StatelessWidget {
       this.onPressed,
       this.color,
       this.loading,
-      this.padding});
+      this.padding,
+      this.focusNode});
 
   @override
   Widget build(BuildContext context) {
     return RaisedButton(
+      focusNode: focusNode,
       child: loading
           ? Container(
               height: 22,

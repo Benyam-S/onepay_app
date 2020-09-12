@@ -4,8 +4,9 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 import 'package:http/http.dart' as http;
@@ -91,33 +92,36 @@ class _SignUpVerify extends State<SignUpVerify> {
         _loading = false;
       });
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         var nonce = jsonData["nonce"];
         widget.nonceController.add(nonce);
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             error = "invalid code used";
+            setState(() {
+              _otpErrorText = ReCase(error).sentenceCase;
+            });
             break;
           default:
             error = SomethingWentWrongError;
+            showServerError(context, error);
         }
-
-        setState(() {
-          _otpErrorText = ReCase(error).sentenceCase;
-        });
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 

@@ -5,10 +5,10 @@ import 'dart:io';
 import 'package:country_code_picker/country_code.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
-import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
 import 'package:http/http.dart' as http;
 
@@ -37,8 +37,6 @@ class _SignUpInit extends State<SignUpInit> {
   String _emailErrorText;
   String _phoneNumberErrorText;
   String _areaCode = '+251';
-  String _errorText = "";
-  bool _errorFlag = false;
   bool _loading = false;
 
   GlobalKey<FormState> _formKey;
@@ -224,7 +222,10 @@ class _SignUpInit extends State<SignUpInit> {
     // Removing the final error at the start
     setState(() {
       _loading = true;
-      _errorFlag = false;
+      _firstNameErrorText = null;
+      _lastNameErrorText = null;
+      _emailErrorText = null;
+      _phoneNumberErrorText = null;
     });
 
     var requester = HttpRequester(path: "/oauth/user/register/init");
@@ -244,7 +245,7 @@ class _SignUpInit extends State<SignUpInit> {
         _loading = false;
       });
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         var nonce = jsonData["nonce"];
         widget.nonceController.add(nonce);
@@ -254,55 +255,61 @@ class _SignUpInit extends State<SignUpInit> {
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             var jsonData = json.decode(response.body);
             jsonData.forEach((key, value) {
+              error = jsonData[key];
               switch (key) {
                 case "first_name":
                   setState(() {
-                    _firstNameErrorText = ReCase(jsonData[key]).sentenceCase;
+                    _firstNameErrorText = ReCase(error).sentenceCase;
                   });
                   break;
                 case "last_name":
                   setState(() {
-                    _lastNameErrorText = ReCase(jsonData[key]).sentenceCase;
+                    _lastNameErrorText = ReCase(error).sentenceCase;
                   });
                   break;
                 case "email":
+                  if (error == EmailAlreadyExistsErrorB) {
+                    error = EmailAlreadyExistsError;
+                  }
                   setState(() {
-                    _emailErrorText = ReCase(jsonData[key]).sentenceCase;
+                    _emailErrorText = ReCase(error).sentenceCase;
                   });
                   break;
                 case "phone_number":
+                  if (error == PhoneNumberAlreadyExistsErrorB) {
+                    error = PhoneNumberAlreadyExistsError;
+                  }
                   setState(() {
-                    _phoneNumberErrorText = ReCase(jsonData[key]).sentenceCase;
+                    _phoneNumberErrorText = ReCase(error).sentenceCase;
                   });
                   break;
               }
             });
-
             return;
-          case 500:
+          case HttpStatus.internalServerError:
             error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        setState(() {
-          _errorText = ReCase(error).sentenceCase;
-          _errorFlag = true;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 
@@ -419,15 +426,8 @@ class _SignUpInit extends State<SignUpInit> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 15),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Visibility(
-                      child: ErrorText(_errorText),
-                      visible: _errorFlag,
-                    ),
-                  ),
+                SizedBox(
+                  height: 25,
                 ),
                 Flexible(
                   fit: FlexFit.loose,

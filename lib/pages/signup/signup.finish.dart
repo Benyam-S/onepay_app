@@ -4,11 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
@@ -169,6 +170,8 @@ class _SignUpFinish extends State<SignUpFinish> {
     // Removing the final error at the start
     setState(() {
       _loading = true;
+      _newPasswordErrorText = null;
+      _verifyPasswordErrorText = null;
       _errorFlag = false;
     });
 
@@ -188,7 +191,7 @@ class _SignUpFinish extends State<SignUpFinish> {
         _loading = false;
       });
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         var accessToken = AccessToken.fromJson(jsonData);
 
@@ -199,7 +202,6 @@ class _SignUpFinish extends State<SignUpFinish> {
         await setLoggedIn(true);
 
         setState(() {
-          _loading = false;
           _errorFlag = false;
         });
 
@@ -214,56 +216,62 @@ class _SignUpFinish extends State<SignUpFinish> {
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             var jsonData = json.decode(response.body);
+            error = jsonData["error"];
 
-            switch (jsonData["error"]) {
+            switch (error) {
               case "password should contain at least 8 characters":
                 setState(() {
-                  _newPasswordErrorText =
-                      ReCase(jsonData["error"]).sentenceCase;
+                  _newPasswordErrorText = ReCase(error).sentenceCase;
                 });
                 break;
-              case "password should contain at least 8 characters":
+              case "invalid characters used in password":
                 setState(() {
-                  _newPasswordErrorText =
-                      ReCase(jsonData["error"]).sentenceCase;
+                  _newPasswordErrorText = ReCase(error).sentenceCase;
                 });
                 break;
               case "password does not match":
                 setState(() {
-                  _verifyPasswordErrorText =
-                      ReCase(jsonData["error"]).sentenceCase;
+                  _verifyPasswordErrorText = ReCase(error).sentenceCase;
+                });
+                break;
+              case "invalid token used":
+                setState(() {
+                  _errorText =
+                      ReCase("the token used is invalid or has expired")
+                          .sentenceCase;
+                  _errorFlag = true;
                 });
                 break;
               default:
                 setState(() {
-                  _errorText = ReCase(jsonData["error"]).sentenceCase;
+                  _errorText = ReCase(error).sentenceCase;
                   _errorFlag = true;
                 });
             }
             return;
-          case 500:
+          case HttpStatus.internalServerError:
             error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        setState(() {
-          _errorText = ReCase(error).sentenceCase;
-          _errorFlag = true;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 

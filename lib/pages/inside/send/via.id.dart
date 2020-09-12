@@ -1,15 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:flutter/services.dart';
+import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
+import 'package:onepay_app/utils/formatter.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
-import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
 
 class ViaOnePayID extends StatefulWidget {
@@ -28,9 +31,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
   FocusNode _opIDFocusNode;
   String _amountErrorText;
   String _opIDErrorText;
-  String _errorText = "";
   bool _loading = false;
-  bool _errorFlag = false;
 
   @override
   void initState() {
@@ -42,10 +43,19 @@ class _ViaOnePayID extends State<ViaOnePayID> {
     _amountController = TextEditingController();
     _opIDController = TextEditingController();
 
-    widget.clearErrorStream.listen((index) {
-      if (index == 1 && mounted) {
+    // widget.clearErrorStream.listen((index) {
+    //   if (index == 1 && mounted) {
+    //     setState(() {
+    //       _errorFlag = false;
+    //     });
+    //   }
+    // });
+
+    _amountFocusNode.addListener(() {
+      if (!_amountFocusNode.hasFocus) {
         setState(() {
-          _errorFlag = false;
+          _amountController.text =
+              CurrencyInputFormatter().toCurrency(_amountController.text);
         });
       }
     });
@@ -92,6 +102,11 @@ class _ViaOnePayID extends State<ViaOnePayID> {
     var opID = _opIDController.text;
     var amount = _amountController.text;
 
+    // Adding prefix if not added
+    if (!opID.toLowerCase().startsWith("op-")) {
+      opID = "op-" + opID;
+    }
+
     showLoaderDialog(context);
 
     var requester = HttpRequester(path: "/oauth/send/id.json");
@@ -99,7 +114,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
     try {
       var response = await requester.post(context, <String, String>{
         'receiver_id': opID,
-        'amount': amount,
+        'amount': CurrencyInputFormatter().toDouble(amount),
       });
 
       // Removing the loading indicator
@@ -110,49 +125,67 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       // Removing loadingDialog
       Navigator.of(context).pop();
 
-      if (!requester.isAuthorized(context, response, true)) {
+      if (!requester.isAuthorized(context, response, true, send)) {
         return;
       }
 
-      if (response.statusCode == 200) {
-        print("Successful..... inside send via onepay id");
+      if (response.statusCode == HttpStatus.ok) {
+        showSuccessDialog(context,
+            "You have successfully transferred $amount ETB to ${opID.toUpperCase()}.");
+        return;
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             var jsonData = json.decode(response.body);
             error = jsonData["error"];
+
             switch (error) {
-              case TransactionBaseLimitError:
-              case DailyTransactionLimitError:
-              case InsufficientBalanceError:
+              case AmountParsingErrorB:
+                error = InvalidAmountError;
+                continue amountError;
+              case TransactionBaseLimitErrorB:
+                error = TransactionBaseLimitError;
+                continue amountError;
+              case DailyTransactionLimitErrorB:
+                error = DailyTransactionLimitError;
+                continue amountError;
+              case InsufficientBalanceErrorB:
+                error = InsufficientBalanceError;
+                continue amountError;
+              amountError:
+              case TransactionBaseLimitErrorB:
                 FocusScope.of(context).requestFocus(_amountFocusNode);
                 this.setState(() {
                   _amountErrorText = ReCase(error).sentenceCase;
                 });
                 return;
-              case ReceiverNotFoundError:
-              case TransactionWSelfError:
+              case FrozenAccountErrorB:
+                error = FrozenReceiverAccountError;
+                continue opIDError;
+              case ReceiverNotFoundErrorB:
+                error = ReceiverNotFoundError;
+                continue opIDError;
+              case TransactionWSelfErrorB:
+                error = TransactionWSelfError;
+                continue opIDError;
+              opIDError:
+              case TransactionWSelfErrorB:
                 FocusScope.of(context).requestFocus(_opIDFocusNode);
                 this.setState(() {
                   _opIDErrorText = ReCase(error).sentenceCase;
                 });
                 return;
-              default:
-                error = FailedOperationError;
             }
             break;
-          case 500:
+          case HttpStatus.internalServerError:
             error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        this.setState(() {
-          _errorFlag = true;
-          _errorText = ReCase(error).sentenceCase;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       // Removing loadingDialog
@@ -160,13 +193,9 @@ class _ViaOnePayID extends State<ViaOnePayID> {
 
       setState(() {
         _loading = false;
-        _errorFlag = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
     } on AccessTokenNotFoundException {
       setState(() {
         _loading = false;
@@ -175,6 +204,15 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       // Logging the use out
       Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 
@@ -197,6 +235,11 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       return;
     }
 
+    // Adding prefix if not added
+    if (!opID.toLowerCase().startsWith("op-")) {
+      opID = "op-" + opID;
+    }
+
     var amountError = validateAmount(amount);
     if (amountError != null) {
       setState(() {
@@ -205,10 +248,23 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       return;
     }
 
+    // Checking transaction with your own
+    if (OnePay.of(context).currentUser?.userID?.toLowerCase() ==
+        opID.toLowerCase()) {
+      FocusScope.of(context).requestFocus(_opIDFocusNode);
+      setState(() {
+        _opIDErrorText = TransactionWSelfError.sentenceCase;
+      });
+      return;
+    }
+
     // Start loading process
     setState(() {
       _loading = true;
-      _errorFlag = false;
+
+      //  Removing entry errors
+      _amountErrorText = null;
+      _opIDErrorText = null;
     });
 
     showLoaderDialog(context);
@@ -230,20 +286,28 @@ class _ViaOnePayID extends State<ViaOnePayID> {
         return;
       }
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         var opUser = User.fromJson(jsonData);
-
-        print("receiver profile found");
-        print(opUser.firstName);
+        var displayAmount = CurrencyInputFormatter().toCurrency(amount);
+        showReceiverVerificationDialog(context, displayAmount, opUser, send);
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
+          case HttpStatus.badRequest:
             FocusScope.of(context).requestFocus(_opIDFocusNode);
 
             var jsonData = json.decode(response.body);
             error = jsonData["error"];
+
+            switch (error) {
+              case "user not found":
+                error = ReceiverNotFoundError;
+                break;
+              case FrozenAccountErrorB:
+                error = FrozenReceiverAccountError;
+                break;
+            }
 
             this.setState(() {
               _opIDErrorText = ReCase(error).sentenceCase;
@@ -253,10 +317,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
             error = SomethingWentWrongError;
         }
 
-        this.setState(() {
-          _errorFlag = true;
-          _errorText = ReCase(error).sentenceCase;
-        });
+        showServerError(context, error);
       }
     } on SocketException {
       // Removing loadingDialog
@@ -266,9 +327,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
         _loading = false;
       });
 
-      final snackBar =
-          SnackBar(content: Text(ReCase(UnableToConnectError).sentenceCase));
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
     } on AccessTokenNotFoundException {
       setState(() {
         _loading = false;
@@ -277,6 +336,15 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       // Logging the use out
       Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 
@@ -300,10 +368,10 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                       CustomIcons.onepay_logo,
                       color: Theme.of(context).primaryColor,
                       // size: 40,
-                      size: vh * 0.054,
+                      size: vh * 0.06,
                     ),
                     SizedBox(
-                      width: 15,
+                      width: 10,
                     ),
                     Text(
                       "Via OnePay ID",
@@ -324,21 +392,26 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                     ),
                   ),
                 ),
-                Padding(
+                Container(
+                  height: 220,
                   padding: const EdgeInsets.only(top: 25),
                   child: Column(
                     children: [
                       TextFormField(
                         controller: _opIDController,
                         focusNode: _opIDFocusNode,
+                        style: TextStyle(letterSpacing: 2),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
                           floatingLabelBehavior: FloatingLabelBehavior.always,
                           labelText: "OnePay ID",
+                          labelStyle: Theme.of(context)
+                              .inputDecorationTheme
+                              .labelStyle
+                              .copyWith(letterSpacing: 0),
                           errorText: _opIDErrorText,
+                          prefixText: "OP-",
                         ),
-                        autovalidate: true,
-                        // validator: autoValidateFirstName,
                         onChanged: (_) => this.setState(() {
                           _opIDErrorText = null;
                         }),
@@ -348,30 +421,39 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         keyboardType: TextInputType.visiblePassword,
                       ),
                       SizedBox(
-                        height: 15,
+                        height: 20,
                       ),
                       TextFormField(
-                          focusNode: _amountFocusNode,
-                          controller: _amountController,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(fontSize: 15, letterSpacing: 4),
-                          textAlign: TextAlign.center,
-                          autovalidate: true,
-                          validator: autoValidateAmount,
-                          decoration: InputDecoration(
-                            hintText: "100.00",
-                            suffixText: "ETB",
-                            labelText: "Amount",
-                            floatingLabelBehavior: FloatingLabelBehavior.always,
-                            labelStyle:
-                                TextStyle(fontSize: 12, letterSpacing: 1),
-                            errorMaxLines: 2,
-                            errorText: _amountErrorText,
-                          ),
-                          onFieldSubmitted: (_) => verify(),
-                          onChanged: (_) => this.setState(() {
-                                _amountErrorText = null;
-                              })),
+                        focusNode: _amountFocusNode,
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(fontSize: 15, letterSpacing: 4),
+                        textAlign: TextAlign.center,
+                        autovalidate: true,
+                        validator: autoValidateAmount,
+                        enableInteractiveSelection: false,
+                        decoration: InputDecoration(
+                          hintText: "100.00",
+                          suffixText: "ETB",
+                          labelText: "Amount",
+                          floatingLabelBehavior: FloatingLabelBehavior.always,
+                          labelStyle: Theme.of(context)
+                              .inputDecorationTheme
+                              .labelStyle
+                              .copyWith(fontSize: 12, letterSpacing: 0),
+                          errorMaxLines: 2,
+                          errorText: _amountErrorText,
+                        ),
+                        inputFormatters: [
+                          CurrencyInputFormatter(),
+                        ],
+                        onFieldSubmitted: (_) => verify(),
+                        onChanged: (_) {
+                          this.setState(() {
+                            _amountErrorText = null;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -384,15 +466,8 @@ class _ViaOnePayID extends State<ViaOnePayID> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Visibility(
-                    child: ErrorText(_errorText),
-                    visible: _errorFlag,
-                  ),
-                ),
                 SizedBox(
-                  height: 25,
+                  height: vh * 0.112,
                 ),
                 Flexible(
                   fit: FlexFit.loose,

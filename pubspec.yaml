@@ -25,7 +25,8 @@ dependencies:
   qr_flutter: ^3.2.0
   fluttertoast: ^7.0.4
   share: ^0.6.5
-
+  flutter_money_formatter: ^0.8.3
+  flare_flutter: ^1.8.3
 
 dev_dependencies:
   flutter_test:
@@ -38,6 +39,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/animations/
 
   fonts:
     - family: ComicSans

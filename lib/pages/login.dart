@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
-import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/basic/logo.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
@@ -124,7 +125,12 @@ class _Login extends State<Login> with TickerProviderStateMixin {
         'password': _passwordController.text,
       });
 
-      if (response.statusCode == 200) {
+      // Removing loader after request
+      setState(() {
+        _loading = false;
+      });
+
+      if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
         var accessToken = AccessToken.fromJson(jsonData);
 
@@ -135,7 +141,6 @@ class _Login extends State<Login> with TickerProviderStateMixin {
         await setLoggedIn(true);
 
         setState(() {
-          _loading = false;
           _errorFlag = false;
         });
 
@@ -146,36 +151,62 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       } else {
         String error = "";
         switch (response.statusCode) {
-          case 400:
-            FocusScope.of(context).requestFocus(_passwordFocusNode);
+          case HttpStatus.badRequest:
             var jsonData = json.decode(response.body);
             error = jsonData["error"];
+            switch (error) {
+              case InvalidPasswordOrIdentifierErrorB:
+                FocusScope.of(context).requestFocus(_passwordFocusNode);
+                error = InvalidPasswordOrIdentifierError;
+                break;
+              case TooManyAttemptsErrorB:
+                error = TooManyAttemptsError;
+                break;
+            }
             break;
-          case 500:
+          case HttpStatus.forbidden:
             error = response.body;
+            switch (error) {
+              case FrozenAccountErrorB:
+                error = FrozenAccountError;
+                break;
+              case FrozenAPIClientErrorB:
+                error = FrozenAPIClientError;
+                break;
+            }
             break;
-          case 403:
-            error = response.body;
+          case HttpStatus.internalServerError:
+            error = FailedOperationError;
             break;
           default:
             error = SomethingWentWrongError;
         }
 
-        setState(() {
-          _loading = false;
-          _errorText = ReCase(error).sentenceCase;
-          _errorFlag = true;
-        });
+        switch (response.statusCode) {
+          case HttpStatus.badRequest:
+          case HttpStatus.forbidden:
+            setState(() {
+              _errorText = ReCase(error).sentenceCase;
+              _errorFlag = true;
+            });
+            break;
+          case HttpStatus.internalServerError:
+          default:
+            showServerError(context, error);
+        }
       }
     } on SocketException {
       setState(() {
         _loading = false;
       });
 
-      final snackBar = SnackBar(
-        content: Text(ReCase(UnableToConnectError).sentenceCase),
-      );
-      Scaffold.of(context).showSnackBar(snackBar);
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
     }
   }
 

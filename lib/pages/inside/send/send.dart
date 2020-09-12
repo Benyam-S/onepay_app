@@ -28,6 +28,7 @@ class _Send extends State<Send> with TickerProviderStateMixin {
       if (_tabController.indexIsChanging) {
         return;
       }
+      FocusScope.of(context).requestFocus(FocusNode());
       _clearErrorStreamController.add(_tabController.index);
     });
 
@@ -126,7 +127,8 @@ class _Send extends State<Send> with TickerProviderStateMixin {
               ViaQRCode(
                 clearErrorStream: _clearErrorStreamController.stream,
               ),
-              ViaOnePayID(clearErrorStream: _clearErrorStreamController.stream,
+              ViaOnePayID(
+                clearErrorStream: _clearErrorStreamController.stream,
               ),
               Center(
                 child: Text("Container 3"),
