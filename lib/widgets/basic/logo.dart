@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 
 class OPLogoAW extends AnimatedWidget {
   final Animation<double> rotateController;

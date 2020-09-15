@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/user.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/formatter.dart';
 import 'package:onepay_app/utils/request.maker.dart';
@@ -16,10 +16,6 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 
 class ViaOnePayID extends StatefulWidget {
-  final Stream<int> clearErrorStream;
-
-  ViaOnePayID({@required this.clearErrorStream});
-
   @override
   _ViaOnePayID createState() => _ViaOnePayID();
 }
@@ -30,6 +26,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
   FocusNode _amountFocusNode;
   FocusNode _opIDFocusNode;
   String _amountErrorText;
+  String _amountHint = "100.00";
   String _opIDErrorText;
   bool _loading = false;
 
@@ -43,19 +40,16 @@ class _ViaOnePayID extends State<ViaOnePayID> {
     _amountController = TextEditingController();
     _opIDController = TextEditingController();
 
-    // widget.clearErrorStream.listen((index) {
-    //   if (index == 1 && mounted) {
-    //     setState(() {
-    //       _errorFlag = false;
-    //     });
-    //   }
-    // });
-
     _amountFocusNode.addListener(() {
       if (!_amountFocusNode.hasFocus) {
         setState(() {
           _amountController.text =
               CurrencyInputFormatter().toCurrency(_amountController.text);
+          _amountHint = "100.00";
+        });
+      } else {
+        setState(() {
+          _amountHint = null;
         });
       }
     });
@@ -148,7 +142,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                 error = TransactionBaseLimitError;
                 continue amountError;
               case DailyTransactionLimitErrorB:
-                error = DailyTransactionLimitError;
+                error = DailyTransactionLimitSendError;
                 continue amountError;
               case InsufficientBalanceErrorB:
                 error = InsufficientBalanceError;
@@ -433,7 +427,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         validator: autoValidateAmount,
                         enableInteractiveSelection: false,
                         decoration: InputDecoration(
-                          hintText: "100.00",
+                          hintText: _amountHint,
                           suffixText: "ETB",
                           labelText: "Amount",
                           floatingLabelBehavior: FloatingLabelBehavior.always,

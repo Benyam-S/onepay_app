@@ -49,4 +49,6 @@ class CustomIcons {
   static const IconData clipboard = IconData(0xe915, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData complete = IconData(0xe914, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData survey = IconData(0xe913, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData enter = IconData(0xe917, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData down_arrow = IconData(0xe900, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

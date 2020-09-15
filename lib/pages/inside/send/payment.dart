@@ -15,11 +15,12 @@ import 'package:onepay_app/widgets/basic/dashed.border.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 
-class ViaQRCode extends StatefulWidget {
-  _ViaQRCode createState() => _ViaQRCode();
+class PaymentQRCode extends StatefulWidget {
+
+  _PaymentQRCode createState() => _PaymentQRCode();
 }
 
-class _ViaQRCode extends State<ViaQRCode> {
+class _PaymentQRCode extends State<PaymentQRCode> {
   TextEditingController _amountController;
   FocusNode _amountFocusNode;
   FocusNode _buttonFocusNode;
@@ -148,7 +149,7 @@ class _ViaQRCode extends State<ViaQRCode> {
 
     showLoaderDialog(context);
 
-    var requester = HttpRequester(path: "/oauth/send/code.json");
+    var requester = HttpRequester(path: "/oauth/pay/code.json");
 
     try {
       var response = await requester.post(context, {
@@ -169,7 +170,7 @@ class _ViaQRCode extends State<ViaQRCode> {
 
       if (response.statusCode == HttpStatus.ok) {
         var jsonData = json.decode(response.body);
-        showQrCodeDialog(context, jsonData["code"], "send");
+        showQrCodeDialog(context, jsonData["code"], "payment");
       } else {
         String error = "";
         switch (response.statusCode) {
@@ -186,10 +187,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                 error = TransactionBaseLimitError;
                 break;
               case DailyTransactionLimitErrorB:
-                error = DailyTransactionLimitSendError;
-                break;
-              case InsufficientBalanceErrorB:
-                error = InsufficientBalanceError;
+                error = DailyTransactionLimitPaymentError;
                 break;
             }
 
@@ -264,7 +262,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                       width: 15,
                     ),
                     Text(
-                      "Via Qr Code",
+                      "Qr Code Payment",
                       style: TextStyle(
                           fontSize: vh * 0.027,
                           // fontSize: 20,
@@ -278,7 +276,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                   padding: const EdgeInsets.only(top: 10),
                   height: 48,
                   child: Text(
-                    "Please enter an amount that you prefer to send via the QR code.",
+                    "Please enter an amount that you prefer to be payed for.",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.surface,
                     ),
@@ -309,7 +307,6 @@ class _ViaQRCode extends State<ViaQRCode> {
                                 errorText: _amountErrorText,
                                 border: DashedInputBorder()),
                             readOnly: true,
-                            showCursor: true,
                             enableInteractiveSelection: false,
                             onChanged: (_) => this.setState(() {
                                   _amountErrorText = null;

@@ -46,13 +46,25 @@ const EmailAlreadyExistsErrorB = "email address already exists";
 /// PhoneNumberAlreadyExistsErrorB is a constant that holds phone number already exists error of the backend
 const PhoneNumberAlreadyExistsErrorB = "phone number already exists";
 
+/// InvalidMoneyTokenErrorB is a constant that holds invalid money token used error of the backend
+const InvalidMoneyTokenErrorB = "invalid money token used";
+
+/// ExpiredMoneyTokenErrorB is a constant that holds money token had expired error of the backend
+const ExpiredMoneyTokenErrorB = "money token has passed expiration date";
+
+/// InvalidMethodErrorB is a constant that holds invalid method used error of the backend
+const InvalidMethodErrorB = "invalid method, code not found";
+
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Errors ++++++++++++++++++++++++++++++++++++++++++++++
 
 /// TransactionBaseLimitError is a constant that holds transaction base limit error
 const TransactionBaseLimitError = "amount is less than transaction base limit";
 
-/// DailyTransactionLimitError is a constant that holds daily transaction limit error
-const DailyTransactionLimitError = "user has exceeded daily transaction limit";
+/// DailyTransactionLimitSendError is a constant that holds daily transaction limit for send error
+const DailyTransactionLimitSendError = "you has exceeded daily transaction limit";
+
+/// DailyTransactionLimitPaymentError is a constant that holds daily transaction limit for payment error
+const DailyTransactionLimitPaymentError = "amount has exceeded daily transaction limit";
 
 /// InsufficientBalanceError is a constant that holds insufficient balance error
 const InsufficientBalanceError =
@@ -111,3 +123,12 @@ const EmailAlreadyExistsError = "email address already exists";
 
 /// PhoneNumberAlreadyExistsError is a constant that holds phone number already exists error
 const PhoneNumberAlreadyExistsError = "phone number already exists";
+
+/// InvalidMoneyTokenError is a constant that holds invalid money token used error
+const InvalidMoneyTokenError = "invalid code used";
+
+/// ExpiredMoneyTokenError is a constant that holds money token had expired error
+const ExpiredMoneyTokenError = "money token has passed expiration date";
+
+/// InvalidMethodError is a constant that holds invalid method used error
+const InvalidMethodError = "invalid method, code not found";

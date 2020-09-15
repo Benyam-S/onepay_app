@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
@@ -319,7 +320,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                 Align(
                                                   alignment:
                                                       Alignment.centerRight,
-                                                  child: FlatButton(
+                                                  child: CupertinoButton(
                                                     child: Text(
                                                       "Forgot Password",
                                                       style: TextStyle(
@@ -328,15 +329,13 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                                   .primaryColor,
                                                           fontWeight:
                                                               FontWeight.normal,
+                                                          fontFamily: 'Roboto',
                                                           fontSize:
                                                               Theme.of(context)
                                                                   .textTheme
                                                                   .bodyText2
                                                                   .fontSize),
                                                     ),
-                                                    materialTapTargetSize:
-                                                        MaterialTapTargetSize
-                                                            .shrinkWrap,
                                                     padding: EdgeInsets.zero,
                                                     onPressed: _loading
                                                         ? null
@@ -357,7 +356,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                           ),
                                           Padding(
                                             padding:
-                                                const EdgeInsets.only(top: 10),
+                                                const EdgeInsets.only(top: 5),
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.stretch,
@@ -397,39 +396,36 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                     children: [
                                                       Text(
                                                           "Don't have Account? "),
-                                                      ButtonTheme(
-                                                        materialTapTargetSize:
-                                                            MaterialTapTargetSize
-                                                                .shrinkWrap,
+                                                      CupertinoButton(
+                                                        child: Text(
+                                                          "Sign Up.",
+                                                          style: TextStyle(
+                                                              color: Theme.of(
+                                                                      context)
+                                                                  .primaryColor,
+                                                              fontFamily:
+                                                                  'Roboto',
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .normal,
+                                                              fontSize: 15),
+                                                        ),
                                                         padding:
                                                             EdgeInsets.zero,
-                                                        minWidth: 0,
-                                                        child: FlatButton(
-                                                          child: Text(
-                                                            "Sign Up.",
-                                                            style: TextStyle(
-                                                                color: Theme.of(
+                                                        minSize: 36,
+                                                        onPressed: _loading
+                                                            ? null
+                                                            : () {
+                                                                Navigator.of(
                                                                         context)
-                                                                    .primaryColor,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal,
-                                                                fontSize: 15),
-                                                          ),
-                                                          onPressed: _loading
-                                                              ? null
-                                                              : () {
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pushNamed(
-                                                                          AppRoutes
-                                                                              .singUpRoute);
-                                                                  FocusScope.of(
-                                                                          context)
-                                                                      .requestFocus(
-                                                                          _signUpFocusNode);
-                                                                },
-                                                        ),
+                                                                    .pushNamed(
+                                                                        AppRoutes
+                                                                            .singUpRoute);
+                                                                FocusScope.of(
+                                                                        context)
+                                                                    .requestFocus(
+                                                                        _signUpFocusNode);
+                                                              },
                                                       )
                                                     ],
                                                   ),

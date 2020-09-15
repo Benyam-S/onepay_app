@@ -6,8 +6,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/pages/inside/receive.dart';
 import 'package:onepay_app/pages/inside/send/send.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
@@ -18,7 +19,7 @@ class Home extends StatefulWidget {
 }
 
 class _Home extends State<Home> {
-  int _currentIndex = 1;
+  int _currentIndex = 2;
   String _appBarTitle = "";
   List<Widget> _listOfSections;
   PageStorageBucket _bucket = PageStorageBucket();
@@ -58,7 +59,7 @@ class _Home extends State<Home> {
         key: PageStorageKey("exchange"),
       ),
       Send(),
-      Container(),
+      Receive(),
       Container(
         key: PageStorageKey("wallet"),
       ),

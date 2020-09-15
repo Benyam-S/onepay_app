@@ -1,21 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:onepay_app/pages/inside/send/payment.dart';
 import 'package:onepay_app/pages/inside/send/via.id.dart';
 import 'package:onepay_app/pages/inside/send/via.qrcode.dart';
 
 class Send extends StatefulWidget {
-  Send({Key key}) : super(key: key);
-
   _Send createState() => _Send();
 }
 
 class _Send extends State<Send> with TickerProviderStateMixin {
   TabController _tabController;
   int _currentIndex = 1;
-  // This stream controller is used to notify the tabs when the tab change
-  StreamController<int> _clearErrorStreamController;
 
   @override
   void initState() {
@@ -29,16 +24,12 @@ class _Send extends State<Send> with TickerProviderStateMixin {
         return;
       }
       FocusScope.of(context).requestFocus(FocusNode());
-      _clearErrorStreamController.add(_tabController.index);
     });
-
-    _clearErrorStreamController = StreamController.broadcast();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _clearErrorStreamController.close();
     super.dispose();
   }
 
@@ -124,15 +115,9 @@ class _Send extends State<Send> with TickerProviderStateMixin {
           child: TabBarView(
             controller: _tabController,
             children: [
-              ViaQRCode(
-                clearErrorStream: _clearErrorStreamController.stream,
-              ),
-              ViaOnePayID(
-                clearErrorStream: _clearErrorStreamController.stream,
-              ),
-              Center(
-                child: Text("Container 3"),
-              )
+              ViaQRCode(),
+              ViaOnePayID(),
+              PaymentQRCode(),
             ],
           ),
         )

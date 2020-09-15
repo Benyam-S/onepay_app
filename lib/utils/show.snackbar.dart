@@ -21,3 +21,13 @@ void showServerError(BuildContext context, String content) {
   );
   Scaffold.of(context).showSnackBar(snackBar);
 }
+
+void showInternalError(BuildContext context, String content) {
+  final snackBar = SnackBar(
+    content: Text(
+      ReCase(content).sentenceCase,
+      style: TextStyle(color: Colors.orange),
+    ),
+  );
+  Scaffold.of(context).showSnackBar(snackBar);
+}

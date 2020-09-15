@@ -8,27 +8,27 @@ part of 'user.dart';
 
 User _$UserFromJson(Map<String, dynamic> json) {
   return User(
-      json['UserID'] as String,
-      json['FirstName'] as String,
-      json['LastName'] as String,
-      json['Email'] as String,
-      json['PhoneNumber'] as String,
-      json['ProfilePic'] as String,
-      json['CreatedAt'] == null
+      json['userID'] as String,
+      json['firstName'] as String,
+      json['lastName'] as String,
+      json['email'] as String,
+      json['phoneNumber'] as String,
+      json['profilePic'] as String,
+      json['createdAt'] == null
           ? null
-          : DateTime.parse(json['CreatedAt'] as String),
-      json['UpdatedAt'] == null
+          : DateTime.parse(json['createdAt'] as String),
+      json['updatedAt'] == null
           ? null
-          : DateTime.parse(json['UpdatedAt'] as String));
+          : DateTime.parse(json['updatedAt'] as String));
 }
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
-      'UserID': instance.userID,
-      'FirstName': instance.firstName,
-      'LastName': instance.lastName,
-      'Email': instance.email,
-      'PhoneNumber': instance.phoneNumber,
-      'ProfilePic': instance.profilePic,
-      'CreatedAt': instance.createdAt?.toIso8601String(),
-      'UpdatedAt': instance.updatedAt?.toIso8601String()
+      'userID': instance.userID,
+      'firstName': instance.firstName,
+      'lastName': instance.lastName,
+      'email': instance.email,
+      'phoneNumber': instance.phoneNumber,
+      'profilePic': instance.profilePic,
+      'createdAt': instance.createdAt?.toIso8601String(),
+      'updatedAt': instance.updatedAt?.toIso8601String()
     };

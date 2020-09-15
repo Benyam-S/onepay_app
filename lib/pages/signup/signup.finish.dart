@@ -7,7 +7,7 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';

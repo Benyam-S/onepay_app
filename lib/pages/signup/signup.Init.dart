@@ -26,6 +26,7 @@ class _SignUpInit extends State<SignUpInit> {
   FocusNode _lastNameFocusNode;
   FocusNode _emailFocusNode;
   FocusNode _phoneFocusNode;
+  FocusNode _buttonFocusNode;
 
   TextEditingController _firstNameController;
   TextEditingController _lastNameController;
@@ -36,6 +37,7 @@ class _SignUpInit extends State<SignUpInit> {
   String _lastNameErrorText;
   String _emailErrorText;
   String _phoneNumberErrorText;
+  String _phoneNumberHint = "9 * * * * * * * *";
   String _areaCode = '+251';
   bool _loading = false;
 
@@ -49,6 +51,7 @@ class _SignUpInit extends State<SignUpInit> {
     _lastNameFocusNode = FocusNode();
     _emailFocusNode = FocusNode();
     _phoneFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
 
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
@@ -74,6 +77,13 @@ class _SignUpInit extends State<SignUpInit> {
             _phoneNumberErrorText = validatePhoneNumber(phoneNumber);
           });
         }
+        setState(() {
+          _phoneNumberHint = "9 * * * * * * * *";
+        });
+      } else {
+        setState(() {
+          _phoneNumberHint = null;
+        });
       }
     });
 
@@ -412,7 +422,7 @@ class _SignUpInit extends State<SignUpInit> {
                     border: const OutlineInputBorder(),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
                     labelText: "Phone number",
-                    hintText: "9 * * * * * * * *",
+                    hintText: _phoneNumberHint,
                     errorText: _phoneNumberErrorText,
                     errorMaxLines: 2,
                   ),
@@ -434,6 +444,7 @@ class _SignUpInit extends State<SignUpInit> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     child: LoadingButton(
+                      focusNode: _buttonFocusNode,
                       loading: _loading,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -452,7 +463,10 @@ class _SignUpInit extends State<SignUpInit> {
                           )
                         ],
                       ),
-                      onPressed: signUpInit,
+                      onPressed: () {
+                        FocusScope.of(context).requestFocus(_buttonFocusNode);
+                        signUpInit();
+                      },
                       padding: EdgeInsets.symmetric(vertical: 13),
                     ),
                   ),

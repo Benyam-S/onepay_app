@@ -21,7 +21,11 @@ class QrCodeDialog extends StatelessWidget {
       msg =
           "OnePay\n\nThe code: $code can be used to claim a credit provided by the sender.";
       subject = "OnePay Qr Code Value";
-    } else {}
+    } else if (type == "payment") {
+      msg =
+          "OnePay\n\nThe code: $code will charge the consumer with an amount held by it.";
+      subject = "OnePay Qr Code Payment";
+    }
 
     Share.share(msg, subject: subject);
   }
@@ -32,7 +36,10 @@ class QrCodeDialog extends StatelessWidget {
     if (type == "send") {
       displayMessage =
           "** The provided code can be collected by scanning the QR code or using the text code. ** ";
-    } else {}
+    } else if (type == "payment") {
+      displayMessage =
+          "** The provided code is used for making payment to this account, any account that uses this code will be charged with an amount held by this code. ** ";
+    }
 
     return AlertDialog(
       title: Text(

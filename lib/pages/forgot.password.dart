@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +19,7 @@ class ForgotPassword extends StatefulWidget {
 class _ForgotPassword extends State<ForgotPassword> {
   FocusNode _emailFocusNode;
   FocusNode _phoneNumberFocusNode;
+  FocusNode _buttonFocusNode;
 
   TextEditingController _emailController;
   TextEditingController _phoneNumberController;
@@ -29,6 +31,7 @@ class _ForgotPassword extends State<ForgotPassword> {
   bool _loading = false;
   String _currentType = "email";
   bool _success = false;
+  String _phoneNumberHint = "9 * * * * * * * *";
 
   @override
   void initState() {
@@ -36,9 +39,22 @@ class _ForgotPassword extends State<ForgotPassword> {
 
     _emailFocusNode = FocusNode();
     _phoneNumberFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
 
     _emailController = TextEditingController();
     _phoneNumberController = TextEditingController();
+
+    _phoneNumberFocusNode.addListener(() {
+      if (_phoneNumberFocusNode.hasFocus) {
+        setState(() {
+          _phoneNumberHint = null;
+        });
+      } else {
+        setState(() {
+          _phoneNumberHint = "9 * * * * * * * *";
+        });
+      }
+    });
   }
 
   @override
@@ -50,6 +66,9 @@ class _ForgotPassword extends State<ForgotPassword> {
   }
 
   void switchType() {
+    // Removing focus
+    FocusScope.of(context).requestFocus(_buttonFocusNode);
+
     if (_currentType == "email") {
       setState(() {
         _currentType = "phone";
@@ -294,7 +313,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.only(
-                                          top: 5, bottom: 10),
+                                          top: 5, bottom: 5),
                                       child: TextFormField(
                                         style: TextStyle(fontSize: 13),
                                         focusNode: _emailFocusNode,
@@ -316,20 +335,19 @@ class _ForgotPassword extends State<ForgotPassword> {
                                     ),
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: FlatButton(
+                                      child: CupertinoButton(
                                         child: Text(
                                           "Can't access email address?",
                                           style: TextStyle(
                                               color: Theme.of(context)
                                                   .primaryColor,
                                               fontWeight: FontWeight.normal,
+                                              fontFamily: 'Roboto',
                                               fontSize: Theme.of(context)
                                                   .textTheme
                                                   .bodyText2
                                                   .fontSize),
                                         ),
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
                                         padding: EdgeInsets.zero,
                                         onPressed: _loading
                                             ? null
@@ -358,7 +376,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.only(
-                                          top: 5, bottom: 10),
+                                          top: 5, bottom: 5),
                                       child: TextFormField(
                                         style: TextStyle(fontSize: 13),
                                         focusNode: _phoneNumberFocusNode,
@@ -381,7 +399,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                           labelText: "Phone number",
                                           errorText: _phoneNumberErrorText,
                                           errorMaxLines: 2,
-                                          hintText: "9 * * * * * * * *",
+                                          hintText: _phoneNumberHint,
                                         ),
                                         onChanged: (_) => this.setState(() {
                                           _phoneNumberErrorText = null;
@@ -392,20 +410,19 @@ class _ForgotPassword extends State<ForgotPassword> {
                                     ),
                                     Align(
                                       alignment: Alignment.centerRight,
-                                      child: FlatButton(
+                                      child: CupertinoButton(
                                         child: Text(
                                           "Can't access phone number?",
                                           style: TextStyle(
                                               color: Theme.of(context)
                                                   .primaryColor,
                                               fontWeight: FontWeight.normal,
+                                              fontFamily: 'Roboto',
                                               fontSize: Theme.of(context)
                                                   .textTheme
                                                   .bodyText2
                                                   .fontSize),
                                         ),
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
                                         padding: EdgeInsets.zero,
                                         onPressed: _loading
                                             ? null
@@ -420,7 +437,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                               fit: FlexFit.loose,
                               child: Padding(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 15),
+                                    const EdgeInsets.only(top: 5, bottom: 15),
                                 child: LoadingButton(
                                   loading: _loading,
                                   child: Text(

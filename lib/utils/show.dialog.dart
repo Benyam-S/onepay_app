@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
+import 'package:onepay_app/widgets/dialog/amount.verification.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
 import 'package:onepay_app/widgets/dialog/receiver.verification.dart';
@@ -63,6 +64,15 @@ void showReceiverVerificationDialog(
     context: context,
     barrierDismissible: false,
     child: ReceiverVerificationDialog(amount, user, callback),
+  );
+}
+
+void showAmountVerificationDialog(
+    BuildContext context, String amount, String method, Function callback) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    child: AmountVerificationDialog(amount, method, callback),
   );
 }
 

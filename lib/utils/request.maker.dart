@@ -11,7 +11,7 @@ import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
 
 class HttpRequester {
-  String baseURI = "http://192.168.1.7:8080/api/v1";
+  String baseURI = "http://192.168.1.3:8080/api/v1";
   String requestURL = "";
 
   HttpRequester({@required String path}) {
@@ -52,6 +52,28 @@ class HttpRequester {
         base64Encode(
             utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
     return await http.post(
+      requestURL,
+      headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'authorization': basicAuth,
+      },
+      body: body,
+    );
+  }
+
+  Future<http.Response> put(
+      BuildContext context, Map<String, dynamic> body) async {
+    AccessToken accessToken =
+        OnePay.of(context).accessToken ?? await getLocalAccessToken();
+
+    if (accessToken == null) {
+      throw AccessTokenNotFoundException();
+    }
+
+    String basicAuth = 'Basic ' +
+        base64Encode(
+            utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
+    return await http.put(
       requestURL,
       headers: <String, String>{
         'Content-Type': 'application/x-www-form-urlencoded',

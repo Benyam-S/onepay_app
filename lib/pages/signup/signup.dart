@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:onepay_app/pages/signup/signup.Init.dart';
 import 'package:onepay_app/pages/signup/signup.finish.dart';
 import 'package:onepay_app/pages/signup/signup.verify.dart';
-import 'package:onepay_app/utils/custom_icons_icons.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/widgets/basic/steps.dart';
 
 class SignUp extends StatefulWidget {
