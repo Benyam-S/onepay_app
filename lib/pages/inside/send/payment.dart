@@ -16,7 +16,6 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:recase/recase.dart';
 
 class PaymentQRCode extends StatefulWidget {
-
   _PaymentQRCode createState() => _PaymentQRCode();
 }
 
@@ -26,6 +25,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
   FocusNode _buttonFocusNode;
   String _amountErrorText;
   String _amountText;
+  String _amountHint = '100.00';
   bool _loading = false;
 
   @override
@@ -46,8 +46,8 @@ class _PaymentQRCode extends State<PaymentQRCode> {
 
       _amountText = _amountController.text;
       setState(() {
-        _amountController.text =
-            CurrencyInputFormatter().transformAmount(_amountController.text);
+        _amountController.selection =
+            TextSelection.collapsed(offset: _amountText.length);
       });
     });
 
@@ -56,6 +56,11 @@ class _PaymentQRCode extends State<PaymentQRCode> {
         setState(() {
           _amountController.text =
               CurrencyInputFormatter().toCurrency(_amountController.text);
+          _amountHint = '100.00';
+        });
+      } else {
+        setState(() {
+          _amountHint = null;
         });
       }
     });
@@ -117,7 +122,8 @@ class _PaymentQRCode extends State<PaymentQRCode> {
 
     setState(() {
       _amountController.addListener(() {});
-      _amountController.text = currentValue;
+      _amountController.text =
+          CurrencyInputFormatter().transformAmount(currentValue);
     });
   }
 
@@ -301,12 +307,22 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                             textAlign: TextAlign.center,
                             decoration: InputDecoration(
                                 isDense: true,
-                                hintText: "100.00",
-                                suffixText: "ETB",
+                                hintText: _amountHint,
+                                suffixIcon: Text(
+                                  "ETB",
+                                  style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 15,
+                                      letterSpacing: 4,
+                                      color: Theme.of(context).iconTheme.color),
+                                ),
+                                suffixIconConstraints: BoxConstraints(),
+                                // suffixText: "ETB",
                                 errorMaxLines: 2,
                                 errorText: _amountErrorText,
                                 border: DashedInputBorder()),
                             readOnly: true,
+                            showCursor: true,
                             enableInteractiveSelection: false,
                             onChanged: (_) => this.setState(() {
                                   _amountErrorText = null;

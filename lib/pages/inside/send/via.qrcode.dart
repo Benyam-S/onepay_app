@@ -25,6 +25,7 @@ class _ViaQRCode extends State<ViaQRCode> {
   FocusNode _buttonFocusNode;
   String _amountErrorText;
   String _amountText;
+  String _amountHint = '100.00';
   bool _loading = false;
 
   @override
@@ -45,8 +46,8 @@ class _ViaQRCode extends State<ViaQRCode> {
 
       _amountText = _amountController.text;
       setState(() {
-        _amountController.text =
-            CurrencyInputFormatter().transformAmount(_amountController.text);
+        _amountController.selection =
+            TextSelection.collapsed(offset: _amountText.length);
       });
     });
 
@@ -55,6 +56,11 @@ class _ViaQRCode extends State<ViaQRCode> {
         setState(() {
           _amountController.text =
               CurrencyInputFormatter().toCurrency(_amountController.text);
+          _amountHint = '100.00';
+        });
+      } else {
+        setState(() {
+          _amountHint = null;
         });
       }
     });
@@ -116,7 +122,8 @@ class _ViaQRCode extends State<ViaQRCode> {
 
     setState(() {
       _amountController.addListener(() {});
-      _amountController.text = currentValue;
+      _amountController.text =
+          CurrencyInputFormatter().transformAmount(currentValue);
     });
   }
 
@@ -303,8 +310,17 @@ class _ViaQRCode extends State<ViaQRCode> {
                             textAlign: TextAlign.center,
                             decoration: InputDecoration(
                                 isDense: true,
-                                hintText: "100.00",
-                                suffixText: "ETB",
+                                hintText: _amountHint,
+                                suffixIcon: Text(
+                                  "ETB",
+                                  style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 15,
+                                      letterSpacing: 4,
+                                      color: Theme.of(context).iconTheme.color),
+                                ),
+                                suffixIconConstraints: BoxConstraints(),
+                                // suffixText: "ETB",
                                 errorMaxLines: 2,
                                 errorText: _amountErrorText,
                                 border: DashedInputBorder()),

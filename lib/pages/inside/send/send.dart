@@ -10,7 +10,7 @@ class Send extends StatefulWidget {
 
 class _Send extends State<Send> with TickerProviderStateMixin {
   TabController _tabController;
-  int _currentIndex = 1;
+  int _currentIndex = 0;
 
   @override
   void initState() {

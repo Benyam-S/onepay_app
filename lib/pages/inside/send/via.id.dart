@@ -428,7 +428,16 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         enableInteractiveSelection: false,
                         decoration: InputDecoration(
                           hintText: _amountHint,
-                          suffixText: "ETB",
+                          suffixIcon: Text(
+                            "ETB",
+                            style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 15,
+                                letterSpacing: 4,
+                                color: Theme.of(context).iconTheme.color),
+                          ),
+                          suffixIconConstraints: BoxConstraints(minWidth: 56),
+                          // suffixText: "ETB",
                           labelText: "Amount",
                           floatingLabelBehavior: FloatingLabelBehavior.always,
                           labelStyle: Theme.of(context)
