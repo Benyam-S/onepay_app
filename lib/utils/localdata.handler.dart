@@ -1,5 +1,6 @@
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/models/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ---------------------------- Local Access Token Management ----------------------------
@@ -79,4 +80,36 @@ Future<void> setLocalUserProfile(User user) async {
   prefs.setString("profile_pic", user?.profilePic);
   prefs.setString("created_at", user?.createdAt?.toIso8601String());
   prefs.setString("updated_at", user?.updatedAt?.toIso8601String());
+}
+
+// ---------------------------- Local User Wallet Management ----------------------------
+
+Future<Wallet> getLocalUserWallet() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final userID = prefs.getString("wallet_owner_id");
+  final amount = prefs.getDouble("wallet_amount");
+  final seen = prefs.getBool("wallet_seen");
+  final updatedAtS = prefs.getString("wallet_updated_at");
+
+  if (userID == null) {
+    return null;
+  }
+  DateTime updatedAt = DateTime.parse(updatedAtS);
+
+  return Wallet(userID, amount, seen, updatedAt);
+}
+
+Future<void> setLocalUserWallet(Wallet wallet) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  prefs.setString("wallet_owner_id", wallet?.userID);
+  prefs.setDouble("wallet_amount", wallet?.amount);
+  prefs.setBool("wallet_seen", wallet?.seen);
+  prefs.setString("wallet_updated_at", wallet?.updatedAt?.toIso8601String());
+}
+
+Future<void> markLocalUserWallet(bool value) async {
+  final prefs = await SharedPreferences.getInstance();
+  prefs.setBool("wallet_seen", value);
 }

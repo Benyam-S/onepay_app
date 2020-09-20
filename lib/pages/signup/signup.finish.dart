@@ -7,7 +7,6 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
-import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
@@ -20,14 +19,15 @@ class SignUpFinish extends StatefulWidget {
   final String nonce;
   final bool visible;
   final Function changeStep;
+  final Function disable;
   final Stream<bool> isNewStream;
 
-  SignUpFinish({
-    this.nonce,
-    this.visible,
-    this.changeStep,
-    this.isNewStream,
-  });
+  SignUpFinish(
+      {this.nonce,
+      this.visible,
+      this.changeStep,
+      this.isNewStream,
+      this.disable});
 
   _SignUpFinish createState() => _SignUpFinish();
 }
@@ -48,58 +48,8 @@ class _SignUpFinish extends State<SignUpFinish> {
 
   GlobalKey<FormState> _formKey;
 
-  void initState() {
-    super.initState();
-
-    _newPasswordFocusNode = FocusNode();
-    _verifyPasswordFocusNode = FocusNode();
-
-    _newPasswordController = TextEditingController();
-    _verifyPasswordController = TextEditingController();
-
-    _formKey = GlobalKey<FormState>();
-
-    _newPasswordFocusNode.addListener(() {
-      if (!_newPasswordFocusNode.hasFocus) {
-        var newPassword = _newPasswordController.text;
-        if (newPassword != null && newPassword.isNotEmpty) {
-          setState(() {
-            _newPasswordErrorText = validateNewPassword(newPassword);
-          });
-        }
-      }
-    });
-
-    _verifyPasswordFocusNode.addListener(() {
-      if (!_verifyPasswordFocusNode.hasFocus) {
-        var verifyPassword = _verifyPasswordController.text;
-        if (verifyPassword != null && verifyPassword.isNotEmpty) {
-          setState(() {
-            _verifyPasswordErrorText = validateVerifyPassword();
-          });
-        }
-      }
-    });
-
-    widget.isNewStream?.listen((event) {
-      if (event) {
-        setState(() {
-          _newPasswordController.clear();
-          _verifyPasswordController.clear();
-
-          _newPasswordErrorText = null;
-          _verifyPasswordErrorText = null;
-
-          _errorText = "";
-          _errorFlag = false;
-          _loading = false;
-        });
-      }
-    });
-  }
-
   // autoValidateNewPassword checks for invalid characters only
-  String autoValidateNewPassword(String value) {
+  String _autoValidateNewPassword(String value) {
     if (value.isEmpty) {
       return null;
     }
@@ -112,7 +62,7 @@ class _SignUpFinish extends State<SignUpFinish> {
     return null;
   }
 
-  String validateNewPassword(String value) {
+  String _validateNewPassword(String value) {
     if (value.length < 8) {
       return ReCase("password should contain at least 8 characters")
           .sentenceCase;
@@ -127,7 +77,7 @@ class _SignUpFinish extends State<SignUpFinish> {
     return null;
   }
 
-  String validateVerifyPassword() {
+  String _validateVerifyPassword() {
     var newPassword = _newPasswordController.text;
     var verifyPassword = _verifyPasswordController.text;
 
@@ -138,7 +88,121 @@ class _SignUpFinish extends State<SignUpFinish> {
     return null;
   }
 
-  void signUpFinish() async {
+  Future<void> _onSuccess(http.Response response) async {
+    var jsonData = json.decode(response.body);
+    var accessToken = AccessToken.fromJson(jsonData);
+
+    OnePay.of(context).appStateController.add(accessToken);
+
+    // Saving data to shared preferences
+    await setLocalAccessToken(accessToken);
+    await setLoggedIn(true);
+
+    setState(() {
+      _errorFlag = false;
+    });
+
+    // This is only used for checking the step 3 icon
+    widget.changeStep(4);
+
+    // Disabling the back button so the user will wait
+    widget.disable();
+
+    // This delay is used to make the use comfortable with registration process
+    Future.delayed(Duration(seconds: 4)).then((value) => Navigator.of(context)
+        .pushNamedAndRemoveUntil(
+            AppRoutes.homeRoute, (Route<dynamic> route) => false));
+  }
+
+  Future<void> _onError(http.Response response) async {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case "password should contain at least 8 characters":
+            setState(() {
+              _newPasswordErrorText = ReCase(error).sentenceCase;
+            });
+            break;
+          case "invalid characters used in password":
+            setState(() {
+              _newPasswordErrorText = ReCase(error).sentenceCase;
+            });
+            break;
+          case "password does not match":
+            setState(() {
+              _verifyPasswordErrorText = ReCase(error).sentenceCase;
+            });
+            break;
+          case "invalid token used":
+            setState(() {
+              _errorText = ReCase("the token used is invalid or has expired")
+                  .sentenceCase;
+              _errorFlag = true;
+            });
+            break;
+          default:
+            setState(() {
+              _errorText = ReCase(error).sentenceCase;
+              _errorFlag = true;
+            });
+        }
+        return;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  Future<void> _handleResponse(http.Response response) async {
+    if (response.statusCode == HttpStatus.ok) {
+      await _onSuccess(response);
+    } else {
+      await _onError(response);
+    }
+  }
+
+  Future<void> _makeRequest(String newPassword, String verifyPassword) async {
+    var requester = HttpRequester(path: "/oauth/user/register/finish.json");
+    try {
+      var response =
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'password': newPassword,
+        'vPassword': verifyPassword,
+        'nonce': nonce,
+      });
+
+      // Stop loading after response received
+      setState(() {
+        _loading = false;
+      });
+
+      await _handleResponse(response);
+    } on SocketException {
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _signUpFinish() async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -148,8 +212,8 @@ class _SignUpFinish extends State<SignUpFinish> {
     var newPassword = _newPasswordController.text;
     var verifyPassword = _verifyPasswordController.text;
 
-    var newPasswordError = validateNewPassword(newPassword);
-    var verifyPasswordError = validateVerifyPassword();
+    var newPasswordError = _validateNewPassword(newPassword);
+    var verifyPasswordError = _validateVerifyPassword();
 
     if (newPasswordError != null) {
       setState(() {
@@ -175,104 +239,57 @@ class _SignUpFinish extends State<SignUpFinish> {
       _errorFlag = false;
     });
 
-    var requester = HttpRequester(path: "/oauth/user/register/finish.json");
-    try {
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: <String, String>{
-        'password': newPassword,
-        'vPassword': verifyPassword,
-        'nonce': nonce,
-      });
+    await _makeRequest(newPassword, verifyPassword);
+  }
 
-      // Stop loading after response received
-      setState(() {
-        _loading = false;
-      });
+  void initState() {
+    super.initState();
 
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var accessToken = AccessToken.fromJson(jsonData);
+    _newPasswordFocusNode = FocusNode();
+    _verifyPasswordFocusNode = FocusNode();
 
-        OnePay.of(context).appStateController.add(accessToken);
+    _newPasswordController = TextEditingController();
+    _verifyPasswordController = TextEditingController();
 
-        // Saving data to shared preferences
-        await setLocalAccessToken(accessToken);
-        await setLoggedIn(true);
+    _formKey = GlobalKey<FormState>();
 
-        setState(() {
-          _errorFlag = false;
-        });
-
-        // This is only used for checking the step 3 icon
-        widget.changeStep(4);
-
-        // This delay is used to make the use comfortable with registration process
-        Future.delayed(Duration(seconds: 4)).then((value) =>
-            Navigator.of(context).pushNamedAndRemoveUntil(
-                AppRoutes.homeRoute, (Route<dynamic> route) => false));
-        return;
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case "password should contain at least 8 characters":
-                setState(() {
-                  _newPasswordErrorText = ReCase(error).sentenceCase;
-                });
-                break;
-              case "invalid characters used in password":
-                setState(() {
-                  _newPasswordErrorText = ReCase(error).sentenceCase;
-                });
-                break;
-              case "password does not match":
-                setState(() {
-                  _verifyPasswordErrorText = ReCase(error).sentenceCase;
-                });
-                break;
-              case "invalid token used":
-                setState(() {
-                  _errorText =
-                      ReCase("the token used is invalid or has expired")
-                          .sentenceCase;
-                  _errorFlag = true;
-                });
-                break;
-              default:
-                setState(() {
-                  _errorText = ReCase(error).sentenceCase;
-                  _errorFlag = true;
-                });
-            }
-            return;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
+    _newPasswordFocusNode.addListener(() {
+      if (!_newPasswordFocusNode.hasFocus) {
+        var newPassword = _newPasswordController.text;
+        if (newPassword != null && newPassword.isNotEmpty) {
+          setState(() {
+            _newPasswordErrorText = _validateNewPassword(newPassword);
+          });
         }
-
-        showServerError(context, error);
       }
-    } on SocketException {
-      setState(() {
-        _loading = false;
-      });
+    });
 
-      showUnableToConnectError(context);
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
+    _verifyPasswordFocusNode.addListener(() {
+      if (!_verifyPasswordFocusNode.hasFocus) {
+        var verifyPassword = _verifyPasswordController.text;
+        if (verifyPassword != null && verifyPassword.isNotEmpty) {
+          setState(() {
+            _verifyPasswordErrorText = _validateVerifyPassword();
+          });
+        }
+      }
+    });
 
-      showServerError(context, SomethingWentWrongError);
-    }
+    widget.isNewStream?.listen((event) {
+      if (event) {
+        setState(() {
+          _newPasswordController.clear();
+          _verifyPasswordController.clear();
+
+          _newPasswordErrorText = null;
+          _verifyPasswordErrorText = null;
+
+          _errorText = "";
+          _errorFlag = false;
+          _loading = false;
+        });
+      }
+    });
   }
 
   @override
@@ -302,7 +319,7 @@ class _SignUpFinish extends State<SignUpFinish> {
                 controller: _newPasswordController,
                 errorText: _newPasswordErrorText,
                 autoValidate: true,
-                validator: autoValidateNewPassword,
+                validator: _autoValidateNewPassword,
                 onChanged: (_) => this.setState(() {
                   _newPasswordErrorText = null;
                 }),
@@ -325,7 +342,7 @@ class _SignUpFinish extends State<SignUpFinish> {
                 onChanged: (_) => this.setState(() {
                   _verifyPasswordErrorText = null;
                 }),
-                onFieldSubmitted: (_) => signUpFinish(),
+                onFieldSubmitted: (_) => _signUpFinish(),
                 keyboardType: TextInputType.visiblePassword,
               ),
             ),
@@ -356,74 +373,13 @@ class _SignUpFinish extends State<SignUpFinish> {
                           fontSize: 18,
                         ),
                       ),
-                      onPressed: signUpFinish,
+                      onPressed: _signUpFinish,
                       padding: EdgeInsets.symmetric(vertical: 13),
                     ),
                   ),
                 )
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SignUpCompleted extends StatelessWidget {
-  final bool visible;
-  final AnimationController controller;
-
-  SignUpCompleted({this.visible, @required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final Animation<double> offsetAnimation = Tween(begin: 0.0, end: 24.0)
-        .chain(CurveTween(curve: Curves.elasticIn))
-        .animate(controller)
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              controller.reverse();
-            }
-          });
-
-    return Visibility(
-      visible: visible ?? false,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedBuilder(
-                animation: offsetAnimation,
-                builder: (buildContext, child) {
-                  return Container(
-                    padding: EdgeInsets.only(
-                        left: offsetAnimation.value + 24.0,
-                        right: 24.0 - offsetAnimation.value,
-                        bottom: 10),
-                    child: Center(
-                      child: Icon(
-                        CustomIcons.complete,
-                        size: 80,
-                        color: Colors.black,
-                      ),
-                    ),
-                  );
-                }),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                "Completed",
-                style: TextStyle(fontSize: 18, color: Colors.green),
-              ),
-            ),
-            Text(
-              "Congratulations, you have taken the first step towards better controlling your personal finances!",
-              textAlign: TextAlign.center,
-            )
           ],
         ),
       ),

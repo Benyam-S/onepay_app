@@ -27,6 +27,8 @@ dependencies:
   share: ^0.6.5
   flutter_money_formatter: ^0.8.3
   flare_flutter: ^1.8.3
+  web_socket_channel: ^1.1.0
+  connectivity: ^0.4.9+2
 
 dev_dependencies:
   flutter_test:

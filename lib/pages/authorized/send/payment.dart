@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
-import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
@@ -27,6 +29,183 @@ class _PaymentQRCode extends State<PaymentQRCode> {
   String _amountText;
   String _amountHint = '100.00';
   bool _loading = false;
+
+  String _autoValidateAmount(String amount) {
+    if (amount.isEmpty) {
+      return null;
+    }
+
+    return _validateAmount(amount);
+  }
+
+  String _validateAmount(String amount) {
+    try {
+      // Removing comma before parsing
+      if (amount.contains(",")) {
+        if (RegExp(r"^(\d{1,3}(,\d{3})*(\.\d*)?|\.\d*)$").hasMatch(amount)) {
+          amount = amount.replaceAll(",", "");
+        } else {
+          return ReCase(InvalidAmountError).sentenceCase;
+        }
+      }
+
+      var amountDouble = double.parse(amount);
+      if (amountDouble < 1) {
+        return ReCase(TransactionBaseLimitError).sentenceCase;
+      }
+    } catch (e) {
+      return ReCase(InvalidAmountError).sentenceCase;
+    }
+
+    return null;
+  }
+
+  void _typeToField(String value) {
+    if (!_amountFocusNode.hasFocus) {
+      FocusScope.of(context).requestFocus(_amountFocusNode);
+    }
+
+    String currentValue = _amountController.text ?? "";
+    if (value == "<") {
+      currentValue = currentValue != ""
+          ? currentValue.substring(0, currentValue.length - 1)
+          : "";
+    } else if (value == "." && currentValue.contains(".")) {
+      return;
+    } else {
+      currentValue += value;
+    }
+
+    HapticFeedback.mediumImpact();
+
+    setState(() {
+      _amountController.addListener(() {});
+      _amountController.text =
+          CurrencyInputFormatter().transformAmount(currentValue);
+    });
+  }
+
+  void _onError(Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        FocusScope.of(context).requestFocus(_amountFocusNode);
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case AmountParsingErrorB:
+            error = InvalidAmountError;
+            break;
+          case TransactionBaseLimitErrorB:
+            error = TransactionBaseLimitError;
+            break;
+          case DailyTransactionLimitErrorB:
+            error = DailyTransactionLimitPaymentError;
+            break;
+        }
+
+        this.setState(() {
+          _amountErrorText = ReCase(error).sentenceCase;
+        });
+        return;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _handleResponse(Response response) {
+    if (!isResponseAuthorized(context, response, _create)) {
+      return;
+    }
+
+    if (response.statusCode == HttpStatus.ok) {
+      var jsonData = json.decode(response.body);
+      showQrCodeDialog(context, jsonData["code"], "payment");
+    } else {
+      _onError(response);
+    }
+  }
+
+  Future<void> _makeRequest(String amount) async {
+    var requester = HttpRequester(path: "/oauth/pay/code.json");
+
+    try {
+      var response = await requester.post(context, {
+        'amount': CurrencyInputFormatter().toDouble(amount),
+      });
+
+      // Removing the loading indicator
+      setState(() {
+        _loading = false;
+      });
+
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      _handleResponse(response);
+    } on SocketException {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } on AccessTokenNotFoundException {
+      setState(() {
+        _loading = false;
+      });
+
+      logout(context);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _create() async {
+    // Cancelling if loading
+    if (_loading) {
+      return;
+    }
+
+    var amount = _amountController.text;
+    if (amount.isEmpty) {
+      FocusScope.of(context).requestFocus(_amountFocusNode);
+      return;
+    }
+
+    var amountError = _validateAmount(amount);
+    if (amountError != null) {
+      setState(() {
+        _amountErrorText = amountError;
+      });
+      return;
+    }
+
+    // Start loading process
+    setState(() {
+      _loading = true;
+      _amountErrorText = null;
+    });
+
+    showLoaderDialog(context);
+
+    await _makeRequest(amount);
+  }
 
   @override
   void initState() {
@@ -70,173 +249,6 @@ class _PaymentQRCode extends State<PaymentQRCode> {
   void dispose() {
     _amountController.dispose();
     super.dispose();
-  }
-
-  String autoValidateAmount(String amount) {
-    if (amount.isEmpty) {
-      return null;
-    }
-
-    return validateAmount(amount);
-  }
-
-  String validateAmount(String amount) {
-    try {
-      // Removing comma before parsing
-      if (amount.contains(",")) {
-        if (RegExp(r"^(\d{1,3}(,\d{3})*(\.\d*)?|\.\d*)$").hasMatch(amount)) {
-          amount = amount.replaceAll(",", "");
-        } else {
-          return ReCase(InvalidAmountError).sentenceCase;
-        }
-      }
-
-      var amountDouble = double.parse(amount);
-      if (amountDouble < 1) {
-        return ReCase(TransactionBaseLimitError).sentenceCase;
-      }
-    } catch (e) {
-      return ReCase(InvalidAmountError).sentenceCase;
-    }
-
-    return null;
-  }
-
-  void typeToField(String value) {
-    if (!_amountFocusNode.hasFocus) {
-      FocusScope.of(context).requestFocus(_amountFocusNode);
-    }
-
-    String currentValue = _amountController.text ?? "";
-    if (value == "<") {
-      currentValue = currentValue != ""
-          ? currentValue.substring(0, currentValue.length - 1)
-          : "";
-    } else if (value == "." && currentValue.contains(".")) {
-      return;
-    } else {
-      currentValue += value;
-    }
-
-    HapticFeedback.mediumImpact();
-
-    setState(() {
-      _amountController.addListener(() {});
-      _amountController.text =
-          CurrencyInputFormatter().transformAmount(currentValue);
-    });
-  }
-
-  void create() async {
-    // Cancelling if loading
-    if (_loading) {
-      return;
-    }
-
-    var amount = _amountController.text;
-    if (amount.isEmpty) {
-      FocusScope.of(context).requestFocus(_amountFocusNode);
-      return;
-    }
-
-    var amountError = validateAmount(amount);
-    if (amountError != null) {
-      setState(() {
-        _amountErrorText = amountError;
-      });
-      return;
-    }
-
-    // Start loading process
-    setState(() {
-      _loading = true;
-      _amountErrorText = null;
-    });
-
-    showLoaderDialog(context);
-
-    var requester = HttpRequester(path: "/oauth/pay/code.json");
-
-    try {
-      var response = await requester.post(context, {
-        'amount': CurrencyInputFormatter().toDouble(amount),
-      });
-
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      if (!requester.isAuthorized(context, response, true, create)) {
-        return;
-      }
-
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        showQrCodeDialog(context, jsonData["code"], "payment");
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            FocusScope.of(context).requestFocus(_amountFocusNode);
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case AmountParsingErrorB:
-                error = InvalidAmountError;
-                break;
-              case TransactionBaseLimitErrorB:
-                error = TransactionBaseLimitError;
-                break;
-              case DailyTransactionLimitErrorB:
-                error = DailyTransactionLimitPaymentError;
-                break;
-            }
-
-            this.setState(() {
-              _amountErrorText = ReCase(error).sentenceCase;
-            });
-            return;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
-      }
-    } on SocketException {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } on AccessTokenNotFoundException {
-      setState(() {
-        _loading = false;
-      });
-
-      // Logging the use out
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.logInRoute, (Route<dynamic> route) => false);
-    } catch (e) {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
   }
 
   @override
@@ -299,9 +311,8 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                         child: TextFormField(
                             focusNode: _amountFocusNode,
                             controller: _amountController,
-                            autofocus: true,
                             autovalidate: true,
-                            validator: autoValidateAmount,
+                            validator: _autoValidateAmount,
                             keyboardType: TextInputType.number,
                             style: TextStyle(fontSize: 15, letterSpacing: 4),
                             textAlign: TextAlign.center,
@@ -345,7 +356,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
                       child: FlatButton(
-                        onPressed: () => typeToField("1"),
+                        onPressed: () => _typeToField("1"),
                         child: Container(
                             alignment: Alignment.center,
                             padding: EdgeInsets.symmetric(
@@ -364,7 +375,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
                       child: FlatButton(
-                        onPressed: () => typeToField("2"),
+                        onPressed: () => _typeToField("2"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -381,7 +392,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
                       child: FlatButton(
-                        onPressed: () => typeToField("3"),
+                        onPressed: () => _typeToField("3"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -399,7 +410,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                   TableRow(children: [
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("4"),
+                        onPressed: () => _typeToField("4"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -415,7 +426,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     ),
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("5"),
+                        onPressed: () => _typeToField("5"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -431,7 +442,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     ),
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("6"),
+                        onPressed: () => _typeToField("6"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -449,7 +460,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                   TableRow(children: [
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("7"),
+                        onPressed: () => _typeToField("7"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -465,7 +476,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     ),
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("8"),
+                        onPressed: () => _typeToField("8"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -481,7 +492,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     ),
                     TableCell(
                       child: FlatButton(
-                        onPressed: () => typeToField("9"),
+                        onPressed: () => _typeToField("9"),
                         child: Container(
                             padding: EdgeInsets.symmetric(
                                 vertical: verticalKeyPadding),
@@ -500,7 +511,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                     children: [
                       TableCell(
                         child: FlatButton(
-                          onPressed: () => typeToField("."),
+                          onPressed: () => _typeToField("."),
                           child: Container(
                               padding: EdgeInsets.symmetric(
                                   vertical: verticalKeyPadding),
@@ -516,7 +527,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                       ),
                       TableCell(
                         child: FlatButton(
-                          onPressed: () => typeToField("0"),
+                          onPressed: () => _typeToField("0"),
                           child: Container(
                               padding: EdgeInsets.symmetric(
                                   vertical: verticalKeyPadding),
@@ -540,7 +551,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                                 onLongPress: () => this.setState(() {
                                   _amountController.clear();
                                 }),
-                                onPressed: () => typeToField("<"),
+                                onPressed: () => _typeToField("<"),
                                 child: Container(
                                     padding: EdgeInsets.symmetric(
                                         vertical: verticalKeyPadding),
@@ -583,7 +594,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
                         : () {
                             FocusScope.of(context)
                                 .requestFocus(_buttonFocusNode);
-                            create();
+                            _create();
                           },
                     padding: EdgeInsets.symmetric(vertical: 13),
                   ),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/request.maker.dart';
+import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:recase/recase.dart';
@@ -73,7 +74,7 @@ class _DEValidationDialog extends State<DEValidationDialog> {
       });
 
       // Since it is in the validation dialog we don't have to get another dialog
-      if (!requester.isAuthorized(context, response, false)) {
+      if (!isResponseAuthorized(context, response)) {
         return;
       }
 

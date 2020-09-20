@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:onepay_app/pages/inside/send/payment.dart';
-import 'package:onepay_app/pages/inside/send/via.id.dart';
-import 'package:onepay_app/pages/inside/send/via.qrcode.dart';
+import 'package:onepay_app/pages/authorized/send/payment.dart';
+import 'package:onepay_app/pages/authorized/send/via.id.dart';
+import 'package:onepay_app/pages/authorized/send/via.qrcode.dart';
 
 class Send extends StatefulWidget {
   _Send createState() => _Send();

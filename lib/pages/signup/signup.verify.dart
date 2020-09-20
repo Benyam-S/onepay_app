@@ -39,26 +39,60 @@ class _SignUpVerify extends State<SignUpVerify> {
 
   GlobalKey<FormState> _formKey;
 
-  @override
-  void initState() {
-    super.initState();
-
-    _otpFocusNode = FocusNode();
-    _otpController = TextEditingController();
-    _formKey = GlobalKey<FormState>();
-
-    widget.isNewStream?.listen((event) {
-      if (event) {
-        setState(() {
-          _otpController.clear();
-          _otpErrorText = null;
-          _loading = false;
-        });
+  void _handleResponse(http.Response response) {
+    if (response.statusCode == HttpStatus.ok) {
+      var jsonData = json.decode(response.body);
+      var nonce = jsonData["nonce"];
+      widget.nonceController.add(nonce);
+    } else {
+      String error = "";
+      switch (response.statusCode) {
+        case HttpStatus.badRequest:
+          error = "invalid code used";
+          setState(() {
+            _otpErrorText = ReCase(error).sentenceCase;
+          });
+          break;
+        default:
+          error = SomethingWentWrongError;
+          showServerError(context, error);
       }
-    });
+    }
   }
 
-  void signUpVerify() async {
+  Future<void> _makeRequest(String nonce, String otp) async {
+    var requester = HttpRequester(path: "/oauth/user/register/verify");
+    try {
+      var response =
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'nonce': nonce,
+        'otp': otp,
+      });
+
+      // Stop loading after response received
+      setState(() {
+        _loading = false;
+      });
+
+      _handleResponse(response);
+    } on SocketException {
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _signUpVerify() async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -77,52 +111,26 @@ class _SignUpVerify extends State<SignUpVerify> {
       _otpErrorText = null;
     });
 
-    var requester = HttpRequester(path: "/oauth/user/register/verify");
-    try {
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: <String, String>{
-        'nonce': nonce,
-        'otp': otp,
-      });
+    await _makeRequest(nonce, otp);
+  }
 
-      // Stop loading after response received
-      setState(() {
-        _loading = false;
-      });
+  @override
+  void initState() {
+    super.initState();
 
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var nonce = jsonData["nonce"];
-        widget.nonceController.add(nonce);
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            error = "invalid code used";
-            setState(() {
-              _otpErrorText = ReCase(error).sentenceCase;
-            });
-            break;
-          default:
-            error = SomethingWentWrongError;
-            showServerError(context, error);
-        }
+    _otpFocusNode = FocusNode();
+    _otpController = TextEditingController();
+    _formKey = GlobalKey<FormState>();
+
+    widget.isNewStream?.listen((event) {
+      if (event) {
+        setState(() {
+          _otpController.clear();
+          _otpErrorText = null;
+          _loading = false;
+        });
       }
-    } on SocketException {
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
+    });
   }
 
   @override
@@ -160,7 +168,7 @@ class _SignUpVerify extends State<SignUpVerify> {
                   onChanged: (_) => this.setState(() {
                     _otpErrorText = null;
                   }),
-                  onFieldSubmitted: (_) => signUpVerify(),
+                  onFieldSubmitted: (_) => _signUpVerify(),
                   keyboardType: TextInputType.visiblePassword,
                 ),
               ),
@@ -187,7 +195,7 @@ class _SignUpVerify extends State<SignUpVerify> {
                         )
                       ],
                     ),
-                    onPressed: signUpVerify,
+                    onPressed: _signUpVerify,
                     padding: EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),

@@ -118,7 +118,95 @@ class _ForgotPassword extends State<ForgotPassword> {
     return phoneNumber;
   }
 
-  Future<void> send(BuildContext context) async {
+  void _onError(http.Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+        if (error == InvalidIdentifierErrorB) {
+          setState(() {
+            if (_currentType == "email") {
+              _emailErrorText = ReCase(
+                      "Unable to find user registered with this email address")
+                  .sentenceCase;
+            } else if (_currentType == "phone") {
+              _phoneNumberErrorText = ReCase(
+                      "Unable to find user registered with this phone number")
+                  .sentenceCase;
+            }
+          });
+          return;
+        }
+
+        setState(() {
+          if (_currentType == "email") {
+            _emailErrorText =
+                ReCase("unable to send email to the provided address")
+                    .sentenceCase;
+          } else if (_currentType == "phone") {
+            _phoneNumberErrorText =
+                ReCase("unable to send message to the provided phone number")
+                    .sentenceCase;
+          }
+        });
+        return;
+
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _handleResponse(http.Response response) {
+    if (response.statusCode == HttpStatus.ok) {
+      setState(() {
+        _success = true;
+      });
+    } else {
+      _onError(response);
+    }
+  }
+
+  Future<void> _makeRequest(String identifier) async {
+    var requester = HttpRequester(path: "/user/password/rest/init.json");
+    try {
+      var response =
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'method': _currentType == "phone" ? "phone_number" : "email",
+        'identifier': _currentType == "phone"
+            ? transformPhoneNumber(identifier)
+            : identifier,
+      });
+
+      // Stop loading after response received
+      setState(() {
+        _loading = false;
+      });
+
+      _handleResponse(response);
+    } on SocketException {
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _send(BuildContext context) async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -166,84 +254,7 @@ class _ForgotPassword extends State<ForgotPassword> {
       _phoneNumberErrorText = null;
     });
 
-    var requester = HttpRequester(path: "/user/password/rest/init.json");
-    try {
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: <String, String>{
-        'method': _currentType == "phone" ? "phone_number" : "email",
-        'identifier': _currentType == "phone"
-            ? transformPhoneNumber(identifier)
-            : identifier,
-      });
-
-      // Stop loading after response received
-      setState(() {
-        _loading = false;
-      });
-
-      if (response.statusCode == HttpStatus.ok) {
-        setState(() {
-          _success = true;
-        });
-        return;
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-            if (error == InvalidIdentifierErrorB) {
-              setState(() {
-                if (_currentType == "email") {
-                  _emailErrorText = ReCase(
-                          "Unable to find user registered with this email address")
-                      .sentenceCase;
-                } else if (_currentType == "phone") {
-                  _phoneNumberErrorText = ReCase(
-                          "Unable to find user registered with this phone number")
-                      .sentenceCase;
-                }
-              });
-              return;
-            }
-
-            setState(() {
-              if (_currentType == "email") {
-                _emailErrorText =
-                    ReCase("unable to send email to the provided address")
-                        .sentenceCase;
-              } else if (_currentType == "phone") {
-                _phoneNumberErrorText = ReCase(
-                        "unable to send message to the provided phone number")
-                    .sentenceCase;
-              }
-            });
-            return;
-
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
-      }
-    } on SocketException {
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
+    await _makeRequest(identifier);
   }
 
   @override
@@ -328,7 +339,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         onChanged: (_) => this.setState(() {
                                           _emailErrorText = null;
                                         }),
-                                        onFieldSubmitted: (_) => send(context),
+                                        onFieldSubmitted: (_) => _send(context),
                                         keyboardType:
                                             TextInputType.emailAddress,
                                       ),
@@ -404,7 +415,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         onChanged: (_) => this.setState(() {
                                           _phoneNumberErrorText = null;
                                         }),
-                                        onFieldSubmitted: (_) => send(context),
+                                        onFieldSubmitted: (_) => _send(context),
                                         keyboardType: TextInputType.phone,
                                       ),
                                     ),
@@ -447,7 +458,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                       fontSize: 18,
                                     ),
                                   ),
-                                  onPressed: () => send(context),
+                                  onPressed: () => _send(context),
                                   padding: EdgeInsets.symmetric(vertical: 13),
                                 ),
                               ),

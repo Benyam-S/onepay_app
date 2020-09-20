@@ -2,14 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
-import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
@@ -25,10 +27,265 @@ class _ViaOnePayID extends State<ViaOnePayID> {
   TextEditingController _opIDController;
   FocusNode _amountFocusNode;
   FocusNode _opIDFocusNode;
+  String _amount;
+  String _opID;
   String _amountErrorText;
   String _amountHint = "100.00";
   String _opIDErrorText;
   bool _loading = false;
+
+  String _autoValidateAmount(String amount) {
+    if (amount.isEmpty) {
+      return null;
+    }
+
+    return _validateAmount(amount);
+  }
+
+  String _validateAmount(String amount) {
+    try {
+      // Removing comma before parsing
+      if (amount.contains(",")) {
+        if (RegExp(r"^(\d{1,3}(,\d{3})*(\.\d*)?|\.\d*)$").hasMatch(amount)) {
+          amount = amount.replaceAll(",", "");
+        } else {
+          return ReCase(InvalidAmountError).sentenceCase;
+        }
+      }
+
+      var amountDouble = double.parse(amount);
+      if (amountDouble < 1) {
+        return ReCase(TransactionBaseLimitError).sentenceCase;
+      }
+    } catch (e) {
+      return ReCase(InvalidAmountError).sentenceCase;
+    }
+
+    return null;
+  }
+
+  void _onSendError(Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case AmountParsingErrorB:
+            error = InvalidAmountError;
+            continue amountError;
+          case TransactionBaseLimitErrorB:
+            error = TransactionBaseLimitError;
+            continue amountError;
+          case DailyTransactionLimitErrorB:
+            error = DailyTransactionLimitSendError;
+            continue amountError;
+          case InsufficientBalanceErrorB:
+            error = InsufficientBalanceError;
+            continue amountError;
+          amountError:
+          case TransactionBaseLimitErrorB:
+            FocusScope.of(context).requestFocus(_amountFocusNode);
+            this.setState(() {
+              _amountErrorText = ReCase(error).sentenceCase;
+            });
+            return;
+          case FrozenAccountErrorB:
+            error = FrozenReceiverAccountError;
+            continue opIDError;
+          case ReceiverNotFoundErrorB:
+            error = ReceiverNotFoundError;
+            continue opIDError;
+          case TransactionWSelfErrorB:
+            error = TransactionWSelfError;
+            continue opIDError;
+          opIDError:
+          case TransactionWSelfErrorB:
+            FocusScope.of(context).requestFocus(_opIDFocusNode);
+            this.setState(() {
+              _opIDErrorText = ReCase(error).sentenceCase;
+            });
+            return;
+        }
+        break;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _onVerifyError(Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        FocusScope.of(context).requestFocus(_opIDFocusNode);
+
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case "user not found":
+            error = ReceiverNotFoundError;
+            break;
+          case FrozenAccountErrorB:
+            error = FrozenReceiverAccountError;
+            break;
+        }
+
+        this.setState(() {
+          _opIDErrorText = ReCase(error).sentenceCase;
+        });
+        return;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _onSendSuccess(Response response) {
+    showSuccessDialog(context,
+        "You have successfully transferred $_amount ETB to ${_opID.toUpperCase()}.");
+  }
+
+  void _onVerifySuccess(Response response) {
+    var jsonData = json.decode(response.body);
+    var opUser = User.fromJson(jsonData);
+    var displayAmount = CurrencyInputFormatter().toCurrency(_amount);
+    showReceiverVerificationDialog(context, displayAmount, opUser, _send);
+  }
+
+  // handleResponse is a function that handles a response coming from request
+  Future<void> _handleResponse(
+      Future<Response> Function() requester,
+      Function(Response response) onSuccess,
+      Function(Response response) onError) async {
+    try {
+      var response = await requester();
+
+      // Removing the loading indicator
+      setState(() {
+        _loading = false;
+      });
+
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      if (!isResponseAuthorized(context, response, _send)) {
+        return;
+      }
+
+      if (response.statusCode == HttpStatus.ok) {
+        onSuccess(response);
+      } else {
+        onError(response);
+      }
+    } on SocketException {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } on AccessTokenNotFoundException {
+      setState(() {
+        _loading = false;
+      });
+
+      logout(context);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  Future<Response> _makeSendRequest() async {
+    var requester = HttpRequester(path: "/oauth/send/id.json");
+
+    return await requester.post(context, <String, String>{
+      'receiver_id': _opID,
+      'amount': CurrencyInputFormatter().toDouble(_amount),
+    });
+  }
+
+  Future<Response> _makeVerifyRequest() async {
+    var requester = HttpRequester(path: "/oauth/user/$_opID/profile.json");
+    return await requester.get(context);
+  }
+
+  void _send() async {
+    showLoaderDialog(context);
+    await _handleResponse(_makeSendRequest, _onSendSuccess, _onSendError);
+  }
+
+  void _verify() async {
+    // Cancelling if loading
+    if (_loading) {
+      return;
+    }
+
+    _opID = _opIDController.text;
+    _amount = _amountController.text;
+
+    if (_opID.isEmpty) {
+      FocusScope.of(context).requestFocus(_opIDFocusNode);
+      return;
+    }
+
+    if (_amount.isEmpty) {
+      FocusScope.of(context).requestFocus(_amountFocusNode);
+      return;
+    }
+
+    // Adding prefix if not added
+    if (!_opID.toLowerCase().startsWith("op-")) {
+      _opID = "op-" + _opID;
+    }
+
+    var amountError = _validateAmount(_amount);
+    if (amountError != null) {
+      setState(() {
+        _amountErrorText = amountError;
+      });
+      return;
+    }
+
+    // Checking transaction with your own
+    if (OnePay.of(context).currentUser?.userID?.toLowerCase() ==
+        _opID.toLowerCase()) {
+      FocusScope.of(context).requestFocus(_opIDFocusNode);
+      setState(() {
+        _opIDErrorText = TransactionWSelfError.sentenceCase;
+      });
+      return;
+    }
+
+    // Start loading process
+    setState(() {
+      _loading = true;
+
+      //  Removing entry errors
+      _amountErrorText = null;
+      _opIDErrorText = null;
+    });
+
+    showLoaderDialog(context);
+
+    await _handleResponse(_makeVerifyRequest, _onVerifySuccess, _onVerifyError);
+  }
 
   @override
   void initState() {
@@ -60,286 +317,6 @@ class _ViaOnePayID extends State<ViaOnePayID> {
     _amountController.dispose();
     _opIDController.dispose();
     super.dispose();
-  }
-
-  String autoValidateAmount(String amount) {
-    if (amount.isEmpty) {
-      return null;
-    }
-
-    return validateAmount(amount);
-  }
-
-  String validateAmount(String amount) {
-    try {
-      // Removing comma before parsing
-      if (amount.contains(",")) {
-        if (RegExp(r"^(\d{1,3}(,\d{3})*(\.\d*)?|\.\d*)$").hasMatch(amount)) {
-          amount = amount.replaceAll(",", "");
-        } else {
-          return ReCase(InvalidAmountError).sentenceCase;
-        }
-      }
-
-      var amountDouble = double.parse(amount);
-      if (amountDouble < 1) {
-        return ReCase(TransactionBaseLimitError).sentenceCase;
-      }
-    } catch (e) {
-      return ReCase(InvalidAmountError).sentenceCase;
-    }
-
-    return null;
-  }
-
-  void send() async {
-    var opID = _opIDController.text;
-    var amount = _amountController.text;
-
-    // Adding prefix if not added
-    if (!opID.toLowerCase().startsWith("op-")) {
-      opID = "op-" + opID;
-    }
-
-    showLoaderDialog(context);
-
-    var requester = HttpRequester(path: "/oauth/send/id.json");
-
-    try {
-      var response = await requester.post(context, <String, String>{
-        'receiver_id': opID,
-        'amount': CurrencyInputFormatter().toDouble(amount),
-      });
-
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      if (!requester.isAuthorized(context, response, true, send)) {
-        return;
-      }
-
-      if (response.statusCode == HttpStatus.ok) {
-        showSuccessDialog(context,
-            "You have successfully transferred $amount ETB to ${opID.toUpperCase()}.");
-        return;
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case AmountParsingErrorB:
-                error = InvalidAmountError;
-                continue amountError;
-              case TransactionBaseLimitErrorB:
-                error = TransactionBaseLimitError;
-                continue amountError;
-              case DailyTransactionLimitErrorB:
-                error = DailyTransactionLimitSendError;
-                continue amountError;
-              case InsufficientBalanceErrorB:
-                error = InsufficientBalanceError;
-                continue amountError;
-              amountError:
-              case TransactionBaseLimitErrorB:
-                FocusScope.of(context).requestFocus(_amountFocusNode);
-                this.setState(() {
-                  _amountErrorText = ReCase(error).sentenceCase;
-                });
-                return;
-              case FrozenAccountErrorB:
-                error = FrozenReceiverAccountError;
-                continue opIDError;
-              case ReceiverNotFoundErrorB:
-                error = ReceiverNotFoundError;
-                continue opIDError;
-              case TransactionWSelfErrorB:
-                error = TransactionWSelfError;
-                continue opIDError;
-              opIDError:
-              case TransactionWSelfErrorB:
-                FocusScope.of(context).requestFocus(_opIDFocusNode);
-                this.setState(() {
-                  _opIDErrorText = ReCase(error).sentenceCase;
-                });
-                return;
-            }
-            break;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
-      }
-    } on SocketException {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } on AccessTokenNotFoundException {
-      setState(() {
-        _loading = false;
-      });
-
-      // Logging the use out
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.logInRoute, (Route<dynamic> route) => false);
-    } catch (e) {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
-  }
-
-  void verify() async {
-    // Cancelling if loading
-    if (_loading) {
-      return;
-    }
-
-    var opID = _opIDController.text;
-    var amount = _amountController.text;
-
-    if (opID.isEmpty) {
-      FocusScope.of(context).requestFocus(_opIDFocusNode);
-      return;
-    }
-
-    if (amount.isEmpty) {
-      FocusScope.of(context).requestFocus(_amountFocusNode);
-      return;
-    }
-
-    // Adding prefix if not added
-    if (!opID.toLowerCase().startsWith("op-")) {
-      opID = "op-" + opID;
-    }
-
-    var amountError = validateAmount(amount);
-    if (amountError != null) {
-      setState(() {
-        _amountErrorText = amountError;
-      });
-      return;
-    }
-
-    // Checking transaction with your own
-    if (OnePay.of(context).currentUser?.userID?.toLowerCase() ==
-        opID.toLowerCase()) {
-      FocusScope.of(context).requestFocus(_opIDFocusNode);
-      setState(() {
-        _opIDErrorText = TransactionWSelfError.sentenceCase;
-      });
-      return;
-    }
-
-    // Start loading process
-    setState(() {
-      _loading = true;
-
-      //  Removing entry errors
-      _amountErrorText = null;
-      _opIDErrorText = null;
-    });
-
-    showLoaderDialog(context);
-
-    var requester = HttpRequester(path: "/oauth/user/$opID/profile.json");
-
-    try {
-      var response = await requester.get(context);
-
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      if (!requester.isAuthorized(context, response, false)) {
-        return;
-      }
-
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var opUser = User.fromJson(jsonData);
-        var displayAmount = CurrencyInputFormatter().toCurrency(amount);
-        showReceiverVerificationDialog(context, displayAmount, opUser, send);
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            FocusScope.of(context).requestFocus(_opIDFocusNode);
-
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case "user not found":
-                error = ReceiverNotFoundError;
-                break;
-              case FrozenAccountErrorB:
-                error = FrozenReceiverAccountError;
-                break;
-            }
-
-            this.setState(() {
-              _opIDErrorText = ReCase(error).sentenceCase;
-            });
-            return;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
-      }
-    } on SocketException {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } on AccessTokenNotFoundException {
-      setState(() {
-        _loading = false;
-      });
-
-      // Logging the use out
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.logInRoute, (Route<dynamic> route) => false);
-    } catch (e) {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
   }
 
   @override
@@ -424,7 +401,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         style: TextStyle(fontSize: 15, letterSpacing: 4),
                         textAlign: TextAlign.center,
                         autovalidate: true,
-                        validator: autoValidateAmount,
+                        validator: _autoValidateAmount,
                         enableInteractiveSelection: false,
                         decoration: InputDecoration(
                           hintText: _amountHint,
@@ -450,7 +427,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         inputFormatters: [
                           CurrencyInputFormatter(),
                         ],
-                        onFieldSubmitted: (_) => verify(),
+                        onFieldSubmitted: (_) => _verify(),
                         onChanged: (_) {
                           this.setState(() {
                             _amountErrorText = null;
@@ -483,7 +460,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
                         fontSize: 18,
                       ),
                     ),
-                    onPressed: _loading ? null : verify,
+                    onPressed: _loading ? null : _verify,
                     padding: EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),

@@ -43,9 +43,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
   bool _loading = false;
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  @override
-  void initState() {
-    super.initState();
+  void _initAnimationControllers() {
     _rotateController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 500),
@@ -66,9 +64,6 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       duration: Duration(seconds: 1),
     );
 
-    _slideTween = Tween<Offset>(begin: Offset(0, 0.7), end: Offset(0, -0.2));
-    _sizeTween = Tween<double>(begin: 1, end: 0.7);
-
     _fadeController1.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         isLoggedIn().then((value) {
@@ -82,21 +77,130 @@ class _Login extends State<Login> with TickerProviderStateMixin {
         });
       }
     });
+  }
 
+  void _initTween() {
+    _slideTween = Tween<Offset>(begin: Offset(0, 0.7), end: Offset(0, -0.2));
+    _sizeTween = Tween<double>(begin: 1, end: 0.7);
+  }
+
+  void _initTextFieldControllers() {
     _passwordFocusNode = FocusNode();
     _identifierFocusNode = FocusNode();
     _signUpFocusNode = FocusNode();
 
     _identifierController = TextEditingController();
     _passwordController = TextEditingController();
-
-    Future.delayed(Duration(seconds: 1)).then((value) {
-      _rotateController.forward();
-      _fadeController1.forward();
-    });
   }
 
-  void login(BuildContext context) async {
+  Future<void> _onSuccess(http.Response response) async {
+    var jsonData = json.decode(response.body);
+    var accessToken = AccessToken.fromJson(jsonData);
+
+    OnePay.of(context).appStateController.add(accessToken);
+
+    // Saving data to shared preferences
+    await setLocalAccessToken(accessToken);
+    await setLoggedIn(true);
+
+    setState(() {
+      _errorFlag = false;
+    });
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.homeRoute, (Route<dynamic> route) => false);
+  }
+
+  void _onError(http.Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+        switch (error) {
+          case InvalidPasswordOrIdentifierErrorB:
+            FocusScope.of(context).requestFocus(_passwordFocusNode);
+            error = InvalidPasswordOrIdentifierError;
+            break;
+          case TooManyAttemptsErrorB:
+            error = TooManyAttemptsError;
+            break;
+        }
+        break;
+      case HttpStatus.forbidden:
+        error = response.body;
+        switch (error) {
+          case FrozenAccountErrorB:
+            error = FrozenAccountError;
+            break;
+          case FrozenAPIClientErrorB:
+            error = FrozenAPIClientError;
+            break;
+        }
+        break;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+      case HttpStatus.forbidden:
+        setState(() {
+          _errorText = ReCase(error).sentenceCase;
+          _errorFlag = true;
+        });
+        break;
+      case HttpStatus.internalServerError:
+      default:
+        showServerError(context, error);
+    }
+  }
+
+  Future<void> _handleResponse(http.Response response) async {
+    if (response.statusCode == HttpStatus.ok) {
+      await _onSuccess(response);
+    } else {
+      _onError(response);
+    }
+  }
+
+  Future<void> _makeRequest() async {
+    var requester = HttpRequester(path: "/oauth/login/app.json");
+
+    try {
+      var response =
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'identifier': _identifierController.text,
+        'password': _passwordController.text,
+      });
+
+      // Removing loader after request
+      setState(() {
+        _loading = false;
+      });
+
+      await _handleResponse(response);
+    } on SocketException {
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _login(BuildContext context) async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -115,100 +219,34 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       _errorFlag = false;
     });
 
-    var requester = HttpRequester(path: "/oauth/login/app.json");
+    await _makeRequest();
+  }
 
-    try {
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: <String, String>{
-        'identifier': _identifierController.text,
-        'password': _passwordController.text,
-      });
+  @override
+  void initState() {
+    super.initState();
 
-      // Removing loader after request
-      setState(() {
-        _loading = false;
-      });
+    _initAnimationControllers();
+    _initTween();
+    _initTextFieldControllers();
 
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var accessToken = AccessToken.fromJson(jsonData);
+    Future.delayed(Duration(seconds: 1)).then((value) {
+      _rotateController.forward();
+      _fadeController1.forward();
+    });
+  }
 
-        OnePay.of(context).appStateController.add(accessToken);
-
-        // Saving data to shared preferences
-        await setLocalAccessToken(accessToken);
-        await setLoggedIn(true);
-
-        setState(() {
-          _errorFlag = false;
-        });
-
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.homeRoute, (Route<dynamic> route) => false);
-
-        return;
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-            switch (error) {
-              case InvalidPasswordOrIdentifierErrorB:
-                FocusScope.of(context).requestFocus(_passwordFocusNode);
-                error = InvalidPasswordOrIdentifierError;
-                break;
-              case TooManyAttemptsErrorB:
-                error = TooManyAttemptsError;
-                break;
-            }
-            break;
-          case HttpStatus.forbidden:
-            error = response.body;
-            switch (error) {
-              case FrozenAccountErrorB:
-                error = FrozenAccountError;
-                break;
-              case FrozenAPIClientErrorB:
-                error = FrozenAPIClientError;
-                break;
-            }
-            break;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-          case HttpStatus.forbidden:
-            setState(() {
-              _errorText = ReCase(error).sentenceCase;
-              _errorFlag = true;
-            });
-            break;
-          case HttpStatus.internalServerError:
-          default:
-            showServerError(context, error);
-        }
-      }
-    } on SocketException {
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _identifierController.dispose();
+    _rotateController.dispose();
+    _fadeController2.dispose();
+    _fadeController1.dispose();
+    _slideController.dispose();
+    _identifierFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -303,7 +341,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                               focusNode: _passwordFocusNode,
                                               controller: _passwordController,
                                               onFieldSubmitted: (_) =>
-                                                  login(context),
+                                                  _login(context),
                                             ),
                                           ),
                                           Padding(
@@ -374,7 +412,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                       ),
                                                     ),
                                                     onPressed: () =>
-                                                        login(context),
+                                                        _login(context),
                                                     padding:
                                                         EdgeInsets.symmetric(
                                                             vertical: 13),
@@ -452,18 +490,5 @@ class _Login extends State<Login> with TickerProviderStateMixin {
         );
       }),
     );
-  }
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    _identifierController.dispose();
-    _rotateController.dispose();
-    _fadeController2.dispose();
-    _fadeController1.dispose();
-    _slideController.dispose();
-    _identifierFocusNode.dispose();
-    _passwordFocusNode.dispose();
-    super.dispose();
   }
 }

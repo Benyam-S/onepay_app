@@ -43,61 +43,14 @@ class _SignUpInit extends State<SignUpInit> {
 
   GlobalKey<FormState> _formKey;
 
-  @override
-  void initState() {
-    super.initState();
-
-    _firstNameFocusNode = FocusNode();
-    _lastNameFocusNode = FocusNode();
-    _emailFocusNode = FocusNode();
-    _phoneFocusNode = FocusNode();
-    _buttonFocusNode = FocusNode();
-
-    _firstNameController = TextEditingController();
-    _lastNameController = TextEditingController();
-    _emailController = TextEditingController();
-    _phoneController = TextEditingController();
-
-    _emailFocusNode.addListener(() {
-      if (!_emailFocusNode.hasFocus) {
-        var email = _emailController.text;
-        if (email != null && email.isNotEmpty) {
-          setState(() {
-            _emailErrorText = validateEmail(email);
-          });
-        }
-      }
-    });
-
-    _phoneFocusNode.addListener(() {
-      if (!_phoneFocusNode.hasFocus) {
-        var phoneNumber = _phoneController.text;
-        if (phoneNumber != null && phoneNumber.isNotEmpty) {
-          setState(() {
-            _phoneNumberErrorText = validatePhoneNumber(phoneNumber);
-          });
-        }
-        setState(() {
-          _phoneNumberHint = "9 * * * * * * * *";
-        });
-      } else {
-        setState(() {
-          _phoneNumberHint = null;
-        });
-      }
-    });
-
-    _formKey = GlobalKey<FormState>();
-  }
-
-  String autoValidateFirstName(String value) {
+  String _autoValidateFirstName(String value) {
     if (value.isEmpty) {
       return null;
     }
-    return validateFirstName(value);
+    return _validateFirstName(value);
   }
 
-  String validateFirstName(String value) {
+  String _validateFirstName(String value) {
     var exp1 = RegExp(r"^[a-zA-Z]\w*$");
     var exp2 = RegExp(r"^[a-zA-Z]");
 
@@ -113,15 +66,15 @@ class _SignUpInit extends State<SignUpInit> {
     return null;
   }
 
-  String autoValidateLastName(String value) {
+  String _autoValidateLastName(String value) {
     if (value.isEmpty) {
       return null;
     }
 
-    return validateLastName(value);
+    return _validateLastName(value);
   }
 
-  String validateLastName(String value) {
+  String _validateLastName(String value) {
     var exp = RegExp(r"^\w*$");
 
     if (!exp.hasMatch(value)) {
@@ -132,7 +85,7 @@ class _SignUpInit extends State<SignUpInit> {
     return null;
   }
 
-  String validateEmail(String value) {
+  String _validateEmail(String value) {
     if (value.isEmpty) {
       return ReCase(EmptyEntryError).sentenceCase;
     }
@@ -147,7 +100,7 @@ class _SignUpInit extends State<SignUpInit> {
     return null;
   }
 
-  String validatePhoneNumber(String value) {
+  String _validatePhoneNumber(String value) {
     if (value.isEmpty) {
       return ReCase(EmptyEntryError).sentenceCase;
     }
@@ -168,7 +121,7 @@ class _SignUpInit extends State<SignUpInit> {
     return null;
   }
 
-  String transformPhoneNumber(String phoneNumber) {
+  String _transformPhoneNumber(String phoneNumber) {
     if (phoneNumber.startsWith("0") && phoneNumber.length == 10) {
       phoneNumber = phoneNumber;
     } else {
@@ -178,7 +131,106 @@ class _SignUpInit extends State<SignUpInit> {
     return phoneNumber;
   }
 
-  void signUpInit() async {
+  void _onSuccess(http.Response response) {
+    var jsonData = json.decode(response.body);
+    var nonce = jsonData["nonce"];
+    widget.nonceController.add(nonce);
+
+    print(nonce);
+    print(jsonData["messageID"]);
+  }
+
+  void _onError(http.Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        var jsonData = json.decode(response.body);
+        jsonData.forEach((key, value) {
+          error = jsonData[key];
+          switch (key) {
+            case "first_name":
+              setState(() {
+                _firstNameErrorText = ReCase(error).sentenceCase;
+              });
+              break;
+            case "last_name":
+              setState(() {
+                _lastNameErrorText = ReCase(error).sentenceCase;
+              });
+              break;
+            case "email":
+              if (error == EmailAlreadyExistsErrorB) {
+                error = EmailAlreadyExistsError;
+              }
+              setState(() {
+                _emailErrorText = ReCase(error).sentenceCase;
+              });
+              break;
+            case "phone_number":
+              if (error == PhoneNumberAlreadyExistsErrorB) {
+                error = PhoneNumberAlreadyExistsError;
+              }
+              setState(() {
+                _phoneNumberErrorText = ReCase(error).sentenceCase;
+              });
+              break;
+          }
+        });
+        return;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _handleResponse(http.Response response) {
+    if (response.statusCode == HttpStatus.ok) {
+      _onSuccess(response);
+    } else {
+      _onError(response);
+    }
+  }
+
+  Future<void> _makeRequest(String firstName, String lastName, String email,
+      String phoneNumber) async {
+    var requester = HttpRequester(path: "/oauth/user/register/init");
+    try {
+      var response =
+          await http.post(requester.requestURL, headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+      }, body: <String, String>{
+        'first_name': firstName,
+        'last_name': lastName,
+        'email': email,
+        'phone_number': _transformPhoneNumber(phoneNumber),
+      });
+
+      // Stop loading after response received
+      setState(() {
+        _loading = false;
+      });
+
+      _handleResponse(response);
+    } on SocketException {
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _signUpInit() async {
     // Cancelling if loading
     if (_loading) {
       return;
@@ -189,10 +241,10 @@ class _SignUpInit extends State<SignUpInit> {
     var email = _emailController.text;
     var phoneNumber = _phoneController.text;
 
-    var firstNameError = validateFirstName(firstName);
-    var lastNameError = validateLastName(lastName);
-    var emailError = validateEmail(email);
-    var phoneNumberError = validatePhoneNumber(phoneNumber);
+    var firstNameError = _validateFirstName(firstName);
+    var lastNameError = _validateLastName(lastName);
+    var emailError = _validateEmail(email);
+    var phoneNumberError = _validatePhoneNumber(phoneNumber);
 
     if (firstName.isEmpty) {
       setState(() {
@@ -238,89 +290,63 @@ class _SignUpInit extends State<SignUpInit> {
       _phoneNumberErrorText = null;
     });
 
-    var requester = HttpRequester(path: "/oauth/user/register/init");
-    try {
-      var response =
-          await http.post(requester.requestURL, headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-      }, body: <String, String>{
-        'first_name': firstName,
-        'last_name': lastName,
-        'email': email,
-        'phone_number': transformPhoneNumber(phoneNumber),
-      });
+    await _makeRequest(firstName, lastName, email, phoneNumber);
+  }
 
-      // Stop loading after response received
-      setState(() {
-        _loading = false;
-      });
+  @override
+  void initState() {
+    super.initState();
 
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var nonce = jsonData["nonce"];
-        widget.nonceController.add(nonce);
+    _firstNameFocusNode = FocusNode();
+    _lastNameFocusNode = FocusNode();
+    _emailFocusNode = FocusNode();
+    _phoneFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
 
-        print(nonce);
-        print(jsonData["messageID"]);
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            var jsonData = json.decode(response.body);
-            jsonData.forEach((key, value) {
-              error = jsonData[key];
-              switch (key) {
-                case "first_name":
-                  setState(() {
-                    _firstNameErrorText = ReCase(error).sentenceCase;
-                  });
-                  break;
-                case "last_name":
-                  setState(() {
-                    _lastNameErrorText = ReCase(error).sentenceCase;
-                  });
-                  break;
-                case "email":
-                  if (error == EmailAlreadyExistsErrorB) {
-                    error = EmailAlreadyExistsError;
-                  }
-                  setState(() {
-                    _emailErrorText = ReCase(error).sentenceCase;
-                  });
-                  break;
-                case "phone_number":
-                  if (error == PhoneNumberAlreadyExistsErrorB) {
-                    error = PhoneNumberAlreadyExistsError;
-                  }
-                  setState(() {
-                    _phoneNumberErrorText = ReCase(error).sentenceCase;
-                  });
-                  break;
-              }
-            });
-            return;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
+
+    _emailFocusNode.addListener(() {
+      if (!_emailFocusNode.hasFocus) {
+        var email = _emailController.text;
+        if (email != null && email.isNotEmpty) {
+          setState(() {
+            _emailErrorText = _validateEmail(email);
+          });
         }
-
-        showServerError(context, error);
       }
-    } on SocketException {
-      setState(() {
-        _loading = false;
-      });
+    });
 
-      showUnableToConnectError(context);
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
+    _phoneFocusNode.addListener(() {
+      if (!_phoneFocusNode.hasFocus) {
+        var phoneNumber = _phoneController.text;
+        if (phoneNumber != null && phoneNumber.isNotEmpty) {
+          setState(() {
+            _phoneNumberErrorText = _validatePhoneNumber(phoneNumber);
+          });
+        }
+        setState(() {
+          _phoneNumberHint = "9 * * * * * * * *";
+        });
+      } else {
+        setState(() {
+          _phoneNumberHint = null;
+        });
+      }
+    });
 
-      showServerError(context, SomethingWentWrongError);
-    }
+    _formKey = GlobalKey<FormState>();
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -344,7 +370,7 @@ class _SignUpInit extends State<SignUpInit> {
                   errorText: _firstNameErrorText,
                 ),
                 autovalidate: true,
-                validator: autoValidateFirstName,
+                validator: _autoValidateFirstName,
                 onChanged: (_) => this.setState(() {
                   _firstNameErrorText = null;
                 }),
@@ -366,7 +392,7 @@ class _SignUpInit extends State<SignUpInit> {
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                 ),
                 autovalidate: true,
-                validator: autoValidateLastName,
+                validator: _autoValidateLastName,
                 onChanged: (_) => this.setState(() {
                   _lastNameErrorText = null;
                 }),
@@ -430,7 +456,7 @@ class _SignUpInit extends State<SignUpInit> {
                   onChanged: (_) => this.setState(() {
                         _phoneNumberErrorText = null;
                       }),
-                  onFieldSubmitted: (_) => signUpInit()),
+                  onFieldSubmitted: (_) => _signUpInit()),
             ),
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -465,7 +491,7 @@ class _SignUpInit extends State<SignUpInit> {
                       ),
                       onPressed: () {
                         FocusScope.of(context).requestFocus(_buttonFocusNode);
-                        signUpInit();
+                        _signUpInit();
                       },
                       padding: EdgeInsets.symmetric(vertical: 13),
                     ),
@@ -477,14 +503,5 @@ class _SignUpInit extends State<SignUpInit> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    super.dispose();
   }
 }

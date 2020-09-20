@@ -5,13 +5,16 @@ import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/money.token.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
-import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/response.dart';
+
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
@@ -25,37 +28,14 @@ class _Receive extends State<Receive> {
   FocusNode _codeFocusNode;
   FocusNode _buttonFocusNode;
   TextEditingController _codeController;
+  String _method;
+  String _amount;
+  String _code;
+  MoneyToken _moneyToken;
   String _codeHintText = "Code Here";
   String _codeErrorText;
   bool _isCameraOpened = false;
   bool _loading = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _codeFocusNode = FocusNode();
-    _buttonFocusNode = FocusNode();
-    _codeController = TextEditingController();
-
-    _codeFocusNode.addListener(() {
-      if (_codeFocusNode.hasFocus) {
-        setState(() {
-          _codeHintText = null;
-        });
-      } else {
-        setState(() {
-          _codeHintText = "Code Here";
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    super.dispose();
-  }
 
   void scan() async {
     if (_isCameraOpened) {
@@ -90,14 +70,231 @@ class _Receive extends State<Receive> {
     }
   }
 
-  void getCodeInfo(String method) async {
+  Future<Response> _makeInfoRequest() async {
+    HttpRequester requester;
+    switch (_method) {
+      case 'pay':
+        requester = HttpRequester(path: "/oauth/pay/code.json?code=$_code");
+        break;
+      case 'receive':
+        requester = HttpRequester(path: "/oauth/receive/code.json?code=$_code");
+        break;
+    }
+
+    return await requester.get(context);
+  }
+
+  Future<Response> _makeProceedRequest() async {
+    HttpRequester requester;
+
+    switch (_method) {
+      case 'pay':
+        requester = HttpRequester(path: "/oauth/pay/code.json");
+        break;
+      case 'receive':
+        requester = HttpRequester(path: "/oauth/receive/code.json");
+        break;
+    }
+
+    return await requester.put(context, <String, String>{
+      'code': _code,
+    });
+  }
+
+  bool _isMethodValid(String method) {
+    switch (method) {
+      case 'pay':
+      case 'receive':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  void _onInfoSuccess(Response response) {
+    var jsonData = json.decode(response.body);
+    _moneyToken = MoneyToken.fromJson(jsonData);
+    var displayAmount =
+        CurrencyInputFormatter().toCurrency(_moneyToken.amount.toString());
+
+    showAmountVerificationDialog(context, displayAmount, _method, _proceed);
+  }
+
+  void _onProceedSuccess(Response response) {
+    String successMsg;
+    if (_method == 'pay') {
+      successMsg =
+          "You have successfully payed $_amount ETB to $_code code owner.";
+    } else if (_method == 'receive') {
+      successMsg =
+          "You have successfully received $_amount ETB from $_code code owner.";
+    }
+
+    _codeController.clear();
+    showSuccessDialog(context, successMsg);
+    return;
+  }
+
+  void _onProceedError(Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        FocusScope.of(context).requestFocus(_codeFocusNode);
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case ReceiverNotFoundErrorB:
+            error = ReceiverNotFoundError;
+            break;
+          case InvalidMoneyTokenErrorB:
+            error = InvalidMoneyTokenError;
+            break;
+          case ExpiredMoneyTokenErrorB:
+            error = ExpiredMoneyTokenError;
+            break;
+          case TransactionBaseLimitErrorB:
+            error = TransactionBaseLimitError;
+            break;
+          case DailyTransactionLimitErrorB:
+            error = DailyTransactionLimitSendError;
+            break;
+          case TransactionWSelfErrorB:
+            error = TransactionWSelfError;
+            break;
+          case InvalidMethodErrorB:
+            error = InvalidMoneyTokenError;
+            break;
+          case SenderNotFoundErrorB:
+            error = SenderNotFoundError;
+            break;
+          case InsufficientBalanceErrorB:
+            error = InsufficientBalanceError;
+            break;
+          case TooManyAttemptsErrorB:
+            error = TooManyAttemptsError;
+            break;
+        }
+
+        this.setState(() {
+          _codeErrorText = ReCase(error).sentenceCase;
+        });
+        return;
+      case HttpStatus.internalServerError:
+        error = FailedOperationError;
+        break;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  void _onInfoError(Response response) {
+    String error = "";
+    switch (response.statusCode) {
+      case HttpStatus.badRequest:
+        FocusScope.of(context).requestFocus(_codeFocusNode);
+
+        var jsonData = json.decode(response.body);
+        error = jsonData["error"];
+
+        switch (error) {
+          case InvalidMoneyTokenErrorB:
+            error = InvalidMoneyTokenError;
+            break;
+          case ExpiredMoneyTokenErrorB:
+            error = ExpiredMoneyTokenError;
+            break;
+          case TransactionBaseLimitErrorB:
+            error = TransactionBaseLimitError;
+            break;
+          case TransactionWSelfErrorB:
+            error = TransactionWSelfError;
+            break;
+          case InvalidMethodErrorB:
+            error = InvalidMoneyTokenError;
+            break;
+          case TooManyAttemptsErrorB:
+            error = TooManyAttemptsError;
+            break;
+        }
+
+        this.setState(() {
+          _codeErrorText = ReCase(error).sentenceCase;
+        });
+        return;
+      default:
+        error = SomethingWentWrongError;
+    }
+
+    showServerError(context, error);
+  }
+
+  Future<void> _handleResponse(
+      Future<Response> Function() requester,
+      Function(Response response) onSuccess,
+      Function(Response response) onError) async {
+    try {
+      if (!_isMethodValid(_method)) {
+        return;
+      }
+
+      var response = await requester();
+
+      // Removing the loading indicator
+      setState(() {
+        _loading = false;
+      });
+
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      if (!isResponseAuthorized(context, response, _proceed)) {
+        return;
+      }
+
+      if (response.statusCode == HttpStatus.ok) {
+        onSuccess(response);
+      } else {
+        onError(response);
+      }
+    } on SocketException {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showUnableToConnectError(context);
+    } on AccessTokenNotFoundException {
+      setState(() {
+        _loading = false;
+      });
+
+      logout(context);
+    } catch (e) {
+      // Removing loadingDialog
+      Navigator.of(context).pop();
+
+      setState(() {
+        _loading = false;
+      });
+
+      showServerError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _getCodeInfo(String method) async {
     if (_loading) {
       return;
     }
 
-    var code = _codeController.text;
+    _code = _codeController.text;
+    _method = method;
 
-    if (code.isEmpty) {
+    if (_code.isEmpty) {
       FocusScope.of(context).requestFocus(_codeFocusNode);
       return;
     }
@@ -112,246 +309,44 @@ class _Receive extends State<Receive> {
 
     showLoaderDialog(context);
 
-    var requester;
-    if (method == 'pay') {
-      requester = HttpRequester(path: "/oauth/pay/code.json?code=$code");
-    } else if (method == 'receive') {
-      requester = HttpRequester(path: "/oauth/receive/code.json?code=$code");
-    } else {
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-      return;
-    }
-
-    try {
-      var response = await requester.get(context);
-
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      if (!requester.isAuthorized(context, response, false)) {
-        return;
-      }
-
-      if (response.statusCode == HttpStatus.ok) {
-        var jsonData = json.decode(response.body);
-        var moneyToken = MoneyToken.fromJson(jsonData);
-        var displayAmount =
-            CurrencyInputFormatter().toCurrency(moneyToken.amount.toString());
-
-        showAmountVerificationDialog(
-            context, displayAmount, method, () => proceed(moneyToken, method));
-      } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            FocusScope.of(context).requestFocus(_codeFocusNode);
-
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case InvalidMoneyTokenErrorB:
-                error = InvalidMoneyTokenError;
-                break;
-              case ExpiredMoneyTokenErrorB:
-                error = ExpiredMoneyTokenError;
-                break;
-              case TransactionBaseLimitErrorB:
-                error = TransactionBaseLimitError;
-                break;
-              case TransactionWSelfErrorB:
-                error = TransactionWSelfError;
-                break;
-              case InvalidMethodErrorB:
-                error = InvalidMoneyTokenError;
-                break;
-              case TooManyAttemptsErrorB:
-                error = TooManyAttemptsError;
-                break;
-            }
-
-            this.setState(() {
-              _codeErrorText = ReCase(error).sentenceCase;
-            });
-            return;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
-      }
-    } on SocketException {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } on AccessTokenNotFoundException {
-      setState(() {
-        _loading = false;
-      });
-
-      // Logging the use out
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.logInRoute, (Route<dynamic> route) => false);
-    } catch (e) {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
+    await _handleResponse(_makeInfoRequest, _onInfoSuccess, _onInfoError);
   }
 
-  void proceed(MoneyToken moneyToken, String method) async {
-    var code = _codeController.text;
-
+  void _proceed() async {
     showLoaderDialog(context);
-    var requester;
-    var successMsg;
-    var amount =
-        CurrencyInputFormatter().toCurrency(moneyToken.amount.toString());
 
-    if (method == 'pay') {
-      requester = HttpRequester(path: "/oauth/pay/code.json");
-      successMsg =
-          "You have successfully payed $amount ETB to $code code owner.";
-    } else if (method == 'receive') {
-      requester = HttpRequester(path: "/oauth/receive/code.json");
-      successMsg =
-          "You have successfully received $amount ETB from $code code owner.";
-    } else {
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
+    _amount =
+        CurrencyInputFormatter().toCurrency(_moneyToken.amount.toString());
 
-      // Removing loadingDialog
-      Navigator.of(context).pop();
+    await _handleResponse(
+        _makeProceedRequest, _onProceedSuccess, _onProceedError);
+  }
 
-      return;
-    }
+  @override
+  void initState() {
+    super.initState();
 
-    try {
-      var response = await requester.put(context, <String, String>{
-        'code': code,
-      });
+    _codeFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
+    _codeController = TextEditingController();
 
-      // Removing the loading indicator
-      setState(() {
-        _loading = false;
-      });
-
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      if (!requester.isAuthorized(
-          context, response, true, () => proceed(moneyToken, method))) {
-        return;
-      }
-
-      if (response.statusCode == HttpStatus.ok) {
-        _codeController.clear();
-        showSuccessDialog(context, successMsg);
-        return;
+    _codeFocusNode.addListener(() {
+      if (_codeFocusNode.hasFocus) {
+        setState(() {
+          _codeHintText = null;
+        });
       } else {
-        String error = "";
-        switch (response.statusCode) {
-          case HttpStatus.badRequest:
-            FocusScope.of(context).requestFocus(_codeFocusNode);
-            var jsonData = json.decode(response.body);
-            error = jsonData["error"];
-
-            switch (error) {
-              case ReceiverNotFoundErrorB:
-                error = ReceiverNotFoundError;
-                break;
-              case InvalidMoneyTokenErrorB:
-                error = InvalidMoneyTokenError;
-                break;
-              case ExpiredMoneyTokenErrorB:
-                error = ExpiredMoneyTokenError;
-                break;
-              case TransactionBaseLimitErrorB:
-                error = TransactionBaseLimitError;
-                break;
-              case DailyTransactionLimitErrorB:
-                error = DailyTransactionLimitSendError;
-                break;
-              case TransactionWSelfErrorB:
-                error = TransactionWSelfError;
-                break;
-              case InvalidMethodErrorB:
-                error = InvalidMoneyTokenError;
-                break;
-              case SenderNotFoundErrorB:
-                error = SenderNotFoundError;
-                break;
-              case InsufficientBalanceErrorB:
-                error = InsufficientBalanceError;
-                break;
-              case TooManyAttemptsErrorB:
-                error = TooManyAttemptsError;
-                break;
-            }
-
-            this.setState(() {
-              _codeErrorText = ReCase(error).sentenceCase;
-            });
-            return;
-          case HttpStatus.internalServerError:
-            error = FailedOperationError;
-            break;
-          default:
-            error = SomethingWentWrongError;
-        }
-
-        showServerError(context, error);
+        setState(() {
+          _codeHintText = "Code Here";
+        });
       }
-    } on SocketException {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
+    });
+  }
 
-      setState(() {
-        _loading = false;
-      });
-
-      showUnableToConnectError(context);
-    } on AccessTokenNotFoundException {
-      setState(() {
-        _loading = false;
-      });
-
-      // Logging the use out
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.logInRoute, (Route<dynamic> route) => false);
-    } catch (e) {
-      // Removing loadingDialog
-      Navigator.of(context).pop();
-
-      setState(() {
-        _loading = false;
-      });
-
-      showServerError(context, SomethingWentWrongError);
-    }
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -440,7 +435,7 @@ class _Receive extends State<Receive> {
                                     : () {
                                         FocusScope.of(context)
                                             .requestFocus(_buttonFocusNode);
-                                        getCodeInfo('pay');
+                                        _getCodeInfo('pay');
                                       },
                               ),
                               CupertinoButton(
@@ -470,7 +465,7 @@ class _Receive extends State<Receive> {
                                     : () {
                                         FocusScope.of(context)
                                             .requestFocus(_buttonFocusNode);
-                                        getCodeInfo('receive');
+                                        _getCodeInfo('receive');
                                       },
                               ),
                             ],

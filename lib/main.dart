@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
-import 'package:onepay_app/pages/inside/home.dart';
+import 'package:onepay_app/pages/authorized/home.dart';
 import 'package:onepay_app/pages/login.dart';
 import 'package:onepay_app/pages/signup/signup.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -38,11 +39,14 @@ class _OnePay extends State<OnePay> {
   StreamController _appStateController = StreamController.broadcast();
   Stream _accessTokenStream;
   Stream _userStream;
+  Stream _walletStream;
   AccessToken accessToken;
   User currentUser;
+  Wallet userWallet;
 
   Stream get accessTokenStream => this._accessTokenStream;
   Stream get userStream => this._userStream;
+  Stream get walletStream => this._walletStream;
   StreamController get appStateController => this._appStateController;
 
   _OnePay() {
@@ -52,12 +56,19 @@ class _OnePay extends State<OnePay> {
     this._userStream =
         _appStateController.stream.where((event) => event is User);
 
+    this._walletStream =
+        _appStateController.stream.where((event) => event is Wallet);
+
     this._accessTokenStream.listen((accessToken) {
       this.accessToken = accessToken as AccessToken;
     });
 
     this._userStream.listen((user) {
       this.currentUser = user as User;
+    });
+
+    this._walletStream.listen((wallet) {
+      this.userWallet = wallet as Wallet;
     });
   }
 

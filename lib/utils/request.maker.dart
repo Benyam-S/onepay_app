@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,8 +6,6 @@ import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
-import 'package:onepay_app/utils/routes.dart';
-import 'package:onepay_app/utils/show.dialog.dart';
 
 class HttpRequester {
   String baseURI = "http://192.168.1.3:8080/api/v1";
@@ -81,33 +78,5 @@ class HttpRequester {
       },
       body: body,
     );
-  }
-
-  /// isAuthorized is used for the checking if the request used a valid access token depending on the status response
-  bool isAuthorized(
-      BuildContext context, http.Response response, bool showDialog,
-      [Function currentCallback]) {
-    switch (response.statusCode) {
-      case HttpStatus.unauthorized:
-      case HttpStatus.forbidden:
-        setLoggedIn(false);
-        setLocalAccessToken(null);
-
-        // Logging the use out
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.logInRoute, (Route<dynamic> route) => false);
-        return false;
-      case HttpStatus.badRequest:
-        if (showDialog) {
-          var jsonData = json.decode(response.body);
-          if (jsonData["error"] ==
-              "access token has exceeded it daily expiration time") {
-            showDEValidationDialog(context, currentCallback);
-            return false;
-          }
-        }
-    }
-
-    return true;
   }
 }
