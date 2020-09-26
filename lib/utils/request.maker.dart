@@ -8,7 +8,7 @@ import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 
 class HttpRequester {
-  String baseURI = "http://192.168.1.3:8080/api/v1";
+  String baseURI = "http://192.168.1.4:8080/api/v1";
   String requestURL = "";
 
   HttpRequester({@required String path}) {
@@ -33,7 +33,7 @@ class HttpRequester {
     return await http.get(requestURL, headers: <String, String>{
       'Content-Type': 'application/x-www-form-urlencoded',
       'authorization': basicAuth,
-    });
+    }).timeout(Duration(minutes: 1));
   }
 
   Future<http.Response> post(
@@ -48,14 +48,16 @@ class HttpRequester {
     String basicAuth = 'Basic ' +
         base64Encode(
             utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
-    return await http.post(
-      requestURL,
-      headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'authorization': basicAuth,
-      },
-      body: body,
-    );
+    return await http
+        .post(
+          requestURL,
+          headers: <String, String>{
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'authorization': basicAuth,
+          },
+          body: body,
+        )
+        .timeout(Duration(minutes: 1));
   }
 
   Future<http.Response> put(
@@ -70,13 +72,15 @@ class HttpRequester {
     String basicAuth = 'Basic ' +
         base64Encode(
             utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
-    return await http.put(
-      requestURL,
-      headers: <String, String>{
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'authorization': basicAuth,
-      },
-      body: body,
-    );
+    return await http
+        .put(
+          requestURL,
+          headers: <String, String>{
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'authorization': basicAuth,
+          },
+          body: body,
+        )
+        .timeout(Duration(minutes: 1));
   }
 }

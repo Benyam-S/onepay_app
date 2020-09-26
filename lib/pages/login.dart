@@ -167,7 +167,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _makeRequest() async {
+  Future<void> _makeRequest(BuildContext context) async {
     var requester = HttpRequester(path: "/oauth/login/app.json");
 
     try {
@@ -219,7 +219,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       _errorFlag = false;
     });
 
-    await _makeRequest();
+    await _makeRequest(context);
   }
 
   @override

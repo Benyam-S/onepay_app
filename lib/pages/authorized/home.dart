@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
@@ -8,10 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
+import 'package:onepay_app/pages/authorized/wallet/wallet.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -26,11 +29,14 @@ class Home extends StatefulWidget {
 }
 
 class _Home extends State<Home> {
-  int _currentIndex = 2;
+  int _currentIndex = 3;
   String _appBarTitle = "";
   List<Widget> _listOfSections;
   PageStorageBucket _bucket = PageStorageBucket();
   bool _showWalletBadge = false;
+  bool _haveUnseenHistories = false;
+  Stream<bool> _unseenHistoryStream;
+  StreamController<bool> _unseenHistoryStreamController = StreamController();
   int _profileState = 0;
   int _socketState = 0;
   IOWebSocketChannel channel;
@@ -100,6 +106,28 @@ class _Home extends State<Home> {
     _handleResponse(makeRequest, null);
   }
 
+  Future<void> _markHistoriesAsSeen() async {
+    if (_currentIndex != 3 && _haveUnseenHistories) {
+      User user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
+
+      OnePay.of(context).histories.forEach((history) {
+        if (history.senderID == user.userID && !history.senderSeen) {
+          history.senderSeen = true;
+        } else if (history.receiverID == user.userID && !history.receiverSeen) {
+          history.receiverSeen = true;
+        }
+      });
+
+      Future<Response> makeRequest() {
+        var requester = HttpRequester(path: "/oauth/user/history.json");
+        return requester.put(context, null);
+      }
+
+      await _handleResponse(makeRequest, null);
+      _haveUnseenHistories = false;
+    }
+  }
+
   // handleResponse is a function that handles a response coming from request
   Future<void> _handleResponse(Future<Response> Function() requester,
       Function(Response response) onSuccess) async {
@@ -140,7 +168,7 @@ class _Home extends State<Home> {
     _socketState = 1;
     try {
       channel = IOWebSocketChannel.connect(
-          'ws://192.168.1.3:8080/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
+          'ws://192.168.1.4:8080/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
       channel.stream.listen(_onNotificationReceived,
           onDone: _onSocketClosed, onError: _onSocketError);
     } catch (e) {
@@ -157,9 +185,13 @@ class _Home extends State<Home> {
         _showWalletBadge = true;
       });
 
-      // Add current user to the stream and shared preference
       OnePay.of(context).appStateController.add(wallet);
       setLocalUserWallet(wallet);
+    }
+    if (jsonMap["Type"] == "history") {
+      var history = History.fromJson(jsonMap["Body"]);
+
+      OnePay.of(context).appStateController.add([history]);
     }
   }
 
@@ -209,13 +241,18 @@ class _Home extends State<Home> {
       ),
       Send(),
       Receive(),
-      Container(
-        key: PageStorageKey("wallet"),
-      ),
+      WalletView(_unseenHistoryStreamController),
       Container(
         key: PageStorageKey("settings"),
       )
     ];
+
+    _unseenHistoryStream = _unseenHistoryStreamController.stream;
+    _unseenHistoryStream.listen((unseen) {
+      if (unseen) {
+        _haveUnseenHistories = true;
+      }
+    });
 
     _connectivityChecker();
     _continuousPolling();
@@ -223,24 +260,31 @@ class _Home extends State<Home> {
 
   @override
   void dispose() {
+    _unseenHistoryStreamController.close();
     channel.sink.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    double elevation;
+
     switch (_currentIndex) {
       case 0:
         _appBarTitle = "OnePay";
+        elevation = 0;
         break;
       case 1:
         _appBarTitle = "Send";
+        elevation = null;
         break;
       case 2:
         _appBarTitle = "Receive";
+        elevation = 0;
         break;
       case 3:
         _appBarTitle = "Wallet";
+        elevation = 0;
         if (_showWalletBadge) {
           _showWalletBadge = false;
           markLocalUserWallet(true);
@@ -248,13 +292,17 @@ class _Home extends State<Home> {
         }
         break;
       case 4:
+        elevation = 1;
         _appBarTitle = "Settings";
         break;
     }
 
+    _markHistoriesAsSeen();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_appBarTitle),
+        elevation: elevation,
       ),
       body: PageStorage(
         child: _listOfSections[_currentIndex],

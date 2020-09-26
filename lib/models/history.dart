@@ -4,7 +4,7 @@ part 'history.g.dart';
 
 @JsonSerializable()
 class History {
-  String id;
+  int id;
   String senderID;
   String receiverID;
   DateTime sentAt;

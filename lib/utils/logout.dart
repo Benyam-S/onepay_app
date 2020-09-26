@@ -8,6 +8,7 @@ void logout(BuildContext context) async{
   await setLocalUserWallet(null);
   await setLocalUserProfile(null);
   await setLocalAccessToken(null);
+  await setLocalViewBys(null);
 
   // Logging the use out
   Navigator.of(context).pushNamedAndRemoveUntil(

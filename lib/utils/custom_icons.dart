@@ -51,4 +51,10 @@ class CustomIcons {
   static const IconData survey = IconData(0xe913, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData enter = IconData(0xe917, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData down_arrow = IconData(0xe900, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData up_triangle = IconData(0xe918, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData up_arrow = IconData(0xe919, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData left_arrow = IconData(0xe91a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData package = IconData(0xe91b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData box = IconData(0xe91c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+
 }

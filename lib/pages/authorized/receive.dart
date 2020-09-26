@@ -381,7 +381,7 @@ class _Receive extends State<Receive> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(top: 35, bottom: 15),
+                          padding: const EdgeInsets.only(top: 40, bottom: 15),
                           child: Text(
                               "Please enter code that you receive here to make payment or receive the amount held by the code."),
                         ),
@@ -470,7 +470,8 @@ class _Receive extends State<Receive> {
                               ),
                             ],
                           ),
-                        )
+                        ),
+                        SizedBox(height: 35),
                       ]),
                 ),
               ),
@@ -478,14 +479,9 @@ class _Receive extends State<Receive> {
                 top: 0,
                 left: MediaQuery.of(context).size.width * 0.15,
                 child: Container(
-                  // margin: const EdgeInsets.only(left: 50),
-                  // padding: const EdgeInsets.all(15),
-                  // decoration: BoxDecoration(
-                  //   color: Colors.white,
-                  //   shape: BoxShape.circle,
-                  // ),
                   child: FloatingActionButton(
                     backgroundColor: Colors.white,
+                    elevation: 1,
                     child: Icon(
                       Icons.camera_alt,
                       color: Theme.of(context).primaryColor,

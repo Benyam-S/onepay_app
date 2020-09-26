@@ -8,7 +8,7 @@ part of 'history.dart';
 
 History _$HistoryFromJson(Map<String, dynamic> json) {
   return History(
-      json['ID'] as String,
+      json['ID'] as int,
       json['SenderID'] as String,
       json['ReceiverID'] as String,
       json['SentAt'] == null ? null : DateTime.parse(json['SentAt'] as String),

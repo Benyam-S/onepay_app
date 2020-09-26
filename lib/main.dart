@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
@@ -40,13 +41,16 @@ class _OnePay extends State<OnePay> {
   Stream _accessTokenStream;
   Stream _userStream;
   Stream _walletStream;
+  Stream _historyStream;
   AccessToken accessToken;
   User currentUser;
   Wallet userWallet;
+  List<History> histories = List<History>();
 
   Stream get accessTokenStream => this._accessTokenStream;
   Stream get userStream => this._userStream;
   Stream get walletStream => this._walletStream;
+  Stream get historyStream => this._historyStream;
   StreamController get appStateController => this._appStateController;
 
   _OnePay() {
@@ -59,6 +63,9 @@ class _OnePay extends State<OnePay> {
     this._walletStream =
         _appStateController.stream.where((event) => event is Wallet);
 
+    this._historyStream =
+        _appStateController.stream.where((event) => event is List<History>);
+
     this._accessTokenStream.listen((accessToken) {
       this.accessToken = accessToken as AccessToken;
     });
@@ -70,6 +77,27 @@ class _OnePay extends State<OnePay> {
     this._walletStream.listen((wallet) {
       this.userWallet = wallet as Wallet;
     });
+
+    this._historyStream.listen((histories) {
+      _filterAndAdd(histories);
+    });
+  }
+
+  void _filterAndAdd(List<History> newHistories) {
+    List<History> filteredHistories = List<History>();
+    newHistories.forEach((newHistory) {
+      bool addFlag = true;
+      histories.forEach((history) {
+        if (history.id == newHistory.id) {
+          addFlag = false;
+        }
+      });
+      if (addFlag) filteredHistories.add(newHistory);
+    });
+
+    histories.addAll(filteredHistories);
+    // Ordering in reverse order
+    histories.sort((a, b) => b.id.compareTo(a.id));
   }
 
   @override

@@ -113,3 +113,48 @@ Future<void> markLocalUserWallet(bool value) async {
   final prefs = await SharedPreferences.getInstance();
   prefs.setBool("wallet_seen", value);
 }
+
+// ---------------------------- Local View Bys Management ----------------------------
+
+Future<Map<String, bool>> getLocalViewBys() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final transferSent = prefs.getBool("transfer_sent");
+  final transferReceived = prefs.getBool("transfer_received");
+  final paymentSent = prefs.getBool("payment_sent");
+  final paymentReceived = prefs.getBool("payment_received");
+  final withdrawn = prefs.getBool("withdrawn");
+  final recharged = prefs.getBool("recharged");
+
+  Map<String, bool> viewBys = {
+    "transfer_sent": transferSent ?? true,
+    "transfer_received": transferReceived ?? true,
+    "payment_sent": paymentSent ?? true,
+    "payment_received": paymentReceived ?? true,
+    "recharged": recharged ?? true,
+    "withdrawn": withdrawn ?? true
+  };
+
+  return viewBys;
+}
+
+Future<void> setLocalViewBys(Map<String, bool> viewBys) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  // Resetting the view by settings
+  if (viewBys == null){
+    prefs.setBool("transfer_sent", true);
+    prefs.setBool("transfer_received", true);
+    prefs.setBool("payment_sent", true);
+    prefs.setBool("payment_received", true);
+    prefs.setBool("withdrawn", true);
+    prefs.setBool("recharged", true);
+  }
+
+  prefs.setBool("transfer_sent", viewBys["transfer_sent"]);
+  prefs.setBool("transfer_received", viewBys["transfer_received"]);
+  prefs.setBool("payment_sent", viewBys["payment_sent"]);
+  prefs.setBool("payment_received", viewBys["payment_received"]);
+  prefs.setBool("withdrawn", viewBys["withdrawn"]);
+  prefs.setBool("recharged", viewBys["recharged"]);
+}

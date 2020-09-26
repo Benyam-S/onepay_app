@@ -172,7 +172,7 @@ class _ForgotPassword extends State<ForgotPassword> {
     }
   }
 
-  Future<void> _makeRequest(String identifier) async {
+  Future<void> _makeRequest(BuildContext context, String identifier) async {
     var requester = HttpRequester(path: "/user/password/rest/init.json");
     try {
       var response =
@@ -254,7 +254,7 @@ class _ForgotPassword extends State<ForgotPassword> {
       _phoneNumberErrorText = null;
     });
 
-    await _makeRequest(identifier);
+    await _makeRequest(context, identifier);
   }
 
   @override
