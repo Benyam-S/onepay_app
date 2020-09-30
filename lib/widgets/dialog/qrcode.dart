@@ -13,7 +13,7 @@ class QrCodeDialog extends StatelessWidget {
 
   QrCodeDialog.forPayment(this.code, {this.type = "payment"});
 
-  void share(String code) {
+  void _share(String code) {
     String msg = "";
     String subject = "";
 
@@ -108,7 +108,7 @@ class QrCodeDialog extends StatelessWidget {
               color: Theme.of(context).primaryColor,
             ),
           ),
-          onPressed: this.code != null ? () => share(this.code) : null,
+          onPressed: this.code != null ? () => _share(this.code) : null,
         ),
         CupertinoButton(
           child: Text(

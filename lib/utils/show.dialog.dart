@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/money.token.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
 import 'package:onepay_app/widgets/dialog/amount.verification.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
+import 'package:onepay_app/widgets/dialog/money.token.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
 import 'package:onepay_app/widgets/dialog/receiver.verification.dart';
 import 'package:onepay_app/widgets/dialog/success.dart';
@@ -81,5 +83,13 @@ void showSuccessDialog(BuildContext context, String successMsg) {
     context: context,
     barrierDismissible: true,
     child: SuccessDialog(successMsg),
+  );
+}
+
+void showMoneyTokenDialog(
+    BuildContext context, MoneyToken moneyToken, Function removeMoneyToken) {
+  showDialog(
+    context: context,
+    child: MoneyTokenDialog(context, moneyToken, removeMoneyToken),
   );
 }

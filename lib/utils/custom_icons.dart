@@ -56,5 +56,20 @@ class CustomIcons {
   static const IconData left_arrow = IconData(0xe91a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData package = IconData(0xe91b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData box = IconData(0xe91c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
-
+  static const IconData debit_card = IconData(0xe922, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData vault = IconData(0xe921, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData vault_big = IconData(0xe920, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData museum = IconData(0xe91f, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData withdraw = IconData(0xe91e, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData atm = IconData(0xe91d, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData atm_money = IconData(0xe927, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData user = IconData(0xe926, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_user_filled = IconData(0xe925, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_user_circled = IconData(0xe924, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData logout = IconData(0xe923, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData logout_door = IconData(0xe929, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData protection = IconData(0xe92d, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData shield_half = IconData(0xe92c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData shield = IconData(0xe92b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData locked = IconData(0xe92a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

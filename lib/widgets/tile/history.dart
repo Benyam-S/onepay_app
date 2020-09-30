@@ -27,7 +27,7 @@ class _HistoryTileState extends State<HistoryTile>
   String _collapsedHistoryTimeStamp;
   String _collapsedHistoryDesc;
   Color _cardColor;
-  Color _unSeenColor = Color.fromRGBO(4, 148, 255, 0.05);
+  Color _unSeenColor = Color.fromRGBO(202, 240, 248, 1);
 
   Widget _detailsWidget;
   Widget _detail1;

@@ -12,8 +12,9 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
-import 'package:onepay_app/pages/authorized/receive.dart';
+import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/pages/authorized/receive/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
+import 'package:onepay_app/pages/authorized/settings/settings.dart';
 import 'package:onepay_app/pages/authorized/wallet/wallet.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
@@ -29,8 +30,8 @@ class Home extends StatefulWidget {
 }
 
 class _Home extends State<Home> {
-  int _currentIndex = 3;
-  String _appBarTitle = "";
+  int _currentIndex = 4;
+  Widget _appBar;
   List<Widget> _listOfSections;
   PageStorageBucket _bucket = PageStorageBucket();
   bool _showWalletBadge = false;
@@ -242,9 +243,7 @@ class _Home extends State<Home> {
       Send(),
       Receive(),
       WalletView(_unseenHistoryStreamController),
-      Container(
-        key: PageStorageKey("settings"),
-      )
+      Settings(),
     ];
 
     _unseenHistoryStream = _unseenHistoryStreamController.stream;
@@ -267,24 +266,29 @@ class _Home extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    double elevation;
-
     switch (_currentIndex) {
       case 0:
-        _appBarTitle = "OnePay";
-        elevation = 0;
+        _appBar = AppBar(
+          title: Text("OnePay"),
+          elevation: 0,
+        );
         break;
       case 1:
-        _appBarTitle = "Send";
-        elevation = null;
+        _appBar = AppBar(
+          title: Text("Send"),
+        );
         break;
       case 2:
-        _appBarTitle = "Receive";
-        elevation = 0;
+        _appBar = AppBar(
+          title: Text("Receive"),
+          elevation: 0,
+        );
         break;
       case 3:
-        _appBarTitle = "Wallet";
-        elevation = 0;
+        _appBar = AppBar(
+          title: Text("Wallet"),
+          elevation: 0,
+        );
         if (_showWalletBadge) {
           _showWalletBadge = false;
           markLocalUserWallet(true);
@@ -292,18 +296,14 @@ class _Home extends State<Home> {
         }
         break;
       case 4:
-        elevation = 1;
-        _appBarTitle = "Settings";
+        _appBar = null;
         break;
     }
 
     _markHistoriesAsSeen();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_appBarTitle),
-        elevation: elevation,
-      ),
+      appBar: _appBar,
       body: PageStorage(
         child: _listOfSections[_currentIndex],
         bucket: _bucket,

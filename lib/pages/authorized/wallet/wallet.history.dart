@@ -399,14 +399,10 @@ class _WalletHistory extends State<WalletHistory> {
                     child: _histories.length == 0
                         ? Stack(
                             children: [
-                              ListView(), // This ListView is used for showing the refreshIndicator
-                              SizedBox(
-                                height: 0,
-                                width: 0,
-                                child: ListView(
-                                  controller: _scrollController,
-                                ),
-                              ),
+                              ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                controller: _scrollController,
+                              ), // This ListView is used for showing the refreshIndicator
                               Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -428,7 +424,8 @@ class _WalletHistory extends State<WalletHistory> {
                             ],
                           )
                         : ListView.builder(
-                            key: PageStorageKey(0),
+                            key: PageStorageKey('history'),
+                            physics: const AlwaysScrollableScrollPhysics(),
                             controller: _scrollController,
                             itemCount: _histories.length + 1,
                             itemBuilder: _listBuilder,
