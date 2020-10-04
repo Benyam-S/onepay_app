@@ -29,8 +29,8 @@ class RechargeDialog extends StatefulWidget {
 }
 
 class _RechargeDialog extends State<RechargeDialog> {
-  TextEditingController _amountController = TextEditingController();
-  FocusNode _amountFocusNode = FocusNode();
+  TextEditingController _amountController;
+  FocusNode _amountFocusNode;
   String _amount;
   String _amountErrorText;
 
@@ -137,6 +137,20 @@ class _RechargeDialog extends State<RechargeDialog> {
     showLoaderDialog(widget.context);
 
     await _makeRechargeRequest();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController();
+    _amountFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    _amountController.dispose();
   }
 
   @override

@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/wallet.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/formatter.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -27,8 +29,9 @@ enum Origin {
 class WalletPocket extends StatefulWidget {
   final Color textColor;
   final Color backgroundColor;
+  final bool isCustom;
 
-  WalletPocket({this.textColor, this.backgroundColor});
+  WalletPocket({this.textColor, this.backgroundColor, this.isCustom});
 
   _WalletPocket createState() => _WalletPocket();
 }
@@ -155,53 +158,118 @@ class _WalletPocket extends State<WalletPocket>
       decoration: BoxDecoration(
           color: widget.backgroundColor ??
               Theme.of(context).colorScheme.primaryVariant),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          StreamBuilder(
-            stream: OnePay.of(context).walletStream,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                double amount = (snapshot.data as Wallet)?.amount;
-                if (amount != null) {
-                  _amount =
-                      CurrencyInputFormatter().toCurrency(amount.toString());
-                }
-              }
-              return Text(
-                "ETB $_amount",
-                style: TextStyle(
-                    color: widget.textColor ?? Colors.white,
-                    fontSize: 30,
-                    fontFamily: 'Roboto'),
-              );
-            },
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          Text(
-            "Deposited",
-            style: TextStyle(
-                color: widget.textColor ?? Colors.white, fontSize: 20),
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          RotationTransition(
-            turns: _rotationController,
-            child: GestureDetector(
-              onTap: _refresh,
-              child: Icon(
-                Icons.refresh,
-                size: 26,
-                color: widget.textColor ?? Colors.white,
-              ),
+      child: widget.isCustom ?? false
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CustomIcons.onepay_logo_filled,
+                      color: Theme.of(context).primaryColor,
+                      size: 80,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        StreamBuilder(
+                          stream: OnePay.of(context).walletStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              double amount = (snapshot.data as Wallet)?.amount;
+                              if (amount != null) {
+                                _amount = CurrencyInputFormatter()
+                                    .toCurrency(amount.toString());
+                              }
+                            }
+                            return Text(
+                              "ETB $_amount",
+                              style: TextStyle(
+                                  color: widget.textColor ?? Colors.white,
+                                  fontSize: 25,
+                                  fontFamily: 'Roboto'),
+                              maxLines: 2,
+                            );
+                          },
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          "Deposited from linked accounts",
+                          style: TextStyle(
+                              color: widget.textColor ?? Colors.white,
+                              fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                RotationTransition(
+                  turns: _rotationController,
+                  child: GestureDetector(
+                    onTap: _refresh,
+                    child: Icon(
+                      Icons.refresh,
+                      size: 26,
+                      color: widget.textColor ?? Colors.white,
+                    ),
+                  ),
+                )
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                StreamBuilder(
+                  stream: OnePay.of(context).walletStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      double amount = (snapshot.data as Wallet)?.amount;
+                      if (amount != null) {
+                        _amount = CurrencyInputFormatter()
+                            .toCurrency(amount.toString());
+                      }
+                    }
+                    return Text(
+                      "ETB $_amount",
+                      style: TextStyle(
+                          color: widget.textColor ?? Colors.white,
+                          fontSize: 30,
+                          fontFamily: 'Roboto'),
+                    );
+                  },
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  "Deposited",
+                  style: TextStyle(
+                      color: widget.textColor ?? Colors.white, fontSize: 20),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                RotationTransition(
+                  turns: _rotationController,
+                  child: GestureDetector(
+                    onTap: _refresh,
+                    child: Icon(
+                      Icons.refresh,
+                      size: 26,
+                      color: widget.textColor ?? Colors.white,
+                    ),
+                  ),
+                )
+              ],
             ),
-          )
-        ],
-      ),
     );
   }
 }

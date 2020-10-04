@@ -16,6 +16,7 @@ class Recharge extends StatelessWidget {
             child: WalletPocket(
               textColor: Theme.of(context).iconTheme.color,
               backgroundColor: Colors.transparent,
+              isCustom: true,
             ),
           ),
           Expanded(

@@ -238,7 +238,7 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
                     ],
                   )
                 : ListView.builder(
-                    key: PageStorageKey('history'),
+                    key: PageStorageKey('recharge'),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: _linkedAccounts.length,
                     itemBuilder: (context, index) {
