@@ -8,7 +8,7 @@ import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 
 class HttpRequester {
-  String baseURI = "http://192.168.1.4:8080/api/v1";
+  String baseURI = "http://192.168.1.6:8080/api/v1";
   String requestURL = "";
 
   HttpRequester({@required String path}) {

@@ -30,6 +30,7 @@ dependencies:
   web_socket_channel: ^1.1.0
   connectivity: ^0.4.9+2
   intl: any
+  dotted_border: ^1.0.6
 
 dev_dependencies:
   flutter_test:

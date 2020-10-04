@@ -9,11 +9,11 @@ class SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: ContinuousRectangleBorder(),
-        margin: const EdgeInsets.only(bottom: 3.6),
+    return Card(
+      shape: ContinuousRectangleBorder(),
+      margin: const EdgeInsets.only(bottom: 3.6),
+      child: InkWell(
+        onTap: onTap,
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           child: Row(

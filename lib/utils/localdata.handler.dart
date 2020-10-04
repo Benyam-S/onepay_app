@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -142,7 +145,7 @@ Future<void> setLocalViewBys(Map<String, bool> viewBys) async {
   final prefs = await SharedPreferences.getInstance();
 
   // Resetting the view by settings
-  if (viewBys == null){
+  if (viewBys == null) {
     prefs.setBool("transfer_sent", true);
     prefs.setBool("transfer_received", true);
     prefs.setBool("payment_sent", true);
@@ -157,4 +160,27 @@ Future<void> setLocalViewBys(Map<String, bool> viewBys) async {
   prefs.setBool("payment_received", viewBys["payment_received"]);
   prefs.setBool("withdrawn", viewBys["withdrawn"]);
   prefs.setBool("recharged", viewBys["recharged"]);
+}
+
+// ---------------------------- Local Linked Account Management ----------------------------
+
+Future<List<LinkedAccount>> getLocalLinkedAccounts() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final jsonLinkedAccounts = prefs.getString("linked_accounts");
+  List<dynamic> jsonList = json.decode(jsonLinkedAccounts);
+  List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
+
+  jsonList.forEach((element) {
+    LinkedAccount linkedAccount = LinkedAccount.fromJson(element);
+    linkedAccounts.add(linkedAccount);
+  });
+
+  return linkedAccounts;
+}
+
+Future<void> setLocalLinkedAccounts(String jsonLinkedAccounts) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  prefs.setString("linked_accounts", jsonLinkedAccounts);
 }

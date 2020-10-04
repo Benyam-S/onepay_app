@@ -25,6 +25,11 @@ enum Origin {
 }
 
 class WalletPocket extends StatefulWidget {
+  final Color textColor;
+  final Color backgroundColor;
+
+  WalletPocket({this.textColor, this.backgroundColor});
+
   _WalletPocket createState() => _WalletPocket();
 }
 
@@ -147,8 +152,9 @@ class _WalletPocket extends State<WalletPocket>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration:
-          BoxDecoration(color: Theme.of(context).colorScheme.primaryVariant),
+      decoration: BoxDecoration(
+          color: widget.backgroundColor ??
+              Theme.of(context).colorScheme.primaryVariant),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -166,7 +172,9 @@ class _WalletPocket extends State<WalletPocket>
               return Text(
                 "ETB $_amount",
                 style: TextStyle(
-                    color: Colors.white, fontSize: 30, fontFamily: 'Roboto'),
+                    color: widget.textColor ?? Colors.white,
+                    fontSize: 30,
+                    fontFamily: 'Roboto'),
               );
             },
           ),
@@ -175,7 +183,8 @@ class _WalletPocket extends State<WalletPocket>
           ),
           Text(
             "Deposited",
-            style: TextStyle(color: Colors.white, fontSize: 20),
+            style: TextStyle(
+                color: widget.textColor ?? Colors.white, fontSize: 20),
           ),
           SizedBox(
             height: 10,
@@ -187,7 +196,7 @@ class _WalletPocket extends State<WalletPocket>
               child: Icon(
                 Icons.refresh,
                 size: 26,
-                color: Colors.white,
+                color: widget.textColor ?? Colors.white,
               ),
             ),
           )

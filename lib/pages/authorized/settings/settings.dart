@@ -46,10 +46,15 @@ class _Settings extends State<Settings> {
                         onTap: () => Navigator.of(context)
                             .pushNamed(AppRoutes.moneyVault),
                       ),
-                      SettingTile("Recharge", CustomIcons.museum),
+                      SettingTile(
+                        "Recharge",
+                        CustomIcons.alert,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.recharge),
+                      ),
                       SettingTile("Withdraw", CustomIcons.withdraw),
-                      SettingTile("Profile", CustomIcons.user),
                       SettingTile("Security & Privacy", CustomIcons.shield),
+                      SettingTile("Profile", CustomIcons.user_images),
                       SettingTile("Logout", CustomIcons.logout),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.3),

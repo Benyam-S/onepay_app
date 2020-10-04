@@ -12,7 +12,7 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
-import 'file:///C:/Users/Administrator/Desktop/Biny%20B.K/work%20shop/Flutter/onepay_app/lib/pages/authorized/receive/receive.dart';
+import 'package:onepay_app/pages/authorized/receive/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
 import 'package:onepay_app/pages/authorized/settings/settings.dart';
 import 'package:onepay_app/pages/authorized/wallet/wallet.dart';
@@ -169,7 +169,7 @@ class _Home extends State<Home> {
     _socketState = 1;
     try {
       channel = IOWebSocketChannel.connect(
-          'ws://192.168.1.4:8080/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
+          'ws://192.168.1.6:8080/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
       channel.stream.listen(_onNotificationReceived,
           onDone: _onSocketClosed, onError: _onSocketError);
     } catch (e) {

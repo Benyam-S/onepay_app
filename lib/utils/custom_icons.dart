@@ -72,4 +72,8 @@ class CustomIcons {
   static const IconData shield_half = IconData(0xe92c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData shield = IconData(0xe92b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData locked = IconData(0xe92a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData hamantash = IconData(0xe931, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData downward_triangle = IconData(0xe930, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData user_images = IconData(0xe92f, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData alert = IconData(0xe92e, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

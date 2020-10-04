@@ -4,4 +4,5 @@ class AppRoutes {
   static String forgotPasswordRoute = "/forgot_password";
   static String homeRoute = "/home";
   static String moneyVault = "/vault";
+  static String recharge = "/recharge";
 }

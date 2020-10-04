@@ -5,7 +5,8 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
-import 'package:onepay_app/pages/authorized/settings/money.vault.dart';
+import 'package:onepay_app/pages/authorized/settings/recharge/recharge.dart';
+import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
 import 'package:onepay_app/pages/authorized/home.dart';
 import 'package:onepay_app/pages/login.dart';
@@ -169,6 +170,7 @@ class _OnePay extends State<OnePay> {
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.homeRoute: (context) => Home(),
           AppRoutes.moneyVault: (context) => MoneyVault(),
+          AppRoutes.recharge: (context) => Recharge(),
         },
       ),
     );

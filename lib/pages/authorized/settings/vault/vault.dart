@@ -641,7 +641,6 @@ class _MoneyVault extends State<MoneyVault> {
     actionButtons.add(
       Builder(builder: (context) {
         return IconButton(
-          onPressed: () {},
           icon: PopupMenuButton(
             child: Icon(
               Icons.more_vert,
@@ -716,26 +715,17 @@ class _MoneyVault extends State<MoneyVault> {
     popUpItems.add(PopupMenuItem(
       value: "selectTransferTokens",
       child: Row(
+        textBaseline: TextBaseline.alphabetic,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
         children: [
           Text("Select All"),
-          SizedBox(width: 5),
-          Stack(
-            children: [
-              Icon(
-                CustomIcons.barcode,
-                size: 24,
-              ),
-              Container(
-                height: 24,
-                width: 24,
-                alignment: Alignment.center,
-                child: Text("S",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor)),
-              )
-            ],
+          SizedBox(width: 8),
+          Text(
+            "S",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor),
           ),
         ],
       ),
@@ -745,26 +735,17 @@ class _MoneyVault extends State<MoneyVault> {
     popUpItems.add(PopupMenuItem(
       value: "selectPaymentTokens",
       child: Row(
+        textBaseline: TextBaseline.alphabetic,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
         children: [
           Text("Select All"),
-          SizedBox(width: 5),
-          Stack(
-            children: [
-              Icon(
-                CustomIcons.barcode,
-                size: 24,
-              ),
-              Container(
-                height: 24,
-                width: 24,
-                alignment: Alignment.center,
-                child: Text("P",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor)),
-              )
-            ],
+          SizedBox(width: 8),
+          Text(
+            "P",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor),
           ),
         ],
       ),

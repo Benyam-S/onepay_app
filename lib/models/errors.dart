@@ -55,16 +55,25 @@ const ExpiredMoneyTokenErrorB = "money token has passed expiration date";
 /// InvalidMethodErrorB is a constant that holds invalid method used error of the backend
 const InvalidMethodErrorB = "invalid method, code not found";
 
+/// LinkedAccountNotFoundB is a constant that holds linked account not found error of the backend
+const LinkedAccountNotFoundB = "linked account not found";
+
+/// LinkedAccountInsufficientBalanceB is a constant that holds linked account with insufficient balance error of the backend
+const LinkedAccountInsufficientBalanceB =
+    "insufficient balance, please recharge your linked account";
+
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Errors ++++++++++++++++++++++++++++++++++++++++++++++
 
 /// TransactionBaseLimitError is a constant that holds transaction base limit error
 const TransactionBaseLimitError = "amount is less than transaction base limit";
 
 /// DailyTransactionLimitSendError is a constant that holds daily transaction limit for send error
-const DailyTransactionLimitSendError = "you has exceeded daily transaction limit";
+const DailyTransactionLimitSendError =
+    "you has exceeded daily transaction limit";
 
 /// DailyTransactionLimitPaymentError is a constant that holds daily transaction limit for payment error
-const DailyTransactionLimitPaymentError = "amount has exceeded daily transaction limit";
+const DailyTransactionLimitPaymentError =
+    "amount has exceeded daily transaction limit";
 
 /// InsufficientBalanceError is a constant that holds insufficient balance error
 const InsufficientBalanceError =
@@ -132,3 +141,10 @@ const ExpiredMoneyTokenError = "money token has passed expiration date";
 
 /// InvalidMethodError is a constant that holds invalid method used error
 const InvalidMethodError = "invalid method, code not found";
+
+/// LinkedAccountNotFound is a constant that holds linked account not found error
+const LinkedAccountNotFound = "invalid linked account used";
+
+/// LinkedAccountInsufficientBalance is a constant that holds linked account with insufficient balance error
+const LinkedAccountInsufficientBalance =
+    "insufficient balance, \nplease recharge your linked account";
