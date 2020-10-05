@@ -52,7 +52,12 @@ class _Settings extends State<Settings> {
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.recharge),
                       ),
-                      SettingTile("Withdraw", CustomIcons.withdraw),
+                      SettingTile(
+                        "Withdraw",
+                        CustomIcons.withdraw,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.withdraw),
+                      ),
                       SettingTile("Security & Privacy", CustomIcons.shield),
                       SettingTile("Profile", CustomIcons.user_images),
                       SettingTile("Logout", CustomIcons.logout),

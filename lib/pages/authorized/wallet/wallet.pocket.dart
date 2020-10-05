@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
@@ -29,9 +28,11 @@ enum Origin {
 class WalletPocket extends StatefulWidget {
   final Color textColor;
   final Color backgroundColor;
+  final Color iconColor;
   final bool isCustom;
 
-  WalletPocket({this.textColor, this.backgroundColor, this.isCustom});
+  WalletPocket(
+      {this.textColor, this.backgroundColor, this.iconColor, this.isCustom});
 
   _WalletPocket createState() => _WalletPocket();
 }
@@ -168,7 +169,7 @@ class _WalletPocket extends State<WalletPocket>
                   children: [
                     Icon(
                       CustomIcons.onepay_logo_filled,
-                      color: Theme.of(context).primaryColor,
+                      color: widget.iconColor ?? Theme.of(context).primaryColor,
                       size: 80,
                     ),
                     Column(

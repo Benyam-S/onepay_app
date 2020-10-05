@@ -3,6 +3,9 @@
 /// TransactionBaseLimitErrorB is a constant that holds transaction base limit error of the backend
 const TransactionBaseLimitErrorB = "amount is less than transaction base limit";
 
+/// WithdrawBaseLimitErrorB is a constant that holds withdraw base limit error of the backend
+const WithdrawBaseLimitErrorB = "amount is less than the withdraw base limit";
+
 /// DailyTransactionLimitErrorB is a constant that holds daily transaction limit error of the backend
 const DailyTransactionLimitErrorB = "user has exceeded daily transaction limit";
 
@@ -66,6 +69,9 @@ const LinkedAccountInsufficientBalanceB =
 
 /// TransactionBaseLimitError is a constant that holds transaction base limit error
 const TransactionBaseLimitError = "amount is less than transaction base limit";
+
+/// WithdrawBaseLimitError is a constant that holds withdraw base limit error
+const WithdrawBaseLimitError = "amount is less than the withdraw base limit";
 
 /// DailyTransactionLimitSendError is a constant that holds daily transaction limit for send error
 const DailyTransactionLimitSendError =

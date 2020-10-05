@@ -7,6 +7,7 @@ import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/settings/recharge/recharge.dart';
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
+import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
 import 'package:onepay_app/pages/authorized/home.dart';
 import 'package:onepay_app/pages/login.dart';
@@ -171,6 +172,7 @@ class _OnePay extends State<OnePay> {
           AppRoutes.homeRoute: (context) => Home(),
           AppRoutes.moneyVault: (context) => MoneyVault(),
           AppRoutes.recharge: (context) => Recharge(),
+          AppRoutes.withdraw: (context) => Withdraw(),
         },
       ),
     );

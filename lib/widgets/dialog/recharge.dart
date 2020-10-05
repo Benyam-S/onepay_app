@@ -34,6 +34,14 @@ class _RechargeDialog extends State<RechargeDialog> {
   String _amount;
   String _amountErrorText;
 
+  String _autoValidateAmount(String amount) {
+    if (amount.isEmpty) {
+      return null;
+    }
+
+    return _validateAmount(amount);
+  }
+
   String _validateAmount(String amount) {
     try {
       // Removing comma before parsing
@@ -74,7 +82,7 @@ class _RechargeDialog extends State<RechargeDialog> {
           break;
       }
 
-      showInternalError(widget.context, error);
+      showInternalError(widget.context, ReCase(error).sentenceCase);
     } else if (response.statusCode == HttpStatus.internalServerError) {
       showServerError(widget.context, FailedOperationError);
     } else {
@@ -132,6 +140,11 @@ class _RechargeDialog extends State<RechargeDialog> {
       });
       return;
     }
+
+    // Removing error before pop
+    setState(() {
+      _amountErrorText = null;
+    });
 
     Navigator.of(context).pop();
     showLoaderDialog(widget.context);
@@ -199,20 +212,23 @@ class _RechargeDialog extends State<RechargeDialog> {
             style: TextStyle(fontSize: 14),
           ),
           FractionallySizedBox(
-            widthFactor: 0.75,
+            widthFactor: 0.8,
             child: TextFormField(
               focusNode: _amountFocusNode,
               controller: _amountController,
               inputFormatters: [
                 CurrencyInputFormatter(),
               ],
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, letterSpacing: 3),
               autofocus: true,
+              autovalidate: true,
+              validator: _autoValidateAmount,
               keyboardType: TextInputType.number,
               enableInteractiveSelection: false,
               decoration: InputDecoration(
                 border: DashedInputBorder(),
-                suffixIconConstraints: BoxConstraints(minWidth: 50),
+                suffixIconConstraints: BoxConstraints(minWidth: 45),
                 suffixIcon: Text(
                   "ETB",
                   style: TextStyle(
