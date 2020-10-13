@@ -65,6 +65,12 @@ const LinkedAccountNotFoundB = "linked account not found";
 const LinkedAccountInsufficientBalanceB =
     "insufficient balance, please recharge your linked account";
 
+/// AccountProviderNotFoundB is a constant that holds account provider not found error of the backend
+const AccountProviderNotFoundB = "account provider not found";
+
+/// AccountAlreadyLinkedErrorB is a constant that holds account has already been linked error of the backend
+const AccountAlreadyLinkedErrorB = "account has already been linked to other onepay account";
+
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Errors ++++++++++++++++++++++++++++++++++++++++++++++
 
 /// TransactionBaseLimitError is a constant that holds transaction base limit error
@@ -154,3 +160,9 @@ const LinkedAccountNotFound = "invalid linked account used";
 /// LinkedAccountInsufficientBalance is a constant that holds linked account with insufficient balance error
 const LinkedAccountInsufficientBalance =
     "insufficient balance, \nplease recharge your linked account";
+
+/// AccountProviderNotFound is a constant that holds account provider not found error
+const AccountProviderNotFound = "invalid provider, please refresh your list";
+
+/// AccountAlreadyLinkedError is a constant that holds account has already been linked error
+const AccountAlreadyLinkedError = "account has already been linked";

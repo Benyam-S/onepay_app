@@ -5,6 +5,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/account.info.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
@@ -62,21 +63,21 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
     Map<String, dynamic> jsonData = json.decode(response.body);
     AccountInfo accountInfo = AccountInfo.fromJson(jsonData);
     for (var i = 0; i < _linkedAccounts.length; i++) {
-      if (_linkedAccounts[i].accountProvider == accountInfo.accountProvider &&
+      if (_linkedAccounts[i].accountProviderID ==
+              accountInfo.accountProviderID &&
           _linkedAccounts[i].accountID == accountInfo.accountID) {
         _linkedAccounts[i].amount = accountInfo.amount;
       }
     }
 
+    OnePay.of(context).appStateController.add(_linkedAccounts);
     setState(() {});
-
-    //  Saving to the local storage
     setLocalLinkedAccounts(json.encode(_linkedAccounts));
   }
 
   Future<Response> _makeGetAccountInfoRequest(String linkedAccountID) async {
     var requester =
-        HttpRequester(path: "/oauth/user/linkedaccount/$linkedAccountID.json");
+        HttpRequester(path: "/oauth/user/linkedaccount/accountinfo/$linkedAccountID.json");
     return requester.get(context);
   }
 
@@ -112,12 +113,11 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
 
     // Sorting linked accounts
     _linkedAccounts.sort((LinkedAccount a, LinkedAccount b) {
-      return a.accountProvider.compareTo(b.accountProvider);
+      return a.accountProviderName.compareTo(b.accountProviderName);
     });
 
+    OnePay.of(context).appStateController.add(_linkedAccounts);
     setState(() {});
-
-    //  Saving to the local storage
     setLocalLinkedAccounts(json.encode(_linkedAccounts));
 
     //  Getting linked accounts info
@@ -148,7 +148,9 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
   }
 
   void _initLinkedAccounts() async {
-    _linkedAccounts = await getLocalLinkedAccounts();
+    _linkedAccounts = OnePay.of(context).linkedAccounts.length == 0
+        ? await getLocalLinkedAccounts()
+        : OnePay.of(context).linkedAccounts;
     setState(() {});
   }
 
@@ -157,13 +159,13 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
     super.initState();
 
     _connectivityChecker();
-    _initLinkedAccounts();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _initLinkedAccounts();
     _getLinkedAccounts();
   }
 

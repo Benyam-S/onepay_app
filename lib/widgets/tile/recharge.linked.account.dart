@@ -58,8 +58,8 @@ class _RechargeLinkedAccountTile extends State<RechargeLinkedAccountTile> {
               width: 50,
               alignment: Alignment.center,
               child: Text(
-                widget.linkedAccount.accountProvider.length > 1
-                    ? widget.linkedAccount.accountProvider[0]
+                widget.linkedAccount.accountProviderName.length > 1
+                    ? widget.linkedAccount.accountProviderName[0]
                     : "",
                 style: TextStyle(
                   fontSize: 20,
@@ -77,7 +77,7 @@ class _RechargeLinkedAccountTile extends State<RechargeLinkedAccountTile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.linkedAccount.accountProvider,
+                    widget.linkedAccount.accountProviderName,
                     style: TextStyle(fontSize: 14),
                   ),
                   SizedBox(height: 5),

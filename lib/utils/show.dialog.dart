@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/money.token.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
 import 'package:onepay_app/widgets/dialog/amount.verification.dart';
+import 'package:onepay_app/widgets/dialog/linked.account.remove.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
 import 'package:onepay_app/widgets/dialog/money.token.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
@@ -91,5 +93,14 @@ void showMoneyTokenDialog(
   showDialog(
     context: context,
     child: MoneyTokenDialog(context, moneyToken, removeMoneyToken),
+  );
+}
+
+void showRemoveLinkedAccountDialog(
+    BuildContext context, LinkedAccount linkedAccount, Function callback) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    child: RemoveLinkedAccountDialog(linkedAccount, callback),
   );
 }

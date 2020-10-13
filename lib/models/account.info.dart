@@ -1,14 +1,14 @@
 class AccountInfo {
   String accountID;
-  String accountProvider;
+  String accountProviderID;
   double amount;
 
-  AccountInfo(this.accountID, this.accountProvider, this.amount);
+  AccountInfo(this.accountID, this.accountProviderID, this.amount);
 
   factory AccountInfo.fromJson(Map<String, dynamic> json) {
     return AccountInfo(
       json["AccountID"] as String,
-      json["AccountProvider"] as String,
+      json["AccountProviderID"] as String,
       (json['Amount'] as num)?.toDouble(),
     );
   }
@@ -16,7 +16,7 @@ class AccountInfo {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       "AccountID": accountID,
-      "AccountProvider": accountProvider,
+      "AccountProviderID": accountProviderID,
       "Amount": amount,
     };
   }

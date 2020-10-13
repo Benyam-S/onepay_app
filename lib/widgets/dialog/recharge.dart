@@ -63,7 +63,7 @@ class _RechargeDialog extends State<RechargeDialog> {
 
   Future<void> _onRechargeSuccess(Response response) async {
     showSuccessDialog(widget.context,
-        "You have successfully recharged you OnePay account with ${CurrencyInputFormatter().toCurrency(_amount)} ETB");
+        "You have successfully recharged your OnePay account with ${CurrencyInputFormatter().toCurrency(_amount)} ETB");
 
     await widget.refreshAccountInfo(widget.linkedAccount);
   }
@@ -93,7 +93,7 @@ class _RechargeDialog extends State<RechargeDialog> {
   Future<void> _makeRechargeRequest() async {
     var requester = HttpRequester(path: "/oauth/user/wallet/recharge.json");
     try {
-      var response = await requester.put(context, {
+      var response = await requester.put(widget.context, {
         "linked_account": widget.linkedAccount.id,
         "amount": CurrencyInputFormatter().toDouble(_amount),
       });
@@ -126,27 +126,30 @@ class _RechargeDialog extends State<RechargeDialog> {
   }
 
   void _recharge() async {
-    _amount = _amountController.text;
+    // If this method is called after DEValidation skip
+    if (mounted) {
+      _amount = _amountController.text;
 
-    if (_amount.isEmpty) {
-      FocusScope.of(context).requestFocus(_amountFocusNode);
-      return;
-    }
+      if (_amount.isEmpty) {
+        FocusScope.of(context).requestFocus(_amountFocusNode);
+        return;
+      }
 
-    var amountError = _validateAmount(_amount);
-    if (amountError != null) {
+      var amountError = _validateAmount(_amount);
+      if (amountError != null) {
+        setState(() {
+          _amountErrorText = amountError;
+        });
+        return;
+      }
+
       setState(() {
-        _amountErrorText = amountError;
+        _amountErrorText = null;
       });
-      return;
+
+      Navigator.of(context).pop();
     }
 
-    // Removing error before pop
-    setState(() {
-      _amountErrorText = null;
-    });
-
-    Navigator.of(context).pop();
     showLoaderDialog(widget.context);
 
     await _makeRechargeRequest();
@@ -189,7 +192,7 @@ class _RechargeDialog extends State<RechargeDialog> {
           ),
           SizedBox(height: 20),
           Text(
-            widget.linkedAccount.accountProvider,
+            widget.linkedAccount.accountProviderName,
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),

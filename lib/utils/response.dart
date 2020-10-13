@@ -21,12 +21,14 @@ bool isResponseAuthorized(BuildContext context, http.Response response,
           AppRoutes.logInRoute, (Route<dynamic> route) => false);
       return false;
     case HttpStatus.badRequest:
-      var jsonData = json.decode(response.body);
-      if (jsonData["error"] ==
-          "access token has exceeded it daily expiration time") {
-        showDEValidationDialog(context, currentCallback);
-        return false;
-      }
+      try {
+        var jsonData = json.decode(response.body);
+        if (jsonData["error"] ==
+            "access token has exceeded it daily expiration time") {
+          showDEValidationDialog(context, currentCallback);
+          return false;
+        }
+      } catch (e) {}
   }
 
   return true;

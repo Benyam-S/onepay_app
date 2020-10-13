@@ -39,7 +39,12 @@ class _Settings extends State<Settings> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     [
-                      SettingTile("Manage Accounts", CustomIcons.debit_card),
+                      SettingTile(
+                        "Manage Accounts",
+                        CustomIcons.debit_card,
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.accounts),
+                      ),
                       SettingTile(
                         "Money Vault",
                         CustomIcons.vault_big,

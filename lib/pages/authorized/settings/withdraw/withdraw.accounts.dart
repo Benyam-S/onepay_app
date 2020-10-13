@@ -6,6 +6,7 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
@@ -233,12 +234,11 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
 
     // Sorting linked accounts
     _linkedAccounts.sort((LinkedAccount a, LinkedAccount b) {
-      return a.accountProvider.compareTo(b.accountProvider);
+      return a.accountProviderName.compareTo(b.accountProviderName);
     });
 
+    OnePay.of(context).appStateController.add(_linkedAccounts);
     setState(() {});
-
-    //  Saving to the local storage
     setLocalLinkedAccounts(json.encode(_linkedAccounts));
   }
 
@@ -274,7 +274,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
     });
   }
 
-  void _connectivityChecker() {
+  void _connectivityListener() {
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       if (result == ConnectivityResult.mobile ||
           result == ConnectivityResult.wifi) {
@@ -284,7 +284,9 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
   }
 
   void _initLinkedAccounts() async {
-    _linkedAccounts = await getLocalLinkedAccounts();
+    _linkedAccounts =  OnePay.of(context).linkedAccounts.length == 0
+        ? await getLocalLinkedAccounts()
+        : OnePay.of(context).linkedAccounts;
     setState(() {});
   }
 
@@ -309,14 +311,14 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
       }
     });
 
-    _connectivityChecker();
-    _initLinkedAccounts();
+    _connectivityListener();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _initLinkedAccounts();
     _getLinkedAccounts();
   }
 
@@ -355,7 +357,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      linkedAccount.accountProvider,
+                                      linkedAccount.accountProviderName,
                                       style: TextStyle(fontSize: 13),
                                     ),
                                     Text(linkedAccount.accountID,

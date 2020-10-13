@@ -6,4 +6,6 @@ class AppRoutes {
   static String moneyVault = "/vault";
   static String recharge = "/recharge";
   static String withdraw = "/withdraw";
+  static String accounts = "/accounts";
+  static String addAccount = "/add_account";
 }

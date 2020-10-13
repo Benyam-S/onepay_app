@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
@@ -168,7 +169,7 @@ Future<List<LinkedAccount>> getLocalLinkedAccounts() async {
   final prefs = await SharedPreferences.getInstance();
 
   final jsonLinkedAccounts = prefs.getString("linked_accounts");
-  List<dynamic> jsonList = json.decode(jsonLinkedAccounts);
+  List<dynamic> jsonList = jsonLinkedAccounts == null ? [] : json.decode(jsonLinkedAccounts);
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
 
   jsonList.forEach((element) {
@@ -183,4 +184,27 @@ Future<void> setLocalLinkedAccounts(String jsonLinkedAccounts) async {
   final prefs = await SharedPreferences.getInstance();
 
   prefs.setString("linked_accounts", jsonLinkedAccounts);
+}
+
+// ---------------------------- Local Account Provider Management ----------------------------
+
+Future<List<AccountProvider>> getLocalAccountProviders() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final jsonAccountProviders = prefs.getString("account_providers");
+  List<dynamic> jsonList = jsonAccountProviders == null ? [] : json.decode(jsonAccountProviders);
+  List<AccountProvider> accountProviders = List<AccountProvider>();
+
+  jsonList.forEach((element) {
+    AccountProvider accountProvider = AccountProvider.fromJson(element);
+    accountProviders.add(accountProvider);
+  });
+
+  return accountProviders;
+}
+
+Future<void> setLocalAccountProviders(String jsonAccountProviders) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  prefs.setString("account_providers", jsonAccountProviders);
 }

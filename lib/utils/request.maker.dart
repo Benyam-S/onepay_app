@@ -83,4 +83,35 @@ class HttpRequester {
         )
         .timeout(Duration(minutes: 1));
   }
+
+  Future<http.Response> delete(
+      BuildContext context, Map<String, dynamic> body) async {
+    AccessToken accessToken =
+        OnePay.of(context).accessToken ?? await getLocalAccessToken();
+
+    if (accessToken == null) {
+      throw AccessTokenNotFoundException();
+    }
+
+    String query = "?";
+    int index = 0;
+    body.forEach((key, value) {
+      if (index > 0) {
+        query += "&";
+      }
+      query += "$key=$value";
+      index++;
+    });
+
+    String basicAuth = 'Basic ' +
+        base64Encode(
+            utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
+    return await http.delete(
+      requestURL + query,
+      headers: <String, String>{
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'authorization': basicAuth,
+      },
+    ).timeout(Duration(minutes: 1));
+  }
 }
