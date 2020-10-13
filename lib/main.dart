@@ -269,7 +269,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Home(),
+          AppRoutes.logInRoute: (context) => Login(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.homeRoute: (context) => Home(),

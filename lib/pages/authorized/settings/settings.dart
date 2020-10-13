@@ -5,6 +5,7 @@ import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/widgets/sliver/setting.dart';
 import 'package:onepay_app/widgets/tile/setting.dart';
 
@@ -42,8 +43,8 @@ class _Settings extends State<Settings> {
                       SettingTile(
                         "Manage Accounts",
                         CustomIcons.debit_card,
-                        onTap: () => Navigator.of(context)
-                            .pushNamed(AppRoutes.accounts),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.accounts),
                       ),
                       SettingTile(
                         "Money Vault",
@@ -63,9 +64,14 @@ class _Settings extends State<Settings> {
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.withdraw),
                       ),
-                      SettingTile("Security & Privacy", CustomIcons.shield),
-                      SettingTile("Profile", CustomIcons.user_images),
-                      SettingTile("Logout", CustomIcons.logout),
+                      SettingTile("Profile", CustomIcons.profile_1),
+                      SettingTile(
+                          "Security & Privacy", CustomIcons.shield_half),
+                      SettingTile(
+                        "Logout",
+                        CustomIcons.powerOff,
+                        onTap: () => showLogOutDialog(context),
+                      ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.3),
                     ],

@@ -76,4 +76,12 @@ class CustomIcons {
   static const IconData downward_triangle = IconData(0xe930, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData user_images = IconData(0xe92f, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData alert = IconData(0xe92e, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData powerOff = IconData(0xe936, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData standBy = IconData(0xe932, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_1 = IconData(0xe938, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_2 = IconData(0xe937, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_3 = IconData(0xe939, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_settings_1 = IconData(0xe93b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_settings_2 = IconData(0xe93a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData profile_settings_3 = IconData(0xe93c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

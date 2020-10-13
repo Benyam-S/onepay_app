@@ -41,6 +41,8 @@ class _Home extends State<Home> {
   int _profileState = 0;
   int _socketState = 0;
   IOWebSocketChannel channel;
+  StreamSubscription _pollingStreamSubscription;
+  StreamSubscription _connectivitySubscription;
 
   Future<void> _getUserProfile() async {
     // This is used to stop any request from starting if a request has already been sent
@@ -204,10 +206,12 @@ class _Home extends State<Home> {
     _socketState = 0;
   }
 
-  void _connectivityChecker() {
+  void _connectivityListener() {
     // Since this listener will be fired every time the connection is changed and on restart,
     // it would be the best place to make background fetch
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
       if (result == ConnectivityResult.mobile ||
           result == ConnectivityResult.wifi) {
         //  Fetching data on background
@@ -219,9 +223,11 @@ class _Home extends State<Home> {
     });
   }
 
-  // continuousPolling is used for making sure the connection is still alive if the connection is down for what ever reasons
+  // continuousPolling is used for making sure the connection is still alive
+  // if the connection is down for what ever reasons
   void _continuousPolling() {
-    Stream.periodic(Duration(minutes: 1)).listen((event) {
+    _pollingStreamSubscription =
+        Stream.periodic(Duration(minutes: 1)).listen((event) {
       _startSocketConn();
     });
   }
@@ -253,14 +259,25 @@ class _Home extends State<Home> {
       }
     });
 
-    _connectivityChecker();
+    _connectivityListener();
     _continuousPolling();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    _getUserProfile();
+    _getUserWallet();
+    _startSocketConn();
   }
 
   @override
   void dispose() {
     _unseenHistoryStreamController.close();
     channel.sink.close();
+    _pollingStreamSubscription.cancel();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 

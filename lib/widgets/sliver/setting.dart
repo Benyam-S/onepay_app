@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
+import 'package:recase/recase.dart';
 
 class SettingAppBar extends SliverPersistentHeaderDelegate {
   final Future<User> user;
@@ -44,9 +45,9 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
               String lastName = "";
               String id = "";
               if (snapshot.hasData) {
-                firstName = snapshot.data.firstName;
-                lastName = snapshot.data.lastName;
-                id = snapshot.data.userID;
+                firstName = ReCase(snapshot.data.firstName).sentenceCase;
+                lastName = ReCase(snapshot.data.lastName).sentenceCase;
+                id = snapshot.data.userID.toUpperCase();
               }
 
               return Container(

@@ -6,6 +6,7 @@ import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
 import 'package:onepay_app/widgets/dialog/amount.verification.dart';
 import 'package:onepay_app/widgets/dialog/linked.account.remove.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
+import 'package:onepay_app/widgets/dialog/logout.dart';
 import 'package:onepay_app/widgets/dialog/money.token.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
 import 'package:onepay_app/widgets/dialog/receiver.verification.dart';
@@ -102,5 +103,13 @@ void showRemoveLinkedAccountDialog(
     context: context,
     barrierDismissible: false,
     child: RemoveLinkedAccountDialog(linkedAccount, callback),
+  );
+}
+
+void showLogOutDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    child: LogoutDialog(),
   );
 }

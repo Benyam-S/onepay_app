@@ -284,7 +284,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
   }
 
   void _initLinkedAccounts() async {
-    _linkedAccounts =  OnePay.of(context).linkedAccounts.length == 0
+    _linkedAccounts = OnePay.of(context).linkedAccounts.length == 0
         ? await getLocalLinkedAccounts()
         : OnePay.of(context).linkedAccounts;
     setState(() {});
@@ -333,10 +333,18 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 25, 20, 15),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 5),
+              child: Text(
+                "Please select the preferred linked account to withdraw an amount you entered.",
+                style: Theme.of(context).textTheme.headline3,
+              ),
+            ),
+            SizedBox(height: 15),
             InkWell(
               onLongPress: _refresh,
               child: Stack(

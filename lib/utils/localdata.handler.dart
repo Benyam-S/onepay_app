@@ -153,6 +153,7 @@ Future<void> setLocalViewBys(Map<String, bool> viewBys) async {
     prefs.setBool("payment_received", true);
     prefs.setBool("withdrawn", true);
     prefs.setBool("recharged", true);
+    return;
   }
 
   prefs.setBool("transfer_sent", viewBys["transfer_sent"]);
