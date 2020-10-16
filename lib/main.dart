@@ -8,6 +8,10 @@ import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/add.account.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/manage.accounts.dart';
+import 'package:onepay_app/pages/authorized/settings/profile/profile.dart';
+import 'package:onepay_app/pages/authorized/settings/profile/update.basic.info.dart';
+import 'package:onepay_app/pages/authorized/settings/profile/update.email.dart';
+import 'package:onepay_app/pages/authorized/settings/profile/update.phone.number.dart';
 import 'package:onepay_app/pages/authorized/settings/recharge/recharge.dart';
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
@@ -269,7 +273,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Login(),
+          AppRoutes.logInRoute: (context) => Home(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.homeRoute: (context) => Home(),
@@ -278,6 +282,10 @@ class _OnePay extends State<OnePay> {
           AppRoutes.withdraw: (context) => Withdraw(),
           AppRoutes.accounts: (context) => ManageAccounts(),
           AppRoutes.addAccount: (context) => AddLinkedAccount(),
+          AppRoutes.profile: (context) => Profile(),
+          AppRoutes.updateBasicInfo: (context) => UpdateBasicInfo(),
+          AppRoutes.updateEmail: (context) => UpdateEmail(),
+          AppRoutes.updatePhoneNumber: (context) => UpdatePhoneNumber(),
         },
       ),
     );

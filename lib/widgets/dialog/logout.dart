@@ -14,23 +14,27 @@ class LogoutDialog extends StatelessWidget {
             "Are you sure you want to log out of this account?",
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 30),
           Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              FlatButton(
+              CupertinoButton(
                 child: Text(
                   "Log Out",
-                  style: TextStyle(color: Theme.of(context).primaryColor),
+                  style: TextStyle(fontSize: 14),
                 ),
+                minSize: 0,
+                padding: EdgeInsets.zero,
                 onPressed: () => logout(context),
               ),
-              FlatButton(
+              CupertinoButton(
                 child: Text(
                   "Cancel",
-                  style: TextStyle(color: Theme.of(context).primaryColor),
+                  style: TextStyle(fontSize: 14),
                 ),
+                minSize: 0,
+                padding: EdgeInsets.zero,
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],

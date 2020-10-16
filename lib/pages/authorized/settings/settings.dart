@@ -19,6 +19,19 @@ class _Settings extends State<Settings> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    OnePay.of(context).userStream.listen((user) {
+      if (mounted) {
+        setState(() {
+          // _user = user as User;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.primaryVariant,
@@ -64,7 +77,12 @@ class _Settings extends State<Settings> {
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.withdraw),
                       ),
-                      SettingTile("Profile", CustomIcons.profile_1),
+                      SettingTile(
+                        "Profile",
+                        CustomIcons.profile_1,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.profile),
+                      ),
                       SettingTile(
                           "Security & Privacy", CustomIcons.shield_half),
                       SettingTile(

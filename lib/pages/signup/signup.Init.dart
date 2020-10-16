@@ -122,7 +122,10 @@ class _SignUpInit extends State<SignUpInit> {
   }
 
   String _transformPhoneNumber(String phoneNumber) {
-    if (phoneNumber.startsWith("0") && phoneNumber.length == 10) {
+    // Meaning local phone number
+    if (phoneNumber.startsWith("0") &&
+        phoneNumber.length == 10 &&
+        _areaCode == "+251") {
       phoneNumber = phoneNumber;
     } else {
       phoneNumber = _areaCode + phoneNumber;
@@ -439,7 +442,7 @@ class _SignUpInit extends State<SignUpInit> {
                   decoration: InputDecoration(
                     prefixIcon: CountryCodePicker(
                       textStyle: TextStyle(fontSize: 11),
-                      initialSelection: '+251',
+                      initialSelection: _areaCode,
                       favorite: ['+251'],
                       onChanged: (CountryCode countryCode) =>
                           _areaCode = countryCode.dialCode,

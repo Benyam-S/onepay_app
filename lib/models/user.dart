@@ -19,4 +19,9 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserToJson(this);
+
+  User copy() {
+    return User(this.userID, this.firstName, this.lastName, this.email,
+        this.phoneNumber, this.profilePic, this.createdAt, this.updatedAt);
+  }
 }

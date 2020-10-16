@@ -181,6 +181,13 @@ class _Home extends State<Home> {
 
   void _onNotificationReceived(response) {
     var jsonMap = json.decode(response);
+    if (jsonMap["Type"] == "user") {
+      var user = User.fromJson(jsonMap["Body"]);
+
+      OnePay.of(context).appStateController.add(user);
+      setLocalUserProfile(user);
+    }
+
     if (jsonMap["Type"] == "wallet") {
       var wallet = Wallet.fromJson(jsonMap["Body"]);
 
@@ -191,6 +198,7 @@ class _Home extends State<Home> {
       OnePay.of(context).appStateController.add(wallet);
       setLocalUserWallet(wallet);
     }
+
     if (jsonMap["Type"] == "history") {
       var history = History.fromJson(jsonMap["Body"]);
 

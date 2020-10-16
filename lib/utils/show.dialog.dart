@@ -8,6 +8,7 @@ import 'package:onepay_app/widgets/dialog/linked.account.remove.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
 import 'package:onepay_app/widgets/dialog/logout.dart';
 import 'package:onepay_app/widgets/dialog/money.token.dart';
+import 'package:onepay_app/widgets/dialog/password.authorization.dart';
 import 'package:onepay_app/widgets/dialog/qrcode.dart';
 import 'package:onepay_app/widgets/dialog/receiver.verification.dart';
 import 'package:onepay_app/widgets/dialog/success.dart';
@@ -37,6 +38,15 @@ void showDEValidationDialog(BuildContext context, Function currentCallback) {
         child: child,
       );
     },
+  );
+}
+
+void showPasswordAuthorizationDialog(
+    BuildContext context, Function currentCallback) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    child: PasswordAuthorizationDialog(currentCallback),
   );
 }
 

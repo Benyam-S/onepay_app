@@ -8,4 +8,8 @@ class AppRoutes {
   static String withdraw = "/withdraw";
   static String accounts = "/accounts";
   static String addAccount = "/add_account";
+  static String profile = "/profile";
+  static String updateBasicInfo = "/update_basic_info";
+  static String updateEmail = "/update_email";
+  static String updatePhoneNumber = "/update_phone_number";
 }
