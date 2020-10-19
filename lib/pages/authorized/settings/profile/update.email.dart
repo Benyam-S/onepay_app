@@ -125,6 +125,10 @@ class _UpdateEmail extends State<UpdateEmail> {
     }
 
     _email = _emailController.text;
+    if (_email.isEmpty) {
+      FocusScope.of(context).requestFocus(_emailFocusNode);
+      return;
+    }
 
     // Checking similarity with the previous email address
     if (_email == _user?.email) {
@@ -132,12 +136,11 @@ class _UpdateEmail extends State<UpdateEmail> {
     }
 
     var emailError = _validateEmail(_email);
-
     if (emailError != null) {
+      FocusScope.of(context).requestFocus(_emailFocusNode);
       setState(() {
         _emailErrorText = emailError;
       });
-      FocusScope.of(context).requestFocus(_emailFocusNode);
       return;
     }
 

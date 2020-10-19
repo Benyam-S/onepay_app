@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
@@ -26,46 +27,15 @@ class _ForgotPassword extends State<ForgotPassword> {
 
   String _emailErrorText;
   String _phoneNumberErrorText;
+  String _phoneNumberHint = "*  *  *   *  *  *   *  *  *  *";
   String _areaCode = '+251';
+  String _countryCode = "ET";
 
   bool _loading = false;
   String _currentType = "email";
   bool _success = false;
-  String _phoneNumberHint = "9 * * * * * * * *";
 
-  @override
-  void initState() {
-    super.initState();
-
-    _emailFocusNode = FocusNode();
-    _phoneNumberFocusNode = FocusNode();
-    _buttonFocusNode = FocusNode();
-
-    _emailController = TextEditingController();
-    _phoneNumberController = TextEditingController();
-
-    _phoneNumberFocusNode.addListener(() {
-      if (_phoneNumberFocusNode.hasFocus) {
-        setState(() {
-          _phoneNumberHint = null;
-        });
-      } else {
-        setState(() {
-          _phoneNumberHint = "9 * * * * * * * *";
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    _emailController.dispose();
-    _phoneNumberController.dispose();
-  }
-
-  void switchType() {
+  void _switchType() {
     // Removing focus
     FocusScope.of(context).requestFocus(_buttonFocusNode);
 
@@ -80,7 +50,7 @@ class _ForgotPassword extends State<ForgotPassword> {
     }
   }
 
-  String validateEmail(String value) {
+  String _validateEmail(String value) {
     var exp = RegExp(
         r'^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
 
@@ -91,29 +61,28 @@ class _ForgotPassword extends State<ForgotPassword> {
     return null;
   }
 
-  String validatePhoneNumber(String value) {
-    // Means it is local phone number
-    if (value.startsWith("0") && value.length == 10) {
-      value = value;
-    } else {
-      value = _areaCode + value;
+  Future<String> _validatePhoneNumber(String value) async {
+    if (value.isEmpty) {
+      return ReCase(EmptyEntryError).sentenceCase;
     }
 
-    var exp = RegExp(r'^(\+\d{11,12})$|(0\d{9})$');
-
-    if (!exp.hasMatch(value)) {
-      return ReCase("invalid phone number used").sentenceCase;
+    try {
+      // Validating phone number
+      await FlutterLibphonenumber().parse(await _transformPhoneNumber(value));
+    } catch (e) {
+      return ReCase(InvalidPhoneNumberError).sentenceCase;
     }
 
     return null;
   }
 
-  String transformPhoneNumber(String phoneNumber) {
-    if (phoneNumber.startsWith("0") && phoneNumber.length == 10) {
-      phoneNumber = phoneNumber;
-    } else {
-      phoneNumber = _areaCode + phoneNumber;
-    }
+  Future<String> _transformPhoneNumber(String phoneNumber) async {
+    try {
+      Map<String, dynamic> parsed =
+          await FlutterLibphonenumber().parse(_areaCode + phoneNumber);
+      phoneNumber = _areaCode + parsed["national_number"];
+      return phoneNumber;
+    } catch (e) {}
 
     return phoneNumber;
   }
@@ -181,7 +150,7 @@ class _ForgotPassword extends State<ForgotPassword> {
       }, body: <String, String>{
         'method': _currentType == "phone" ? "phone_number" : "email",
         'identifier': _currentType == "phone"
-            ? transformPhoneNumber(identifier)
+            ? await _transformPhoneNumber(identifier)
             : identifier,
       });
 
@@ -230,7 +199,7 @@ class _ForgotPassword extends State<ForgotPassword> {
     }
 
     if (_currentType == "email") {
-      var emailError = validateEmail(identifier);
+      var emailError = _validateEmail(identifier);
       if (emailError != null) {
         setState(() {
           _emailErrorText = emailError;
@@ -238,7 +207,7 @@ class _ForgotPassword extends State<ForgotPassword> {
         return;
       }
     } else if (_currentType == "phone") {
-      var phoneNumberError = validatePhoneNumber(identifier);
+      var phoneNumberError = await _validatePhoneNumber(identifier);
       if (phoneNumberError != null) {
         setState(() {
           _phoneNumberErrorText = phoneNumberError;
@@ -257,11 +226,74 @@ class _ForgotPassword extends State<ForgotPassword> {
     await _makeRequest(context, identifier);
   }
 
+  String _getPhoneNumberHint() {
+    var selectedCountry = CountryManager().countries.firstWhere(
+        (element) =>
+            element.phoneCode == _areaCode.replaceAll(RegExp(r'[^\d]+'), ''),
+        orElse: () => null);
+
+    String hint = selectedCountry?.exampleNumberMobileNational ??
+        " *  *  *  *  *  *  *  *  *";
+    hint = hint
+        .replaceAll(RegExp(r'[\d]'), " * ")
+        .replaceAll(RegExp(r'[\-\(\)]'), "");
+    return hint;
+  }
+
+  String _formatTextController(String phoneNumber) {
+    if (phoneNumber.isEmpty) return "";
+
+    String formatted = LibPhonenumberTextFormatter(
+      phoneNumberType: PhoneNumberType.mobile,
+      phoneNumberFormat: PhoneNumberFormat.national,
+      overrideSkipCountryCode: _countryCode,
+    )
+        .formatEditUpdate(
+            TextEditingValue.empty, TextEditingValue(text: phoneNumber))
+        .text;
+    return formatted.trim();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    FlutterLibphonenumber().init();
+
+    _emailFocusNode = FocusNode();
+    _phoneNumberFocusNode = FocusNode();
+    _buttonFocusNode = FocusNode();
+
+    _emailController = TextEditingController();
+    _phoneNumberController = TextEditingController();
+
+    _phoneNumberFocusNode.addListener(() {
+      if (_phoneNumberFocusNode.hasFocus) {
+        setState(() {
+          _phoneNumberHint = null;
+        });
+      } else {
+        setState(() {
+          _phoneNumberHint = _getPhoneNumberHint();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Reset"),
+        elevation: 0,
       ),
       backgroundColor: Theme.of(context).colorScheme.primaryVariant,
       body: Builder(builder: (BuildContext context) {
@@ -362,7 +394,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         padding: EdgeInsets.zero,
                                         onPressed: _loading
                                             ? null
-                                            : () => switchType(),
+                                            : () => _switchType(),
                                       ),
                                     ),
                                   ],
@@ -395,13 +427,21 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         decoration: InputDecoration(
                                           prefixIcon: CountryCodePicker(
                                             textStyle: TextStyle(fontSize: 11),
-                                            initialSelection: '+251',
+                                            initialSelection: _countryCode,
                                             favorite: ['+251'],
                                             onChanged:
-                                                (CountryCode countryCode) =>
-                                                    _areaCode =
-                                                        countryCode.dialCode,
-                                            alignLeft: false,
+                                                (CountryCode countryCode) {
+                                              _countryCode = countryCode.code;
+                                              _areaCode = countryCode.dialCode;
+                                              _phoneNumberController.text =
+                                                  _formatTextController(
+                                                      _phoneNumberController
+                                                          .text);
+                                              setState(() {
+                                                _phoneNumberHint =
+                                                    _getPhoneNumberHint();
+                                              });
+                                            },
                                           ),
                                           // isDense: true,
                                           border: const OutlineInputBorder(),
@@ -412,6 +452,17 @@ class _ForgotPassword extends State<ForgotPassword> {
                                           errorMaxLines: 2,
                                           hintText: _phoneNumberHint,
                                         ),
+                                        enableInteractiveSelection: false,
+                                        inputFormatters: [
+                                          LibPhonenumberTextFormatter(
+                                            phoneNumberType:
+                                                PhoneNumberType.mobile,
+                                            phoneNumberFormat:
+                                                PhoneNumberFormat.national,
+                                            overrideSkipCountryCode:
+                                                _countryCode,
+                                          ),
+                                        ],
                                         onChanged: (_) => this.setState(() {
                                           _phoneNumberErrorText = null;
                                         }),
@@ -437,7 +488,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                                         padding: EdgeInsets.zero,
                                         onPressed: _loading
                                             ? null
-                                            : () => switchType(),
+                                            : () => _switchType(),
                                       ),
                                     ),
                                   ],

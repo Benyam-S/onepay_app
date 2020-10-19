@@ -161,7 +161,10 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
     }
 
     _phoneNumber = _phoneController.text;
-    var phoneNumberError = await _validatePhoneNumber(_phoneNumber);
+    if (_phoneNumber.isEmpty) {
+      FocusScope.of(context).requestFocus(_phoneFocusNode);
+      return;
+    }
 
     // Checking similarity with the previous phone number
     _phoneNumber = await _transformPhoneNumber(_phoneNumber);
@@ -169,11 +172,12 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
       return;
     }
 
+    var phoneNumberError = await _validatePhoneNumber(_phoneNumber);
     if (phoneNumberError != null) {
+      FocusScope.of(context).requestFocus(_phoneFocusNode);
       setState(() {
         _phoneNumberErrorText = phoneNumberError;
       });
-
       return;
     }
 
@@ -192,10 +196,11 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
             element.phoneCode == _areaCode.replaceAll(RegExp(r'[^\d]+'), ''),
         orElse: () => null);
 
-    String hint = selectedCountry?.exampleNumberMobileNational ?? " *  *  *  *  *  *  *  *  *";
+    String hint = selectedCountry?.exampleNumberMobileNational ??
+        " *  *  *  *  *  *  *  *  *";
     hint = hint
         .replaceAll(RegExp(r'[\d]'), " * ")
-        .replaceAll(RegExp(r'[-]'), " - ");
+        .replaceAll(RegExp(r'[\-\(\)]'), "");
     return hint;
   }
 
@@ -256,6 +261,18 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
     _buttonFocusNode = FocusNode();
 
     _phoneController = TextEditingController();
+
+    _phoneFocusNode.addListener(() {
+      if (!_phoneFocusNode.hasFocus) {
+        setState(() {
+          _phoneNumberHint = _getPhoneNumberHint();
+        });
+      } else {
+        setState(() {
+          _phoneNumberHint = null;
+        });
+      }
+    });
   }
 
   @override

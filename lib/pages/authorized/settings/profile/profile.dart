@@ -30,9 +30,7 @@ class _Profile extends State<Profile> {
                 _phoneNumber = parsed["national"] as String;
               });
           });
-        } catch (e) {
-          setState(() {});
-        }
+        } catch (e) {}
       });
     }
   }
@@ -40,6 +38,7 @@ class _Profile extends State<Profile> {
   void _initUserProfile() async {
     _user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
     _phoneNumber = _user?.onlyPhoneNumber;
+    setState(() {});
     _localizingData();
   }
 
@@ -52,8 +51,10 @@ class _Profile extends State<Profile> {
     OnePay.of(context).userStream.listen((user) {
       if (mounted) {
         // Don't need to set state since set state is called in _localizing data
-        _user = user as User;
-        _phoneNumber = _user?.onlyPhoneNumber;
+        setState(() {
+          _user = user as User;
+          _phoneNumber = _user?.onlyPhoneNumber;
+        });
         _localizingData();
       }
     });

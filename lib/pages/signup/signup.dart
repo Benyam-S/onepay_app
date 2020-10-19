@@ -341,6 +341,7 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       child: Scaffold(
         appBar: AppBar(
           title: Text("Sign Up"),
+          elevation: 0,
         ),
         backgroundColor: Theme.of(context).colorScheme.primaryVariant,
         body: SafeArea(

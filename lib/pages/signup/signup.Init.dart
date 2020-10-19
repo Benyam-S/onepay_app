@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:country_code_picker/country_code.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
@@ -37,11 +38,10 @@ class _SignUpInit extends State<SignUpInit> {
   String _lastNameErrorText;
   String _emailErrorText;
   String _phoneNumberErrorText;
-  String _phoneNumberHint = "9 * * * * * * * *";
+  String _phoneNumberHint = "*  *  *   *  *  *   *  *  *  *";
   String _areaCode = '+251';
+  String _countryCode = "ET";
   bool _loading = false;
-
-  GlobalKey<FormState> _formKey;
 
   String _autoValidateFirstName(String value) {
     if (value.isEmpty) {
@@ -100,36 +100,28 @@ class _SignUpInit extends State<SignUpInit> {
     return null;
   }
 
-  String _validatePhoneNumber(String value) {
+  Future<String> _validatePhoneNumber(String value) async {
     if (value.isEmpty) {
       return ReCase(EmptyEntryError).sentenceCase;
     }
 
-    // Means it is local phone number
-    if (value.startsWith("0") && value.length == 10) {
-      value = value;
-    } else {
-      value = _areaCode + value;
-    }
-
-    var exp = RegExp(r'^(\+\d{11,12})$|(0\d{9})$');
-
-    if (!exp.hasMatch(value)) {
+    try {
+      // Validating phone number
+      await FlutterLibphonenumber().parse(await _transformPhoneNumber(value));
+    } catch (e) {
       return ReCase(InvalidPhoneNumberError).sentenceCase;
     }
 
     return null;
   }
 
-  String _transformPhoneNumber(String phoneNumber) {
-    // Meaning local phone number
-    if (phoneNumber.startsWith("0") &&
-        phoneNumber.length == 10 &&
-        _areaCode == "+251") {
-      phoneNumber = phoneNumber;
-    } else {
-      phoneNumber = _areaCode + phoneNumber;
-    }
+  Future<String> _transformPhoneNumber(String phoneNumber) async {
+    try {
+      Map<String, dynamic> parsed =
+          await FlutterLibphonenumber().parse(_areaCode + phoneNumber);
+      phoneNumber = _areaCode + parsed["national_number"];
+      return phoneNumber;
+    } catch (e) {}
 
     return phoneNumber;
   }
@@ -209,7 +201,7 @@ class _SignUpInit extends State<SignUpInit> {
         'first_name': firstName,
         'last_name': lastName,
         'email': email,
-        'phone_number': _transformPhoneNumber(phoneNumber),
+        'phone_number': phoneNumber,
       });
 
       // Stop loading after response received
@@ -247,7 +239,7 @@ class _SignUpInit extends State<SignUpInit> {
     var firstNameError = _validateFirstName(firstName);
     var lastNameError = _validateLastName(lastName);
     var emailError = _validateEmail(email);
-    var phoneNumberError = _validatePhoneNumber(phoneNumber);
+    var phoneNumberError = await _validatePhoneNumber(phoneNumber);
 
     if (firstName.isEmpty) {
       setState(() {
@@ -293,12 +285,47 @@ class _SignUpInit extends State<SignUpInit> {
       _phoneNumberErrorText = null;
     });
 
+    phoneNumber = _withCountryCode(await _transformPhoneNumber(phoneNumber));
     await _makeRequest(firstName, lastName, email, phoneNumber);
+  }
+
+  String _withCountryCode(String phoneNumber) {
+    return phoneNumber + "[" + _countryCode + "]";
+  }
+
+  String _getPhoneNumberHint() {
+    var selectedCountry = CountryManager().countries.firstWhere(
+        (element) =>
+            element.phoneCode == _areaCode.replaceAll(RegExp(r'[^\d]+'), ''),
+        orElse: () => null);
+
+    String hint = selectedCountry?.exampleNumberMobileNational ??
+        " *  *  *  *  *  *  *  *  *";
+    hint = hint
+        .replaceAll(RegExp(r'[\d]'), " * ")
+        .replaceAll(RegExp(r'[\-\(\)]'), "");
+    return hint;
+  }
+
+  String _formatTextController(String phoneNumber) {
+    if (phoneNumber.isEmpty) return "";
+
+    String formatted = LibPhonenumberTextFormatter(
+      phoneNumberType: PhoneNumberType.mobile,
+      phoneNumberFormat: PhoneNumberFormat.national,
+      overrideSkipCountryCode: _countryCode,
+    )
+        .formatEditUpdate(
+            TextEditingValue.empty, TextEditingValue(text: phoneNumber))
+        .text;
+    return formatted.trim();
   }
 
   @override
   void initState() {
     super.initState();
+
+    FlutterLibphonenumber().init();
 
     _firstNameFocusNode = FocusNode();
     _lastNameFocusNode = FocusNode();
@@ -326,12 +353,16 @@ class _SignUpInit extends State<SignUpInit> {
       if (!_phoneFocusNode.hasFocus) {
         var phoneNumber = _phoneController.text;
         if (phoneNumber != null && phoneNumber.isNotEmpty) {
-          setState(() {
-            _phoneNumberErrorText = _validatePhoneNumber(phoneNumber);
+          _validatePhoneNumber(phoneNumber).then((value) {
+            if (mounted) {
+              setState(() {
+                _phoneNumberErrorText = value;
+              });
+            }
           });
         }
         setState(() {
-          _phoneNumberHint = "9 * * * * * * * *";
+          _phoneNumberHint = _getPhoneNumberHint();
         });
       } else {
         setState(() {
@@ -339,8 +370,6 @@ class _SignUpInit extends State<SignUpInit> {
         });
       }
     });
-
-    _formKey = GlobalKey<FormState>();
   }
 
   @override
@@ -356,154 +385,167 @@ class _SignUpInit extends State<SignUpInit> {
   Widget build(BuildContext context) {
     return Visibility(
       visible: widget.visible ?? false,
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: TextFormField(
-                controller: _firstNameController,
-                focusNode: _firstNameFocusNode,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TextFormField(
+              controller: _firstNameController,
+              focusNode: _firstNameFocusNode,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                isDense: true,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                labelText: "First Name",
+                errorText: _firstNameErrorText,
+              ),
+              autovalidateMode: AutovalidateMode.always,
+              validator: _autoValidateFirstName,
+              onChanged: (_) => this.setState(() {
+                _firstNameErrorText = null;
+              }),
+              textCapitalization: TextCapitalization.sentences,
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+              textInputAction: TextInputAction.next,
+              keyboardType: TextInputType.name,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 25),
+            child: TextFormField(
+              controller: _lastNameController,
+              focusNode: _lastNameFocusNode,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                labelText: "Last Name",
+                errorText: _lastNameErrorText,
+                isDense: true,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+              ),
+              autovalidateMode: AutovalidateMode.always,
+              validator: _autoValidateLastName,
+              onChanged: (_) => this.setState(() {
+                _lastNameErrorText = null;
+              }),
+              textCapitalization: TextCapitalization.sentences,
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+              textInputAction: TextInputAction.next,
+              keyboardType: TextInputType.name,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 15),
+              child: Text(
+                "Contact Information",
+                style: Theme.of(context).textTheme.headline6,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: TextFormField(
+              controller: _emailController,
+              focusNode: _emailFocusNode,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
+                isDense: true,
+                floatingLabelBehavior: FloatingLabelBehavior.always,
+                labelText: "Email",
+                errorText: _emailErrorText,
+              ),
+              onChanged: (_) => this.setState(() {
+                _emailErrorText = null;
+              }),
+              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+              textInputAction: TextInputAction.next,
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TextFormField(
+                controller: _phoneController,
+                focusNode: _phoneFocusNode,
                 decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelText: "First Name",
-                  errorText: _firstNameErrorText,
-                ),
-                autovalidate: true,
-                validator: _autoValidateFirstName,
-                onChanged: (_) => this.setState(() {
-                  _firstNameErrorText = null;
-                }),
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.name,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 25),
-              child: TextFormField(
-                controller: _lastNameController,
-                focusNode: _lastNameFocusNode,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  labelText: "Last Name",
-                  errorText: _lastNameErrorText,
-                  isDense: true,
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                ),
-                autovalidate: true,
-                validator: _autoValidateLastName,
-                onChanged: (_) => this.setState(() {
-                  _lastNameErrorText = null;
-                }),
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.name,
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15),
-                child: Text(
-                  "Contact Information",
-                  style: Theme.of(context).textTheme.headline6,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: TextFormField(
-                controller: _emailController,
-                focusNode: _emailFocusNode,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
-                  labelText: "Email",
-                  errorText: _emailErrorText,
-                ),
-                onChanged: (_) => this.setState(() {
-                  _emailErrorText = null;
-                }),
-                onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                textInputAction: TextInputAction.next,
-                keyboardType: TextInputType.emailAddress,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: TextFormField(
-                  controller: _phoneController,
-                  focusNode: _phoneFocusNode,
-                  decoration: InputDecoration(
-                    prefixIcon: CountryCodePicker(
-                      textStyle: TextStyle(fontSize: 11),
-                      initialSelection: _areaCode,
-                      favorite: ['+251'],
-                      onChanged: (CountryCode countryCode) =>
-                          _areaCode = countryCode.dialCode,
-                      alignLeft: false,
-                    ),
-                    border: const OutlineInputBorder(),
-                    floatingLabelBehavior: FloatingLabelBehavior.always,
-                    labelText: "Phone number",
-                    hintText: _phoneNumberHint,
-                    errorText: _phoneNumberErrorText,
-                    errorMaxLines: 2,
+                  prefixIcon: CountryCodePicker(
+                    textStyle: TextStyle(fontSize: 11),
+                    initialSelection: _countryCode,
+                    favorite: ['+251'],
+                    onChanged: (CountryCode countryCode) {
+                      _countryCode = countryCode.code;
+                      _areaCode = countryCode.dialCode;
+                      _phoneController.text =
+                          _formatTextController(_phoneController.text);
+                      setState(() {
+                        _phoneNumberHint = _getPhoneNumberHint();
+                      });
+                    },
+                    alignLeft: false,
                   ),
-                  keyboardType: TextInputType.phone,
-                  onChanged: (_) => this.setState(() {
-                        _phoneNumberErrorText = null;
-                      }),
-                  onFieldSubmitted: (_) => _signUpInit()),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 25,
+                  border: const OutlineInputBorder(),
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  labelText: "Phone number",
+                  hintText: _phoneNumberHint,
+                  errorText: _phoneNumberErrorText,
+                  errorMaxLines: 2,
                 ),
-                Flexible(
-                  fit: FlexFit.loose,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: LoadingButton(
-                      focusNode: _buttonFocusNode,
-                      loading: _loading,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Continue",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward,
+                enableInteractiveSelection: false,
+                inputFormatters: [
+                  LibPhonenumberTextFormatter(
+                    phoneNumberType: PhoneNumberType.mobile,
+                    phoneNumberFormat: PhoneNumberFormat.national,
+                    overrideSkipCountryCode: _countryCode,
+                  ),
+                ],
+                keyboardType: TextInputType.phone,
+                onChanged: (_) => this.setState(() {
+                      _phoneNumberErrorText = null;
+                    }),
+                onFieldSubmitted: (_) => _signUpInit()),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 25,
+              ),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  child: LoadingButton(
+                    loading: _loading,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Continue",
+                          style: TextStyle(
                             color: Colors.white,
-                          )
-                        ],
-                      ),
-                      onPressed: () {
-                        FocusScope.of(context).requestFocus(_buttonFocusNode);
-                        _signUpInit();
-                      },
-                      padding: EdgeInsets.symmetric(vertical: 13),
+                            fontSize: 18,
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                        )
+                      ],
                     ),
+                    onPressed: () {
+                      FocusScope.of(context).requestFocus(_buttonFocusNode);
+                      _signUpInit();
+                    },
+                    padding: EdgeInsets.symmetric(vertical: 13),
                   ),
-                )
-              ],
-            )
-          ],
-        ),
+                ),
+              )
+            ],
+          )
+        ],
       ),
     );
   }
