@@ -14,18 +14,23 @@ class Settings extends StatefulWidget {
 }
 
 class _Settings extends State<Settings> {
-  Future<User> _initUser() async {
-    return OnePay.of(context).currentUser ?? await getLocalUserProfile();
+  User _user;
+
+  void _initUser() async {
+    _user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
+    setState(() {});
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    _initUser();
+
     OnePay.of(context).userStream.listen((user) {
       if (mounted) {
         setState(() {
-          // _user = user as User;
+          _user = (user as User);
         });
       }
     });
@@ -45,7 +50,7 @@ class _Settings extends State<Settings> {
                 padding: const EdgeInsets.only(bottom: 6),
                 sliver: SliverPersistentHeader(
                   pinned: true,
-                  delegate: SettingAppBar(user: _initUser()),
+                  delegate: SettingAppBar(user: _user),
                 ),
               ),
               SliverPadding(
@@ -84,7 +89,9 @@ class _Settings extends State<Settings> {
                             Navigator.of(context).pushNamed(AppRoutes.profile),
                       ),
                       SettingTile(
-                          "Security & Privacy", CustomIcons.shield_half),
+                        "Security & Privacy",
+                        CustomIcons.shield_half,
+                      ),
                       SettingTile(
                         "Logout",
                         CustomIcons.powerOff,

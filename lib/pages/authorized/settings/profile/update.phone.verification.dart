@@ -23,10 +23,8 @@ class UpdatePhoneVerification extends StatefulWidget {
   final String nonce;
   final Function(String) next;
   final Function back;
-  final Stream clearStream;
 
-  UpdatePhoneVerification(
-      {this.phoneNumber, this.nonce, this.next, this.back, this.clearStream});
+  UpdatePhoneVerification({this.phoneNumber, this.nonce, this.next, this.back});
 
   @override
   _UpdatePhoneVerification createState() => _UpdatePhoneVerification();
@@ -42,12 +40,13 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
   bool _reSending = false;
 
   Future<void> _onVerifyPhoneSuccess(Response response) async {
-    User user = OnePay.of(context).currentUser?.copy() ?? await getLocalUserProfile();
+    User user =
+        OnePay.of(context).currentUser?.copy() ?? await getLocalUserProfile();
     if (user != null) {
       if (widget.phoneNumber.startsWith("0") &&
           widget.phoneNumber.length == 10) {
         user.phoneNumber = widget.phoneNumber.replaceFirst("0", "+251");
-      }else{
+      } else {
         user.phoneNumber = widget.phoneNumber;
       }
 
@@ -77,7 +76,8 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
   }
 
   Future<void> _makeVerifyPhoneRequest(String nonce, String otp) async {
-    var requester = HttpRequester(path: "/oauth/user/profile/phonenumber/verify");
+    var requester =
+        HttpRequester(path: "/oauth/user/profile/phonenumber/verify");
     try {
       var response = await requester.put(context, {
         'nonce': nonce,
@@ -121,14 +121,15 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
 
   void _onUpdatePhoneSuccess(Response response) {
     var jsonData = json.decode(response.body);
+    print(response.body);
     widget.next(jsonData["nonce"]);
   }
 
   Future<void> _makeUpdatePhoneRequest() async {
     HttpRequester requester =
-        HttpRequester(path: "/oauth/user/phonenumber/update.json");
+        HttpRequester(path: "/oauth/user/profile/phonenumber.json");
     try {
-      var response = await requester.post(context, {
+      var response = await requester.put(context, {
         "phone_number": widget.phoneNumber,
       });
 
@@ -210,15 +211,12 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
     _buttonFocusNode = FocusNode();
     _otpFocusNode = FocusNode();
     _otpController = TextEditingController();
+  }
 
-    widget.clearStream.listen((clear) {
-      if (clear) {
-        setState(() {
-          _otpController.clear();
-          _otpErrorText = null;
-        });
-      }
-    });
+  @override
+  void dispose() {
+    _otpController.dispose();
+    super.dispose();
   }
 
   @override

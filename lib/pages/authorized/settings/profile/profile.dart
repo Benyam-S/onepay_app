@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -14,20 +15,32 @@ class _Profile extends State<Profile> {
   String _phoneNumber;
   bool _isAuthorized = false;
 
+  final _initPhoneNumberFormatter = FlutterLibphonenumber().init();
+
   void _localizingData() {
     if (_user != null) {
       // Localizing phone number
-      if (_user.phoneNumber.contains("+251")) {
-        _phoneNumber = _user.phoneNumber.replaceFirst("+251", "0");
-      }
+      _initPhoneNumberFormatter.then((_) {
+        try {
+          Future<Map<String, dynamic>> fParsed =
+              FlutterLibphonenumber().parse(_user.onlyPhoneNumber);
+          fParsed.then((parsed) {
+            if (mounted)
+              setState(() {
+                _phoneNumber = parsed["national"] as String;
+              });
+          });
+        } catch (e) {
+          setState(() {});
+        }
+      });
     }
   }
 
   void _initUserProfile() async {
     _user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
-    _phoneNumber = _user?.phoneNumber;
+    _phoneNumber = _user?.onlyPhoneNumber;
     _localizingData();
-    setState(() {});
   }
 
   @override
@@ -38,11 +51,10 @@ class _Profile extends State<Profile> {
 
     OnePay.of(context).userStream.listen((user) {
       if (mounted) {
-        setState(() {
-          _user = user as User;
-          _phoneNumber = _user?.phoneNumber;
-          _localizingData();
-        });
+        // Don't need to set state since set state is called in _localizing data
+        _user = user as User;
+        _phoneNumber = _user?.onlyPhoneNumber;
+        _localizingData();
       }
     });
   }

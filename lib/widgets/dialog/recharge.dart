@@ -8,7 +8,7 @@ import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -225,7 +225,7 @@ class _RechargeDialog extends State<RechargeDialog> {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, letterSpacing: 3),
               autofocus: true,
-              autovalidate: true,
+              autovalidateMode: AutovalidateMode.always,
               validator: _autoValidateAmount,
               keyboardType: TextInputType.number,
               enableInteractiveSelection: false,

@@ -7,7 +7,7 @@ import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
-import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 
 class HistoryTile extends StatefulWidget {
   final History history;

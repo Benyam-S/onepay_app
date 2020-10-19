@@ -7,7 +7,7 @@ import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -314,7 +314,7 @@ class _ViaQRCode extends State<ViaQRCode> {
                         child: TextFormField(
                             focusNode: _amountFocusNode,
                             controller: _amountController,
-                            autovalidate: true,
+                            autovalidateMode: AutovalidateMode.always,
                             validator: _autoValidateAmount,
                             keyboardType: TextInputType.number,
                             style: TextStyle(fontSize: 15, letterSpacing: 4),

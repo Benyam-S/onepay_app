@@ -6,7 +6,7 @@ import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:recase/recase.dart';
 
 class SettingAppBar extends SliverPersistentHeaderDelegate {
-  final Future<User> user;
+  final User user;
   double _appBarHeight = AppBar().preferredSize.height;
   double _titleFontSize = 17;
   double _descFontSize = 10;
@@ -36,74 +36,65 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
+    String firstName = user?.firstName?.sentenceCase ?? "";
+    String lastName = user?.lastName?.sentenceCase ?? "";
+    String id = user?.userID?.toUpperCase() ?? "";
+
     return shrinkOffset > 150
         ? AppBar(title: Text("Settings"))
-        : FutureBuilder<User>(
-            future: user,
-            builder: (context, snapshot) {
-              String firstName = "";
-              String lastName = "";
-              String id = "";
-              if (snapshot.hasData) {
-                firstName = ReCase(snapshot.data.firstName).sentenceCase;
-                lastName = ReCase(snapshot.data.lastName).sentenceCase;
-                id = snapshot.data.userID.toUpperCase();
-              }
-
-              return Container(
-                color: Theme.of(context).colorScheme.primaryVariant,
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Opacity(
-                        opacity: _getContainerOpacity(shrinkOffset),
-                        child: Icon(
-                          CustomIcons.onepay_logo_filled,
-                          color: Colors.white,
-                          size: _getIconSize(shrinkOffset),
-                        ),
-                      ),
+        : Container(
+            color: Theme.of(context).colorScheme.primaryVariant,
+            child: Stack(
+              children: [
+                Center(
+                  child: Opacity(
+                    opacity: _getContainerOpacity(shrinkOffset),
+                    child: Icon(
+                      CustomIcons.onepay_logo_filled,
+                      color: Colors.white,
+                      size: _getIconSize(shrinkOffset),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      child: Opacity(
-                        opacity: _getContainerOpacity(shrinkOffset),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 15, bottom: 15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  child: Opacity(
+                    opacity: _getContainerOpacity(shrinkOffset),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 15, bottom: 15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Text(firstName,
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: _getTitleSize(shrinkOffset),
-                                          fontFamily: 'Roboto')),
-                                  SizedBox(width: 5),
-                                  Text(lastName,
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: _getTitleSize(shrinkOffset),
-                                          fontFamily: 'Roboto')),
-                                ],
-                              ),
-                              SizedBox(height: 3),
-                              Text(id.toUpperCase(),
+                              Text(firstName,
                                   style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: _getDescSize(shrinkOffset))),
+                                      fontSize: _getTitleSize(shrinkOffset),
+                                      fontFamily: 'Roboto')),
+                              SizedBox(width: 5),
+                              Text(lastName,
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: _getTitleSize(shrinkOffset),
+                                      fontFamily: 'Roboto')),
                             ],
                           ),
-                        ),
+                          SizedBox(height: 3),
+                          Text(id.toUpperCase(),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: _getDescSize(shrinkOffset))),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              );
-            });
+              ],
+            ),
+          );
   }
 
   @override
@@ -114,6 +105,6 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) {
-    return false;
+    return true;
   }
 }

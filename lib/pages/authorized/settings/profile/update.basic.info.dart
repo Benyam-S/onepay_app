@@ -82,7 +82,8 @@ class _UpdateBasicInfo extends State<UpdateBasicInfo> {
   }
 
   Future<void> _onSuccess(BuildContext context, Response response) async {
-    User user = OnePay.of(context).currentUser?.copy() ?? await getLocalUserProfile();
+    User user =
+        OnePay.of(context).currentUser?.copy() ?? await getLocalUserProfile();
     if (user != null) {
       user.firstName = _firstName;
       user.lastName = _lastName;
@@ -291,7 +292,8 @@ class _UpdateBasicInfo extends State<UpdateBasicInfo> {
                       labelText: "First Name",
                       errorText: _firstNameErrorText,
                     ),
-                    autovalidate: true,
+                    textCapitalization: TextCapitalization.sentences,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: _autoValidateFirstName,
                     onChanged: (_) => this.setState(() {
                       _firstNameErrorText = null;
@@ -313,7 +315,8 @@ class _UpdateBasicInfo extends State<UpdateBasicInfo> {
                       isDense: true,
                       floatingLabelBehavior: FloatingLabelBehavior.always,
                     ),
-                    autovalidate: true,
+                    textCapitalization: TextCapitalization.sentences,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: _autoValidateLastName,
                     onChanged: (_) => this.setState(() {
                       _lastNameErrorText = null;

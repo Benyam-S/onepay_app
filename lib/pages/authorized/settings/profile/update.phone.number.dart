@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_libphonenumber/flutter_libphonenumber.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
@@ -27,15 +29,14 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
   FocusNode _buttonFocusNode;
 
   TextEditingController _phoneController;
-  StreamController _streamController;
-  Stream _clearStream;
 
   User _user;
   String _phoneNumber;
   String _nonce;
   String _phoneNumberErrorText;
-  String _phoneNumberHint = "9 * * * * * * * *";
+  String _phoneNumberHint = "";
   String _areaCode = '+251';
+  String _countryCode = "ET";
   bool _loading = false;
   bool _verificationDialog = false;
 
@@ -48,44 +49,36 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
   void _next(String nonce) {
     this._nonce = nonce;
     setState(() {
-      _phoneNumber = _transformPhoneNumber(_phoneNumber);
       _verificationDialog = true;
     });
-
-    //  This will clear the the second dialog
-    _streamController.add(true);
   }
 
-  String _validatePhoneNumber(String value) {
+  Future<String> _validatePhoneNumber(String value) async {
     if (value.isEmpty) {
       return ReCase(EmptyEntryError).sentenceCase;
     }
 
-    // Means it is local phone number
-    if (value.startsWith("0") && value.length == 10) {
-      value = value;
-    } else {
-      value = _areaCode + value;
-    }
-
-    var exp = RegExp(r'^(\+\d{11,12})$|(0\d{9})$');
-
-    if (!exp.hasMatch(value)) {
+    try {
+      // Validating phone number
+      await FlutterLibphonenumber().parse(await _transformPhoneNumber(value));
+    } catch (e) {
       return ReCase(InvalidPhoneNumberError).sentenceCase;
     }
 
     return null;
   }
 
-  String _transformPhoneNumber(String phoneNumber) {
-    // Means local phone number
-    if (phoneNumber.startsWith("0") &&
-        phoneNumber.length == 10 &&
-        _areaCode == "+251") {
-      phoneNumber = phoneNumber;
-    } else {
-      phoneNumber = _areaCode + phoneNumber;
-    }
+  String _withCountryCode(String phoneNumber) {
+    return phoneNumber + "[" + _countryCode + "]";
+  }
+
+  Future<String> _transformPhoneNumber(String phoneNumber) async {
+    try {
+      Map<String, dynamic> parsed =
+          await FlutterLibphonenumber().parse(_areaCode + phoneNumber);
+      phoneNumber = _areaCode + parsed["national_number"];
+      return phoneNumber;
+    } catch (e) {}
 
     return phoneNumber;
   }
@@ -124,7 +117,7 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
     var requester = HttpRequester(path: "/oauth/user/profile/phonenumber.json");
     try {
       var response = await requester.put(context, {
-        'phone_number': _transformPhoneNumber(_phoneNumber),
+        'phone_number': _phoneNumber,
       });
 
       setState(() {
@@ -168,20 +161,12 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
     }
 
     _phoneNumber = _phoneController.text;
-    var phoneNumberError = _validatePhoneNumber(_phoneNumber);
+    var phoneNumberError = await _validatePhoneNumber(_phoneNumber);
 
     // Checking similarity with the previous phone number
-    if (_phoneNumber.startsWith("0") &&
-        _phoneNumber.length == 10 &&
-        _areaCode == "+251") {
-      String phoneNumber = _phoneNumber.replaceFirst("0", "+251");
-      if (_user?.phoneNumber == phoneNumber) {
-        return;
-      }
-    } else {
-      if (_user?.phoneNumber == _transformPhoneNumber(_phoneNumber)) {
-        return;
-      }
+    _phoneNumber = await _transformPhoneNumber(_phoneNumber);
+    if (_user?.onlyPhoneNumber == _phoneNumber) {
+      return;
     }
 
     if (phoneNumberError != null) {
@@ -197,17 +182,69 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
       _phoneNumberErrorText = null;
     });
 
+    _phoneNumber = _withCountryCode(_phoneNumber);
     await _makeRequest(context);
+  }
+
+  String _getPhoneNumberHint() {
+    var selectedCountry = CountryManager().countries.firstWhere(
+        (element) =>
+            element.phoneCode == _areaCode.replaceAll(RegExp(r'[^\d]+'), ''),
+        orElse: () => null);
+
+    String hint = selectedCountry?.exampleNumberMobileNational ?? " *  *  *  *  *  *  *  *  *";
+    hint = hint
+        .replaceAll(RegExp(r'[\d]'), " * ")
+        .replaceAll(RegExp(r'[-]'), " - ");
+    return hint;
+  }
+
+  String _formatTextController(String phoneNumber) {
+    if (phoneNumber.isEmpty) return "";
+
+    String formatted = LibPhonenumberTextFormatter(
+      phoneNumberType: PhoneNumberType.mobile,
+      phoneNumberFormat: PhoneNumberFormat.national,
+      overrideSkipCountryCode: _countryCode,
+    )
+        .formatEditUpdate(
+            TextEditingValue.empty, TextEditingValue(text: phoneNumber))
+        .text;
+    return formatted.trim();
   }
 
   void _initUserProfile() async {
     _user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
     if (_user != null) {
-      if (_user.phoneNumber.length > 9 && _user.phoneNumber.startsWith("+")) {
-        _phoneController.text = _user.phoneNumber
-            .substring(_user.phoneNumber.length - 9, _user.phoneNumber.length);
-        setState(() {});
-      }
+      try {
+        Future<Map<String, dynamic>> fParsed =
+            FlutterLibphonenumber().parse(_user.onlyPhoneNumber);
+        fParsed.then((parsed) {
+          if (mounted) {
+            setState(() {
+              _areaCode = "+" + (parsed["country_code"]).toString();
+              if (_user.countryCode != "") {
+                _countryCode = _user.countryCode;
+              } else {
+                _countryCode = CountryManager()
+                    .countries
+                    .firstWhere(
+                        (element) =>
+                            element.phoneCode ==
+                            _areaCode.replaceAll(RegExp(r'[^\d]+'), ''),
+                        orElse: () => null)
+                    ?.countryCode;
+              }
+              String formatted =
+                  _formatTextController(parsed["national_number"]);
+              _phoneNumberHint = _getPhoneNumberHint();
+              _phoneController.text = formatted;
+              _phoneController.selection =
+                  TextSelection.collapsed(offset: formatted.length);
+            });
+          }
+        });
+      } catch (e) {}
     }
   }
 
@@ -219,14 +256,10 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
     _buttonFocusNode = FocusNode();
 
     _phoneController = TextEditingController();
-
-    _streamController = StreamController.broadcast();
-    _clearStream = _streamController.stream.where((event) => event is bool);
   }
 
   @override
   void dispose() {
-    _streamController.close();
     _phoneController.dispose();
     super.dispose();
   }
@@ -254,8 +287,7 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
                     phoneNumber: _phoneNumber,
                     nonce: _nonce,
                     next: _next,
-                    back: _back,
-                    clearStream: _clearStream)
+                    back: _back)
                 : Column(
                     children: [
                       Padding(
@@ -275,10 +307,17 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
                             decoration: InputDecoration(
                               prefixIcon: CountryCodePicker(
                                 textStyle: TextStyle(fontSize: 11),
-                                initialSelection: _areaCode,
+                                initialSelection: _countryCode,
                                 favorite: ['+251'],
-                                onChanged: (CountryCode countryCode) =>
-                                    _areaCode = countryCode.dialCode,
+                                onChanged: (CountryCode countryCode) {
+                                  _countryCode = countryCode.code;
+                                  _areaCode = countryCode.dialCode;
+                                  _phoneController.text = _formatTextController(
+                                      _phoneController.text);
+                                  setState(() {
+                                    _phoneNumberHint = _getPhoneNumberHint();
+                                  });
+                                },
                                 alignLeft: false,
                               ),
                               border: const OutlineInputBorder(),
@@ -289,6 +328,14 @@ class _UpdatePhoneNumber extends State<UpdatePhoneNumber> {
                               errorText: _phoneNumberErrorText,
                               errorMaxLines: 2,
                             ),
+                            enableInteractiveSelection: false,
+                            inputFormatters: [
+                              LibPhonenumberTextFormatter(
+                                phoneNumberType: PhoneNumberType.mobile,
+                                phoneNumberFormat: PhoneNumberFormat.national,
+                                overrideSkipCountryCode: _countryCode,
+                              ),
+                            ],
                             keyboardType: TextInputType.phone,
                             onChanged: (_) => this.setState(() {
                                   _phoneNumberErrorText = null;

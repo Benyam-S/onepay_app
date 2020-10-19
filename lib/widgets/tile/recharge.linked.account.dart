@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/linked.account.dart';
-import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/widgets/dialog/recharge.dart';
 
 class RechargeLinkedAccountTile extends StatefulWidget {

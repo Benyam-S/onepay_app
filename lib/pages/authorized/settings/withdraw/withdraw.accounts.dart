@@ -11,7 +11,7 @@ import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/formatter.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
@@ -411,7 +411,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
               keyboardType: TextInputType.number,
               style: TextStyle(fontSize: 15, letterSpacing: 4),
               textAlign: TextAlign.center,
-              autovalidate: true,
+              autovalidateMode: AutovalidateMode.always,
               validator: _autoValidateAmount,
               enableInteractiveSelection: false,
               decoration: InputDecoration(

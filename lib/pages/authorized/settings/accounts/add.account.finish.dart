@@ -9,6 +9,7 @@ import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/utils/exceptions.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -53,11 +54,14 @@ class _AddLinkedAccountFinish extends State<AddLinkedAccountFinish> {
     var jsonData = json.decode(response.body);
     LinkedAccount newLinkedAccount = LinkedAccount.fromJson(jsonData);
 
-    List<LinkedAccount> prevLinkedAccounts = List<LinkedAccount>();
-    prevLinkedAccounts.addAll(OnePay.of(context).linkedAccounts);
-    prevLinkedAccounts.add(newLinkedAccount);
+    List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
+    linkedAccounts.addAll(OnePay.of(context).linkedAccounts);
+    linkedAccounts.add(newLinkedAccount);
 
-    OnePay.of(context).appStateController.add(prevLinkedAccounts);
+    OnePay.of(context).appStateController.add(linkedAccounts);
+    linkedAccounts
+        .sort((a, b) => a.accountProviderName.compareTo(b.accountProviderName));
+    setLocalLinkedAccounts(json.encode(linkedAccounts));
 
     Navigator.of(context).pop();
     showSuccessDialog(context,
