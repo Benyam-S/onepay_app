@@ -13,6 +13,8 @@ import 'package:onepay_app/pages/authorized/settings/profile/update.basic.info.d
 import 'package:onepay_app/pages/authorized/settings/profile/update.email.dart';
 import 'package:onepay_app/pages/authorized/settings/profile/update.phone.number.dart';
 import 'package:onepay_app/pages/authorized/settings/recharge/recharge.dart';
+import 'package:onepay_app/pages/authorized/settings/security/change.password.dart';
+import 'package:onepay_app/pages/authorized/settings/security/security.dart';
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
@@ -282,10 +284,12 @@ class _OnePay extends State<OnePay> {
           AppRoutes.withdraw: (context) => Withdraw(),
           AppRoutes.accounts: (context) => ManageAccounts(),
           AppRoutes.addAccount: (context) => AddLinkedAccount(),
+          AppRoutes.security: (context) => Security(),
           AppRoutes.profile: (context) => Profile(),
           AppRoutes.updateBasicInfo: (context) => UpdateBasicInfo(),
           AppRoutes.updateEmail: (context) => UpdateEmail(),
           AppRoutes.updatePhoneNumber: (context) => UpdatePhoneNumber(),
+          AppRoutes.changePassword: (context) => ChangePassword(),
         },
       ),
     );

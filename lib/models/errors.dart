@@ -49,6 +49,19 @@ const EmailAlreadyExistsErrorB = "email address already exists";
 /// PhoneNumberAlreadyExistsErrorB is a constant that holds phone number already exists error of the backend
 const PhoneNumberAlreadyExistsErrorB = "phone number already exists";
 
+/// InvalidCharacterInPasswordErrorB is a constant that holds invalid characters in password error of the backend
+const InvalidCharacterInPasswordErrorB = "invalid characters used in password";
+
+/// PasswordLengthErrorB is a constant that holds password too short error of the backend
+const PasswordLengthErrorB = "password should contain at least 8 characters";
+
+/// PasswordDontMatchErrorB is a constant that holds password doesn't match error of the backend
+const PasswordDontMatchErrorB = "passwords do not match";
+
+/// IdenticalPasswordErrorB is a constant that holds new password is identical with old one error of the backend
+const IdenticalPasswordErrorB =
+    "new password is identical with the old password";
+
 /// InvalidMoneyTokenErrorB is a constant that holds invalid money token used error of the backend
 const InvalidMoneyTokenErrorB = "invalid money token used";
 
@@ -69,7 +82,8 @@ const LinkedAccountInsufficientBalanceB =
 const AccountProviderNotFoundB = "account provider not found";
 
 /// AccountAlreadyLinkedErrorB is a constant that holds account has already been linked error of the backend
-const AccountAlreadyLinkedErrorB = "account has already been linked to other onepay account";
+const AccountAlreadyLinkedErrorB =
+    "account has already been linked to other onepay account";
 
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Errors ++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -120,6 +134,18 @@ const InvalidPhoneNumberError = "invalid phone number used";
 
 /// InvalidEmailAddressError is a constant that holds invalid email address used error
 const InvalidEmailAddressError = "invalid email address used";
+
+/// InvalidCharacterInPasswordError is a constant that holds invalid characters in password error
+const InvalidCharacterInPasswordError = "invalid characters used in password";
+
+/// PasswordLengthError is a constant that holds password too short error
+const PasswordLengthError = "password should contain at least 8 characters";
+
+/// PasswordDontMatchError is a constant that holds password doesn't match error
+const PasswordDontMatchError = "passwords do not match";
+
+/// IdenticalPasswordError is a constant that holds new password is identical with old one error
+const IdenticalPasswordError = "new password is identical with the old one";
 
 /// FrozenReceiverAccountError is a constant that holds frozen receiver account error
 const FrozenReceiverAccountError = "receiver account has been frozen";

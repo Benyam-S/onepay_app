@@ -9,7 +9,12 @@ void showUnableToConnectError(BuildContext context) {
       style: TextStyle(color: Colors.orange),
     ),
   );
-  Scaffold.of(context).showSnackBar(snackBar);
+  try {
+    Scaffold.of(context).showSnackBar(snackBar);
+  } catch (e) {
+    ///TODO: should remove the line below, should only be used for development purpose
+    throw (e);
+  }
 }
 
 void showServerError(BuildContext context, String content) {
@@ -19,7 +24,12 @@ void showServerError(BuildContext context, String content) {
       style: TextStyle(color: Colors.orange),
     ),
   );
-  Scaffold.of(context).showSnackBar(snackBar);
+  try {
+    Scaffold.of(context).showSnackBar(snackBar);
+  } catch (e) {
+    ///TODO: should remove the line below, should only be used for development purpose
+    throw (e);
+  }
 }
 
 void showInternalError(BuildContext context, String content) {
@@ -29,5 +39,10 @@ void showInternalError(BuildContext context, String content) {
       style: TextStyle(color: Colors.orange),
     ),
   );
-  Scaffold.of(context).showSnackBar(snackBar);
+  try {
+    Scaffold.of(context).showSnackBar(snackBar);
+  } catch (e) {
+    ///TODO: should remove the line below, should only be used for development purpose
+    throw (e);
+  }
 }

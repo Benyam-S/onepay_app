@@ -90,6 +90,8 @@ class _Settings extends State<Settings> {
                       SettingTile(
                         "Security & Privacy",
                         CustomIcons.shield_half,
+                        onTap: () =>
+                            Navigator.of(context).pushNamed(AppRoutes.security),
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.37),
