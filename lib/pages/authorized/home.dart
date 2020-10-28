@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
@@ -171,7 +172,7 @@ class _Home extends State<Home> {
     _socketState = 1;
     try {
       channel = IOWebSocketChannel.connect(
-          'ws://192.168.1.6:8080/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
+          'ws://$Host/api/v1/connect.json/${accessToken.apiKey}/${accessToken.accessToken}');
       channel.stream.listen(_onNotificationReceived,
           onDone: _onSocketClosed, onError: _onSocketError);
     } catch (e) {

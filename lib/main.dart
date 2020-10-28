@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
+import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
@@ -15,12 +16,14 @@ import 'package:onepay_app/pages/authorized/settings/profile/update.phone.number
 import 'package:onepay_app/pages/authorized/settings/recharge/recharge.dart';
 import 'package:onepay_app/pages/authorized/settings/security/change.password.dart';
 import 'package:onepay_app/pages/authorized/settings/security/security.dart';
+import 'package:onepay_app/pages/authorized/settings/security/session.management.dart';
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
 import 'package:onepay_app/pages/authorized/home.dart';
 import 'package:onepay_app/pages/login.dart';
 import 'package:onepay_app/pages/signup/signup.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
 
 import 'models/linked.account.dart';
@@ -64,6 +67,7 @@ class _OnePay extends State<OnePay> {
   List<History> histories = List<History>();
   List<AccountProvider> accountProviders = List<AccountProvider>();
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
+  AppMeta appMetaData;
 
   Stream get accessTokenStream => this._accessTokenStream;
 
@@ -213,6 +217,13 @@ class _OnePay extends State<OnePay> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    getAppMeta().then((appMeta) => appMetaData = appMeta);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return _AppState(
       appState: this,
@@ -284,12 +295,13 @@ class _OnePay extends State<OnePay> {
           AppRoutes.withdraw: (context) => Withdraw(),
           AppRoutes.accounts: (context) => ManageAccounts(),
           AppRoutes.addAccount: (context) => AddLinkedAccount(),
-          AppRoutes.security: (context) => Security(),
           AppRoutes.profile: (context) => Profile(),
           AppRoutes.updateBasicInfo: (context) => UpdateBasicInfo(),
           AppRoutes.updateEmail: (context) => UpdateEmail(),
           AppRoutes.updatePhoneNumber: (context) => UpdatePhoneNumber(),
+          AppRoutes.security: (context) => Security(),
           AppRoutes.changePassword: (context) => ChangePassword(),
+          AppRoutes.sessionManagement: (context) => SessionManagement(),
         },
       ),
     );

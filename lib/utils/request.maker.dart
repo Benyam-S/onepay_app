@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
+import 'package:onepay_app/models/app.meta.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 
 class HttpRequester {
-  String baseURI = "http://192.168.1.6:8080/api/v1";
+  String baseURI = "http://$Host/api/v1";
   String requestURL = "";
 
   HttpRequester({@required String path}) {
@@ -23,6 +25,12 @@ class HttpRequester {
     AccessToken accessToken =
         OnePay.of(context).accessToken ?? await getLocalAccessToken();
 
+    AppMeta appMeta = OnePay.of(context).appMetaData;
+    if (appMeta == null) {
+      appMeta = await getAppMeta();
+      OnePay.of(context).appMetaData = appMeta;
+    }
+
     if (accessToken == null) {
       throw AccessTokenNotFoundException();
     }
@@ -31,6 +39,7 @@ class HttpRequester {
         base64Encode(
             utf8.encode('${accessToken.apiKey}:${accessToken.accessToken}'));
     return await http.get(requestURL, headers: <String, String>{
+      'User-Agent': "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
       'Content-Type': 'application/x-www-form-urlencoded',
       'authorization': basicAuth,
     }).timeout(Duration(minutes: 1));
@@ -40,6 +49,12 @@ class HttpRequester {
       BuildContext context, Map<String, dynamic> body) async {
     AccessToken accessToken =
         OnePay.of(context).accessToken ?? await getLocalAccessToken();
+
+    AppMeta appMeta = OnePay.of(context).appMetaData;
+    if (appMeta == null) {
+      appMeta = await getAppMeta();
+      OnePay.of(context).appMetaData = appMeta;
+    }
 
     if (accessToken == null) {
       throw AccessTokenNotFoundException();
@@ -52,6 +67,8 @@ class HttpRequester {
         .post(
           requestURL,
           headers: <String, String>{
+            'User-Agent':
+                "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
             'Content-Type': 'application/x-www-form-urlencoded',
             'authorization': basicAuth,
           },
@@ -65,6 +82,12 @@ class HttpRequester {
     AccessToken accessToken =
         OnePay.of(context).accessToken ?? await getLocalAccessToken();
 
+    AppMeta appMeta = OnePay.of(context).appMetaData;
+    if (appMeta == null) {
+      appMeta = await getAppMeta();
+      OnePay.of(context).appMetaData = appMeta;
+    }
+
     if (accessToken == null) {
       throw AccessTokenNotFoundException();
     }
@@ -76,6 +99,8 @@ class HttpRequester {
         .put(
           requestURL,
           headers: <String, String>{
+            'User-Agent':
+                "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
             'Content-Type': 'application/x-www-form-urlencoded',
             'authorization': basicAuth,
           },
@@ -88,6 +113,12 @@ class HttpRequester {
       BuildContext context, Map<String, dynamic> body) async {
     AccessToken accessToken =
         OnePay.of(context).accessToken ?? await getLocalAccessToken();
+
+    AppMeta appMeta = OnePay.of(context).appMetaData;
+    if (appMeta == null) {
+      appMeta = await getAppMeta();
+      OnePay.of(context).appMetaData = appMeta;
+    }
 
     if (accessToken == null) {
       throw AccessTokenNotFoundException();
@@ -109,6 +140,8 @@ class HttpRequester {
     return await http.delete(
       requestURL + query,
       headers: <String, String>{
+        'User-Agent':
+            "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
         'Content-Type': 'application/x-www-form-urlencoded',
         'authorization': basicAuth,
       },

@@ -14,4 +14,5 @@ class AppRoutes {
   static String updatePhoneNumber = "/update_phone_number";
   static String security = "/security";
   static String changePassword = "/change_password";
+  static String sessionManagement = "/session_management";
 }

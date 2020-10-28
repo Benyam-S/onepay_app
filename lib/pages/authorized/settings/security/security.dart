@@ -37,29 +37,33 @@ class _Security extends State<Security> {
               Card(
                 shape: ContinuousRectangleBorder(),
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(Icons.devices_other),
-                      SizedBox(width: 10),
-                      Text(
-                        "Session Management",
-                        style: TextStyle(fontSize: 13, fontFamily: 'Roboto'),
-                      ),
-                    ],
+                child: InkWell(
+                  onTap: () => Navigator.of(context)
+                      .pushNamed(AppRoutes.sessionManagement),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.devices_other),
+                        SizedBox(width: 10),
+                        Text(
+                          "Session Management",
+                          style: TextStyle(fontSize: 13, fontFamily: 'Roboto'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               SizedBox(height: 5),
-              InkWell(
-                onTap: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.changePassword),
-                child: Card(
-                  shape: ContinuousRectangleBorder(),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
+              Card(
+                shape: ContinuousRectangleBorder(),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: InkWell(
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.changePassword),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
                     child: Row(

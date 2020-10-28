@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:device_info/device_info.dart';
+import 'package:flutter_user_agent/flutter_user_agent.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
+import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/wallet.dart';
@@ -170,7 +174,8 @@ Future<List<LinkedAccount>> getLocalLinkedAccounts() async {
   final prefs = await SharedPreferences.getInstance();
 
   final jsonLinkedAccounts = prefs.getString("linked_accounts");
-  List<dynamic> jsonList = jsonLinkedAccounts == null ? [] : json.decode(jsonLinkedAccounts);
+  List<dynamic> jsonList =
+      jsonLinkedAccounts == null ? [] : json.decode(jsonLinkedAccounts);
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
 
   jsonList.forEach((element) {
@@ -193,7 +198,8 @@ Future<List<AccountProvider>> getLocalAccountProviders() async {
   final prefs = await SharedPreferences.getInstance();
 
   final jsonAccountProviders = prefs.getString("account_providers");
-  List<dynamic> jsonList = jsonAccountProviders == null ? [] : json.decode(jsonAccountProviders);
+  List<dynamic> jsonList =
+      jsonAccountProviders == null ? [] : json.decode(jsonAccountProviders);
   List<AccountProvider> accountProviders = List<AccountProvider>();
 
   jsonList.forEach((element) {
@@ -208,4 +214,58 @@ Future<void> setLocalAccountProviders(String jsonAccountProviders) async {
   final prefs = await SharedPreferences.getInstance();
 
   prefs.setString("account_providers", jsonAccountProviders);
+}
+
+// ---------------------------- Local Device Information ----------------------------
+
+// getAppMeta is a function that retrieves that application's meta data
+Future<AppMeta> getAppMeta() async {
+  AppMeta appMeta;
+  String applicationName;
+  String applicationVersion;
+  String userAgent = "";
+  DeviceInfoPlugin deviceInfoPlugin = DeviceInfoPlugin();
+
+  String readAndroidBuildData(AndroidDeviceInfo build) {
+    return '${build.device} Build/${build.id}';
+  }
+
+  String readIosDeviceInfo(IosDeviceInfo data) {
+    return data.name;
+  }
+
+  try {
+    await FlutterUserAgent.init();
+    if (Platform.isAndroid) {
+      var deviceData = readAndroidBuildData(await deviceInfoPlugin.androidInfo);
+      userAgent =
+          '($deviceData ${(await FlutterUserAgent.getPropertyAsync('systemName'))} '
+                  '${(await FlutterUserAgent.getPropertyAsync('systemVersion'))} )' ??
+              "";
+    } else if (Platform.isIOS) {
+      var deviceData = readIosDeviceInfo(await deviceInfoPlugin.iosInfo);
+      userAgent =
+          '($deviceData ${(await FlutterUserAgent.getPropertyAsync('systemName'))}/'
+                  '${(await FlutterUserAgent.getPropertyAsync('systemVersion'))} )' ??
+              "";
+    }
+
+    applicationName = FlutterUserAgent.getProperty('applicationName');
+    applicationVersion = FlutterUserAgent.getProperty('applicationVersion');
+  } catch (e) {}
+
+  if (applicationName == null || applicationName == "") {
+    applicationName = "OnePay Mobile";
+  } else {
+    applicationName = "$applicationName Mobile";
+  }
+
+  if (applicationVersion == null || applicationVersion == "") {
+    applicationVersion = "v1.0.0";
+  } else {
+    applicationVersion = "v$applicationVersion";
+  }
+
+  appMeta = AppMeta(applicationName, applicationVersion, userAgent);
+  return appMeta;
 }

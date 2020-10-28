@@ -32,6 +32,8 @@ dependencies:
   intl: any
   dotted_border: ^1.0.6
   flutter_libphonenumber: ^0.3.8
+  device_info: ^0.4.2+9
+  flutter_user_agent: ^1.2.2
 
 dev_dependencies:
   flutter_test:
