@@ -25,6 +25,6 @@ void logout(BuildContext context) async {
         AppRoutes.logInRoute, (Route<dynamic> route) => false);
   } catch (e) {
     ///TODO: should remove the line below, should only be used for development purpose
-    // throw (e);
+    throw (e);
   }
 }

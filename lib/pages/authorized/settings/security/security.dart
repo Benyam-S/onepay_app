@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/widgets/tile/security.dart';
 
 class Security extends StatefulWidget {
@@ -87,23 +88,26 @@ class _Security extends State<Security> {
                   Card(
                     shape: ContinuousRectangleBorder(),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Icon(Icons.delete_forever),
-                          SizedBox(width: 10),
-                          Text(
-                            "Delete Account",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontFamily: 'Roboto',
-                              color: Theme.of(context).errorColor,
+                    child: InkWell(
+                      onTap: () => showDeleteAccountDialog(context),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(Icons.delete_forever),
+                            SizedBox(width: 10),
+                            Text(
+                              "Delete Account",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontFamily: 'Roboto',
+                                color: Theme.of(context).errorColor,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -111,7 +115,7 @@ class _Security extends State<Security> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     child: Text(
-                      "This action can't be undo, please drain your wallet and unlink accounts before proceeding.",
+                      "This action is irreversible, please drain your wallet and reclaim any money token before proceeding.",
                       style: TextStyle(
                           color: Theme.of(context).iconTheme.color,
                           fontSize: 10),

@@ -85,6 +85,14 @@ const AccountProviderNotFoundB = "account provider not found";
 const AccountAlreadyLinkedErrorB =
     "account has already been linked to other onepay account";
 
+/// UnDrainedWalletErrorB is a constant that holds drain your wallet first error of the backend
+const UnDrainedWalletErrorB =
+    "please empty your wallet before deleting account";
+
+/// UnClaimedMoneyTokenErrorB is a constant that holds claim money tokens first error of the backend
+const UnClaimedMoneyTokenErrorB =
+    "please delete or reclaim all money tokens that has not been received before deleting account";
+
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Errors ++++++++++++++++++++++++++++++++++++++++++++++
 
 /// TransactionBaseLimitError is a constant that holds transaction base limit error
@@ -192,3 +200,9 @@ const AccountProviderNotFound = "invalid provider, please refresh your list";
 
 /// AccountAlreadyLinkedError is a constant that holds account has already been linked error
 const AccountAlreadyLinkedError = "account has already been linked";
+
+/// UnDrainedWalletError is a constant that holds drain your wallet first error
+const UnDrainedWalletError = "please empty your OnePay wallet first";
+
+/// UnClaimedMoneyTokenError is a constant that holds claim money tokens first error
+const UnClaimedMoneyTokenError = "unclaimed money token found";

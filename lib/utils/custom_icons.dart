@@ -84,4 +84,8 @@ class CustomIcons {
   static const IconData profile_settings_1 = IconData(0xe93b, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData profile_settings_2 = IconData(0xe93a, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData profile_settings_3 = IconData(0xe93c, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData sad_face = IconData(0xe940, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData sad_emoji = IconData(0xe93f, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData waving_hand = IconData(0xe93e, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData sad = IconData(0xe93d, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

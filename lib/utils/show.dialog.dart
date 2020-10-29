@@ -4,6 +4,7 @@ import 'package:onepay_app/models/money.token.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/widgets/dialog/DEvalidation.dart';
 import 'package:onepay_app/widgets/dialog/amount.verification.dart';
+import 'package:onepay_app/widgets/dialog/delete.account.dart';
 import 'package:onepay_app/widgets/dialog/linked.account.remove.dart';
 import 'package:onepay_app/widgets/dialog/loader.dart';
 import 'package:onepay_app/widgets/dialog/logout.dart';
@@ -121,5 +122,19 @@ void showLogOutDialog(BuildContext context) {
     context: context,
     barrierDismissible: false,
     child: LogoutDialog(),
+  );
+}
+
+void showDeleteAccountDialog(BuildContext context) {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierLabel: MaterialLocalizations.of(context).dialogLabel,
+    pageBuilder: (_, __, ___) {
+      return Scaffold(
+        body: DeleteUserAccountDialog(context),
+        backgroundColor: Colors.transparent,
+      );
+    },
   );
 }
