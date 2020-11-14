@@ -6,6 +6,8 @@ import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/models/user.preference.dart';
+import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/add.account.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/manage.accounts.dart';
@@ -57,21 +59,27 @@ class _OnePay extends State<OnePay> {
   StreamController _appStateController = StreamController.broadcast();
   Stream _accessTokenStream;
   Stream _userStream;
+  Stream _userPreferenceStream;
   Stream _walletStream;
   Stream _historyStream;
   Stream _linkedAccountStream;
   Stream _accountProviderStream;
+  Stream _dataSaverStream;
   AccessToken accessToken;
   User currentUser;
+  UserPreference userPreference;
   Wallet userWallet;
   List<History> histories = List<History>();
   List<AccountProvider> accountProviders = List<AccountProvider>();
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
+  DataSaverState dataSaverState;
   AppMeta appMetaData;
 
   Stream get accessTokenStream => this._accessTokenStream;
 
   Stream get userStream => this._userStream;
+
+  Stream get userPreferenceStream => this._userPreferenceStream;
 
   Stream get walletStream => this._walletStream;
 
@@ -81,6 +89,8 @@ class _OnePay extends State<OnePay> {
 
   Stream get linkedAccountStream => this._linkedAccountStream;
 
+  Stream get dataSaverStream => this._dataSaverStream;
+
   StreamController get appStateController => this._appStateController;
 
   _OnePay() {
@@ -89,6 +99,9 @@ class _OnePay extends State<OnePay> {
 
     this._userStream =
         _appStateController.stream.where((event) => event is User);
+
+    this._userPreferenceStream =
+        _appStateController.stream.where((event) => event is UserPreference);
 
     this._walletStream =
         _appStateController.stream.where((event) => event is Wallet);
@@ -102,12 +115,19 @@ class _OnePay extends State<OnePay> {
     this._linkedAccountStream = _appStateController.stream
         .where((event) => event is List<LinkedAccount>);
 
+    this._dataSaverStream = _appStateController.stream
+        .where((event) => event is DataSaverState);
+
     this._accessTokenStream.listen((accessToken) {
       this.accessToken = accessToken as AccessToken;
     });
 
     this._userStream.listen((user) {
       this.currentUser = user as User;
+    });
+
+    this._userPreferenceStream.listen((userPreference) {
+      this.userPreference = userPreference as UserPreference;
     });
 
     this._walletStream.listen((wallet) {
@@ -124,6 +144,10 @@ class _OnePay extends State<OnePay> {
 
     this._linkedAccountStream.listen((linkedAccounts) {
       _filterAndAddLinkedAccounts(linkedAccounts);
+    });
+
+    this._dataSaverStream.listen((dataSaverState) {
+      this.dataSaverState = dataSaverState as DataSaverState;
     });
   }
 
@@ -221,6 +245,7 @@ class _OnePay extends State<OnePay> {
     super.initState();
 
     getAppMeta().then((appMeta) => appMetaData = appMeta);
+    getLocalDataSaverState().then((dataSaverS) => dataSaverState = dataSaverS);
   }
 
   @override
@@ -286,7 +311,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Login(),
+          AppRoutes.logInRoute: (context) => Home(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.homeRoute: (context) => Home(),

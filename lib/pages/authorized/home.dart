@@ -12,6 +12,8 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/models/user.preference.dart';
+import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/receive/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
@@ -64,6 +66,25 @@ class _Home extends State<Home> {
       // Add current user to the stream and shared preference
       OnePay.of(context).appStateController.add(opUser);
       setLocalUserProfile(opUser);
+    }
+
+    _handleResponse(makeRequest, onSuccess);
+  }
+
+  Future<void> _getUserPreference() async {
+    Future<Response> makeRequest() {
+      var requester =
+          HttpRequester(path: "/oauth/user/profile/preference.json");
+      return requester.get(context);
+    }
+
+    void onSuccess(Response response) {
+      var jsonData = json.decode(response.body);
+      var userPreference = UserPreference.fromJson(jsonData);
+
+      // Add current user preference to the stream and shared preference
+      OnePay.of(context).appStateController.add(userPreference);
+      setLocalUserPreference(userPreference);
     }
 
     _handleResponse(makeRequest, onSuccess);
@@ -159,6 +180,11 @@ class _Home extends State<Home> {
       return;
     }
 
+    // Aborting if data-saver is enabled
+    DataSaverState dataSaverState =
+        OnePay.of(context).dataSaverState ?? await getLocalDataSaverState();
+    if (dataSaverState == DataSaverState.Enabled) return;
+
     AccessToken accessToken =
         OnePay.of(context).accessToken ?? await getLocalAccessToken();
 
@@ -205,6 +231,13 @@ class _Home extends State<Home> {
 
       OnePay.of(context).appStateController.add([history]);
     }
+
+    if (jsonMap["Type"] == "preference") {
+      var userPreference = UserPreference.fromJson(jsonMap["Body"]);
+
+      OnePay.of(context).appStateController.add(userPreference);
+      setLocalUserPreference(userPreference);
+    }
   }
 
   void _onSocketClosed() {
@@ -225,6 +258,7 @@ class _Home extends State<Home> {
           result == ConnectivityResult.wifi) {
         //  Fetching data on background
         _getUserProfile();
+        _getUserPreference();
         _getUserWallet();
         // Starting socket connection
         _startSocketConn();
@@ -277,8 +311,18 @@ class _Home extends State<Home> {
     super.didChangeDependencies();
 
     _getUserProfile();
+    _getUserPreference();
     _getUserWallet();
     _startSocketConn();
+
+    OnePay.of(context).dataSaverStream.listen((dataSaverState) {
+      if ((dataSaverState as DataSaverState) == DataSaverState.Disabled) {
+        _startSocketConn();
+      } else if ((dataSaverState as DataSaverState) == DataSaverState.Enabled) {
+        _socketState = 0;
+        channel.sink.close();
+      }
+    });
   }
 
   @override

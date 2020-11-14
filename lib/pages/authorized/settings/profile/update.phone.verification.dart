@@ -169,7 +169,7 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
 
   void _verifyPhone() async {
     // Cancelling if loading
-    if (_loading) {
+    if (_loading || _reSending) {
       return;
     }
 
@@ -191,7 +191,7 @@ class _UpdatePhoneVerification extends State<UpdatePhoneVerification> {
 
   void _resend() async {
     // Cancelling if resending
-    if (_reSending) {
+    if (_loading || _reSending) {
       return;
     }
 

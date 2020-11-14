@@ -16,6 +16,7 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
+import 'package:onepay_app/pages/login.verification.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -95,20 +96,32 @@ class _Login extends State<Login> with TickerProviderStateMixin {
 
   Future<void> _onSuccess(http.Response response) async {
     var jsonData = json.decode(response.body);
-    var accessToken = AccessToken.fromJson(jsonData);
 
-    OnePay.of(context).appStateController.add(accessToken);
+    if (jsonData["type"] == "Bearer") {
+      var accessToken = AccessToken.fromJson(jsonData);
 
-    // Saving data to shared preferences
-    await setLocalAccessToken(accessToken);
-    await setLoggedIn(true);
+      OnePay.of(context).appStateController.add(accessToken);
 
-    setState(() {
-      _errorFlag = false;
-    });
+      // Saving data to shared preferences
+      await setLocalAccessToken(accessToken);
+      await setLoggedIn(true);
 
-    Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.homeRoute, (Route<dynamic> route) => false);
+      setState(() {
+        _errorFlag = false;
+      });
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.homeRoute, (Route<dynamic> route) => false);
+    } else if (jsonData["type"] == "OTP") {
+      print(jsonData["messageID"]);
+      String nonce = jsonData["nonce"];
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => LoginVerification(nonce),
+        ),
+      );
+    }
   }
 
   void _onError(http.Response response) {
@@ -326,9 +339,6 @@ class _Login extends State<Login> with TickerProviderStateMixin {
                                                 ),
                                                 keyboardType: TextInputType
                                                     .visiblePassword,
-                                                onFieldSubmitted: (_) =>
-                                                    FocusScope.of(context)
-                                                        .nextFocus(),
                                                 textInputAction:
                                                     TextInputAction.next),
                                           ),

@@ -1,0 +1,1 @@
+enum DataSaverState { Enabled, Disabled }

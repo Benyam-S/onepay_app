@@ -94,7 +94,7 @@ class _Settings extends State<Settings> {
                             Navigator.of(context).pushNamed(AppRoutes.security),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.37),
+                          height: MediaQuery.of(context).size.height * 0.23),
                     ],
                   ),
                 ),

@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
 
-class SecurityTile extends StatefulWidget {
+class SecurityTile extends StatelessWidget {
   final String title;
   final String desc;
-  final Future<void> Function() onChange;
+  final bool value;
+  final bool isChanging;
+  final bool disabled;
+  final Function(bool) onChange;
 
-  SecurityTile({this.title, this.desc, this.onChange});
-
-  @override
-  _SecurityTile createState() => _SecurityTile();
-}
-
-class _SecurityTile extends State<SecurityTile> {
-  bool _value = false;
-  bool _isChanging = false;
-
-  void _onChange(bool value) async {
-    setState(() {
-      _isChanging = true;
-    });
-
-    await widget.onChange();
-
-    setState(() {
-      _value = value;
-      _isChanging = false;
-    });
-  }
+  SecurityTile(
+      {this.title,
+      this.desc,
+      @required this.value,
+      @required this.isChanging,
+      this.disabled,
+      @required this.onChange});
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +30,18 @@ class _SecurityTile extends State<SecurityTile> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.title ?? "",
-                      style: TextStyle(fontSize: 13, fontFamily: 'Roboto'),
+                      title ?? "",
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Roboto',
+                          color: (disabled ?? false)
+                              ? Theme.of(context).iconTheme.color
+                              : Colors.black),
                     ),
                     Row(
                       children: [
                         Visibility(
-                          visible: _isChanging,
+                          visible: isChanging ?? false,
                           child: Container(
                             height: 20,
                             width: 20,
@@ -56,8 +49,11 @@ class _SecurityTile extends State<SecurityTile> {
                           ),
                         ),
                         Switch(
-                          value: _value,
-                          onChanged: _isChanging ? null : _onChange,
+                          value: value ?? false,
+                          onChanged:
+                              (isChanging ?? false) || (disabled ?? false)
+                                  ? null
+                                  : onChange,
                         ),
                       ],
                     ),
@@ -68,7 +64,7 @@ class _SecurityTile extends State<SecurityTile> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: Text(
-                widget.desc ?? "",
+                desc ?? "",
                 style: TextStyle(
                     color: Theme.of(context).iconTheme.color, fontSize: 10),
               ),

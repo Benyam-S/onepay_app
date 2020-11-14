@@ -7,6 +7,7 @@ import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/account.info.dart';
 import 'package:onepay_app/models/linked.account.dart';
+import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -51,7 +52,7 @@ class _ManageAccounts extends State<ManageAccounts> {
   Future<void> _handleResponse(
       BuildContext context,
       Future<Response> Function() requester,
-      Function(Response response) onSuccess,
+      Future<void> Function(Response response) onSuccess,
       Function(Response response) onError) async {
     try {
       var response = await requester();
@@ -61,7 +62,7 @@ class _ManageAccounts extends State<ManageAccounts> {
       }
 
       if (response.statusCode == HttpStatus.ok) {
-        onSuccess(response);
+        await onSuccess(response);
       } else {
         onError(response);
       }
@@ -70,7 +71,7 @@ class _ManageAccounts extends State<ManageAccounts> {
     } catch (e) {}
   }
 
-  void _onGetAccountInfoSuccess(Response response) {
+  Future<void> _onGetAccountInfoSuccess(Response response) async {
     Map<String, dynamic> jsonData = json.decode(response.body);
     AccountInfo accountInfo = AccountInfo.fromJson(jsonData);
     for (var i = 0; i < _linkedAccounts.length; i++) {
@@ -112,7 +113,7 @@ class _ManageAccounts extends State<ManageAccounts> {
         (_) => null);
   }
 
-  void _onGetLinkedAccountsSuccess(Response response) {
+  Future<void> _onGetLinkedAccountsSuccess(Response response) async {
     List<dynamic> jsonData = json.decode(response.body);
 
     // Have to rest _linkedAccounts since the incoming linked accounts may not be compatible with the local one
@@ -131,6 +132,11 @@ class _ManageAccounts extends State<ManageAccounts> {
     OnePay.of(context).appStateController.add(_linkedAccounts);
     setState(() {});
     setLocalLinkedAccounts(json.encode(_linkedAccounts));
+
+    // Aborting if data-saver is enabled
+    DataSaverState dataSaverState =
+        OnePay.of(context).dataSaverState ?? await getLocalDataSaverState();
+    if (dataSaverState == DataSaverState.Enabled) return;
 
     //  Getting linked accounts info
     _getLinkedAccountsAccountInfo();

@@ -24,6 +24,9 @@ const APIClientTypeInternalB = "Internal";
 /// APIClientTypeExternalB is a constant for external or third party client
 const APIClientTypeExternalB = "Third Party";
 
+/// MessageIDPrefix is a constant that holds the value message_id-
+const MessageIDPrefix = "message_id-";
+
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Constants ++++++++++++++++++++++++++++++++++++++++++++++
 /// Host is a constant that holds the requests end point host
-const Host = "192.168.1.13:8080";
+const Host = "192.168.1.10:8080";

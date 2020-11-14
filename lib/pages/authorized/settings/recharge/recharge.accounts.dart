@@ -8,6 +8,7 @@ import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/account.info.dart';
 import 'package:onepay_app/models/linked.account.dart';
+import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
@@ -40,7 +41,7 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
   Future<void> _handleResponse(
       BuildContext context,
       Future<Response> Function() requester,
-      Function(Response response) onSuccess,
+      Future<void> Function(Response response) onSuccess,
       Function(Response response) onError) async {
     try {
       var response = await requester();
@@ -50,7 +51,7 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
       }
 
       if (response.statusCode == HttpStatus.ok) {
-        onSuccess(response);
+        await onSuccess(response);
       } else {
         onError(response);
       }
@@ -59,7 +60,7 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
     } catch (e) {}
   }
 
-  void _onGetAccountInfoSuccess(Response response) {
+  Future<void> _onGetAccountInfoSuccess(Response response) async {
     Map<String, dynamic> jsonData = json.decode(response.body);
     AccountInfo accountInfo = AccountInfo.fromJson(jsonData);
     for (var i = 0; i < _linkedAccounts.length; i++) {
@@ -76,8 +77,8 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
   }
 
   Future<Response> _makeGetAccountInfoRequest(String linkedAccountID) async {
-    var requester =
-        HttpRequester(path: "/oauth/user/linkedaccount/accountinfo/$linkedAccountID.json");
+    var requester = HttpRequester(
+        path: "/oauth/user/linkedaccount/accountinfo/$linkedAccountID.json");
     return requester.get(context);
   }
 
@@ -99,7 +100,7 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
         (_) => null);
   }
 
-  void _onGetLinkedAccountsSuccess(Response response) {
+  Future<void> _onGetLinkedAccountsSuccess(Response response) async {
     List<dynamic> jsonData = json.decode(response.body);
     // Have to rest _linkedAccounts since the incoming linked accounts may not be compatible with the local one
     _linkedAccounts = List<LinkedAccount>();
@@ -119,6 +120,11 @@ class _RechargeLinkedAccounts extends State<RechargeLinkedAccounts> {
     OnePay.of(context).appStateController.add(_linkedAccounts);
     setState(() {});
     setLocalLinkedAccounts(json.encode(_linkedAccounts));
+
+    // Aborting if data-saver is enabled
+    DataSaverState dataSaverState =
+        OnePay.of(context).dataSaverState ?? await getLocalDataSaverState();
+    if (dataSaverState == DataSaverState.Enabled) return;
 
     //  Getting linked accounts info
     _getLinkedAccountsAccountInfo();

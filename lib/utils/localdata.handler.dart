@@ -8,8 +8,10 @@ import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:onepay_app/models/data.saver.dart';
 
 // ---------------------------- Local Access Token Management ----------------------------
 
@@ -88,6 +90,24 @@ Future<void> setLocalUserProfile(User user) async {
   prefs.setString("profile_pic", user?.profilePic);
   prefs.setString("created_at", user?.createdAt?.toIso8601String());
   prefs.setString("updated_at", user?.updatedAt?.toIso8601String());
+}
+
+// ---------------------------- Local User Preference Management ----------------------------
+
+Future<UserPreference> getLocalUserPreference() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final userID = prefs.getString("user_id");
+  final twoStepVerification = prefs.getBool("two_step_verification");
+
+  return UserPreference(userID, twoStepVerification);
+}
+
+Future<void> setLocalUserPreference(UserPreference userPreference) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  // Only need to set two_step_verification value
+  prefs.setBool("two_step_verification", userPreference?.twoStepVerification);
 }
 
 // ---------------------------- Local User Wallet Management ----------------------------
@@ -268,4 +288,33 @@ Future<AppMeta> getAppMeta() async {
 
   appMeta = AppMeta(applicationName, applicationVersion, userAgent);
   return appMeta;
+}
+
+// ---------------------------- Local In App Settings Management ----------------------------
+
+Future<DataSaverState> getLocalDataSaverState() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final dataSaverStateB = prefs.getBool("data_saver_state");
+  DataSaverState dataSaverState;
+
+  if (dataSaverStateB == null || !dataSaverStateB) {
+    dataSaverState = DataSaverState.Disabled;
+  } else {
+    dataSaverState = DataSaverState.Enabled;
+  }
+
+  return dataSaverState;
+}
+
+Future<void> setLocalDataSaverState(DataSaverState dataSaverState) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  if (dataSaverState == DataSaverState.Enabled) {
+    prefs.setBool("data_saver_state", true);
+  } else if (dataSaverState == DataSaverState.Disabled) {
+    prefs.setBool("data_saver_state", false);
+  } else {
+    prefs.setBool("data_saver_state", null);
+  }
 }

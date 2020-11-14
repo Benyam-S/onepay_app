@@ -9,29 +9,41 @@ class SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: ContinuousRectangleBorder(),
-      margin: const EdgeInsets.only(bottom: 3.6),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                this.title,
-                style: TextStyle(fontSize: 13, fontFamily: 'Roboto'),
-              ),
-              Icon(
-                this.icon,
-                size: 30,
-                color: Colors.black,
-              ),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Theme.of(context).iconTheme.color.withOpacity(0.1)
+            )
+          )
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  this.icon,
+                  size: 30,
+                  color: Colors.black,
+                ),
+                SizedBox(width: 15),
+                Text(
+                  this.title,
+                  style: TextStyle(fontSize: 14, fontFamily: 'Roboto'),
+                ),
+              ],
+            ),
+
+            Icon(
+              Icons.chevron_right
+            )
+          ],
         ),
       ),
     );
