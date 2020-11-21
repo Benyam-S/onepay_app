@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -63,7 +63,7 @@ class _RechargeDialog extends State<RechargeDialog> {
 
   Future<void> _onRechargeSuccess(Response response) async {
     showSuccessDialog(widget.context,
-        "You have successfully recharged your OnePay account with ${CurrencyInputFormatter().toCurrency(_amount)} ETB");
+        "You have successfully recharged your OnePay account with ${CurrencyInputFormatter.toCurrency(_amount)} ETB");
 
     await widget.refreshAccountInfo(widget.linkedAccount);
   }
@@ -95,7 +95,7 @@ class _RechargeDialog extends State<RechargeDialog> {
     try {
       var response = await requester.put(widget.context, {
         "linked_account": widget.linkedAccount.id,
-        "amount": CurrencyInputFormatter().toDouble(_amount),
+        "amount": CurrencyInputFormatter.toDouble(_amount),
       });
 
       // Removing loadingDialog
@@ -171,8 +171,8 @@ class _RechargeDialog extends State<RechargeDialog> {
 
   @override
   Widget build(BuildContext context) {
-    String amount = CurrencyInputFormatter()
-        .toCurrency(this.widget.linkedAccount.amount?.toString());
+    String amount = CurrencyInputFormatter.toCurrency(
+        this.widget.linkedAccount.amount?.toString());
     if (amount == null) {
       amount = "Undetermined";
     } else {

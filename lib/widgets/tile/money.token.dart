@@ -6,9 +6,9 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/money.token.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -211,7 +211,7 @@ class _MoneyTokenTileState extends State<MoneyTokenTile>
                                   color: Theme.of(context).iconTheme.color),
                             ),
                             Text(
-                              CurrencyInputFormatter().toCurrency(
+                              CurrencyInputFormatter.toCurrency(
                                       widget.moneyToken.amount.toString()) +
                                   " ETB",
                               style: TextStyle(fontWeight: FontWeight.bold),

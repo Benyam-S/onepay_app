@@ -12,7 +12,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
   }
 
   /// toCurrency will change the provided amount to currency with decimal point included
-  String toCurrency(String amount) {
+  static String toCurrency(String amount) {
     try {
       // Removing any non currency related characters
       amount = amount.replaceAll(RegExp(r"[^0-9.,]"), "");
@@ -48,7 +48,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
   }
 
   /// toDouble will change the provided currency amount to double in string format
-  String toDouble(String amount) {
+  static String toDouble(String amount) {
     try {
       // Removing comma before parsing
       if (amount.contains(",")) {
@@ -64,7 +64,7 @@ class CurrencyInputFormatter extends TextInputFormatter {
   }
 
   /// transformAmount is a method that changes the amount to currency
-  String transformAmount(String amount) {
+  static String transformAmount(String amount) {
     try {
       // Removing any non currency related characters
       amount = amount.replaceAll(RegExp(r"[^0-9.,]"), "");

@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/wallet.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
@@ -52,7 +52,7 @@ class _WalletPocket extends State<WalletPocket>
     wallet.seen = true;
 
     setState(() {
-      _amount = CurrencyInputFormatter().toCurrency(wallet.amount.toString());
+      _amount = CurrencyInputFormatter.toCurrency(wallet.amount.toString());
     });
 
     // Add current user to the stream and shared preference
@@ -124,7 +124,7 @@ class _WalletPocket extends State<WalletPocket>
         (await getLocalUserWallet())?.amount;
 
     setState(() {
-      _amount = CurrencyInputFormatter().toCurrency(amount.toString());
+      _amount = CurrencyInputFormatter.toCurrency(amount.toString());
     });
 
     await _makeRequest(Origin.initAmount);
@@ -181,8 +181,8 @@ class _WalletPocket extends State<WalletPocket>
                             if (snapshot.hasData) {
                               double amount = (snapshot.data as Wallet)?.amount;
                               if (amount != null) {
-                                _amount = CurrencyInputFormatter()
-                                    .toCurrency(amount.toString());
+                                _amount = CurrencyInputFormatter.toCurrency(
+                                    amount.toString());
                               }
                             }
                             return Text(
@@ -234,8 +234,8 @@ class _WalletPocket extends State<WalletPocket>
                     if (snapshot.hasData) {
                       double amount = (snapshot.data as Wallet)?.amount;
                       if (amount != null) {
-                        _amount = CurrencyInputFormatter()
-                            .toCurrency(amount.toString());
+                        _amount = CurrencyInputFormatter.toCurrency(
+                            amount.toString());
                       }
                     }
                     return Text(

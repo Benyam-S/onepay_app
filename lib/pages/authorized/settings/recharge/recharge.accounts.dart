@@ -8,7 +8,7 @@ import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/account.info.dart';
 import 'package:onepay_app/models/linked.account.dart';
-import 'package:onepay_app/models/data.saver.dart';
+import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';

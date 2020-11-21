@@ -8,13 +8,12 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/money.token.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
-
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/basic/dashed.border.dart';
@@ -115,7 +114,7 @@ class _Receive extends State<Receive> {
     var jsonData = json.decode(response.body);
     _moneyToken = MoneyToken.fromJson(jsonData);
     var displayAmount =
-        CurrencyInputFormatter().toCurrency(_moneyToken.amount.toString());
+        CurrencyInputFormatter.toCurrency(_moneyToken.amount.toString());
 
     showAmountVerificationDialog(context, displayAmount, _method, _proceed);
   }
@@ -315,8 +314,7 @@ class _Receive extends State<Receive> {
   void _proceed() async {
     showLoaderDialog(context);
 
-    _amount =
-        CurrencyInputFormatter().toCurrency(_moneyToken.amount.toString());
+    _amount = CurrencyInputFormatter.toCurrency(_moneyToken.amount.toString());
 
     await _handleResponse(
         _makeProceedRequest, _onProceedSuccess, _onProceedError);

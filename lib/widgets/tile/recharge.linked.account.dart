@@ -18,7 +18,8 @@ class _RechargeLinkedAccountTile extends State<RechargeLinkedAccountTile> {
   void _showRechargeDialog() {
     showDialog(
       context: context,
-      child: RechargeDialog(context, widget.linkedAccount, widget.refreshAccountInfo),
+      child: RechargeDialog(
+          context, widget.linkedAccount, widget.refreshAccountInfo),
     );
   }
 
@@ -36,8 +37,8 @@ class _RechargeLinkedAccountTile extends State<RechargeLinkedAccountTile> {
 
   @override
   Widget build(BuildContext context) {
-    String amount = CurrencyInputFormatter()
-        .toCurrency(widget.linkedAccount.amount?.toString());
+    String amount = CurrencyInputFormatter.toCurrency(
+        widget.linkedAccount.amount?.toString());
     if (amount == null) {
       amount = "Undetermined";
     } else {

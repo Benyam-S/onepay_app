@@ -8,9 +8,9 @@ import 'package:http/http.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/money.token.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -280,7 +280,7 @@ class _MoneyVault extends State<MoneyVault> {
 
   void _onReclaimSelectedSuccess(Response response) {
     showSuccessDialog(context,
-        "You have successfully reclaimed ${CurrencyInputFormatter().toCurrency(_reclaimAmount.toString())} ETB.");
+        "You have successfully reclaimed ${CurrencyInputFormatter.toCurrency(_reclaimAmount.toString())} ETB.");
     _getSelectedMoneyTokens().forEach((moneyToken) {
       _deleteMoneyToken(moneyToken);
     });
@@ -328,10 +328,10 @@ class _MoneyVault extends State<MoneyVault> {
                   "$claimedCount has been reclaimed."),
               SizedBox(height: 15),
               Text(
-                  "Reclaimed amount: ${CurrencyInputFormatter().toCurrency(reclaimedAmount.toString())} ETB"),
+                  "Reclaimed amount: ${CurrencyInputFormatter.toCurrency(reclaimedAmount.toString())} ETB"),
               SizedBox(height: 5),
               Text(
-                  "Unclaimed amount: ${CurrencyInputFormatter().toCurrency(unclaimedAmount.toString())} ETB"),
+                  "Unclaimed amount: ${CurrencyInputFormatter.toCurrency(unclaimedAmount.toString())} ETB"),
             ],
           ),
           actions: [
@@ -379,7 +379,7 @@ class _MoneyVault extends State<MoneyVault> {
       barrierDismissible: true,
       child: AlertDialog(
         content: Text(
-            "Do you wish to reclaim ${CurrencyInputFormatter().toCurrency(_reclaimAmount.toString())} ETB "
+            "Do you wish to reclaim ${CurrencyInputFormatter.toCurrency(_reclaimAmount.toString())} ETB "
             "collected from the selected $_selectedCount transfer money token${_selectedCount > 1 ? "s" : ""}."),
         actions: [
           CupertinoButton(

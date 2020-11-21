@@ -14,6 +14,8 @@ void logout(BuildContext context) async {
     OnePay.of(context).histories = List<History>();
     OnePay.of(context).linkedAccounts = List<LinkedAccount>();
     OnePay.of(context).dataSaverState = null;
+    OnePay.of(context).fNotificationState = null;
+    OnePay.of(context).bNotificationState = null;
 
     await setLoggedIn(false);
     await setLocalUserWallet(null);
@@ -23,6 +25,8 @@ void logout(BuildContext context) async {
     await setLocalViewBys(null);
     await setLocalLinkedAccounts(null);
     await setLocalDataSaverState(null);
+    await setLocalForegroundNotificationState(null);
+    await setLocalBackgroundNotificationState(null);
 
     // Logging the use out
     Navigator.of(context).pushNamedAndRemoveUntil(

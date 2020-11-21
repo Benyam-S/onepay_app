@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -81,7 +82,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
     setState(() {
       _amountController.addListener(() {});
       _amountController.text =
-          CurrencyInputFormatter().transformAmount(currentValue);
+          CurrencyInputFormatter.transformAmount(currentValue);
     });
   }
 
@@ -137,7 +138,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
 
     try {
       var response = await requester.post(context, {
-        'amount': CurrencyInputFormatter().toDouble(amount),
+        'amount': CurrencyInputFormatter.toDouble(amount),
       });
 
       // Removing the loading indicator
@@ -234,7 +235,7 @@ class _PaymentQRCode extends State<PaymentQRCode> {
       if (!_amountFocusNode.hasFocus) {
         setState(() {
           _amountController.text =
-              CurrencyInputFormatter().toCurrency(_amountController.text);
+              CurrencyInputFormatter.toCurrency(_amountController.text);
           _amountHint = '100.00';
         });
       } else {

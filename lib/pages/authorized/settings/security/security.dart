@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/pages/authorized/settings/security/two.step.verification.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.dialog.dart';
 import 'package:onepay_app/widgets/tile/security.dart';
-import 'package:onepay_app/models/data.saver.dart';
 
 class Security extends StatefulWidget {
   _Security createState() => _Security();
@@ -19,21 +19,28 @@ class _Security extends State<Security> {
   bool _dataSaverState = false;
   bool _dataSaverStateProgress = false;
 
-  Future<bool> _onChange(bool value) async {
-    await Future.delayed(Duration(seconds: 2));
-    return value;
-  }
+  bool _foregroundNotificationState = false;
+  bool _foregroundNotificationStateProgress = false;
 
   Future<void> _initInAppSettings() async {
     UserPreference userPreference =
         OnePay.of(context).userPreference ?? await getLocalUserPreference();
     DataSaverState dataSaverState =
         OnePay.of(context).dataSaverState ?? await getLocalDataSaverState();
+    ForegroundNotificationState foregroundNotificationState =
+        OnePay.of(context).fNotificationState ??
+            await getLocalForegroundNotificationState();
 
     if (dataSaverState == DataSaverState.Enabled) {
       _dataSaverState = true;
     } else {
       _dataSaverState = false;
+    }
+
+    if (foregroundNotificationState == ForegroundNotificationState.Enabled) {
+      _foregroundNotificationState = true;
+    } else {
+      _foregroundNotificationState = false;
     }
 
     setState(() {
@@ -65,6 +72,14 @@ class _Security extends State<Security> {
     if (value) {
       OnePay.of(context).appStateController.add(DataSaverState.Enabled);
       await setLocalDataSaverState(DataSaverState.Enabled);
+
+      //  When data saver is on we should close the notification
+      _foregroundNotificationState = false;
+      OnePay.of(context)
+          .appStateController
+          .add(ForegroundNotificationState.Disabled);
+      await setLocalForegroundNotificationState(
+          ForegroundNotificationState.Disabled);
     } else {
       OnePay.of(context).appStateController.add(DataSaverState.Disabled);
       await setLocalDataSaverState(DataSaverState.Disabled);
@@ -72,6 +87,33 @@ class _Security extends State<Security> {
 
     setState(() {
       _dataSaverStateProgress = false;
+    });
+  }
+
+  Future<void> _onForegroundNotificationStateChange(
+      BuildContext context, bool value) async {
+    setState(() {
+      _foregroundNotificationStateProgress = true;
+    });
+
+    _foregroundNotificationState = value;
+
+    if (value) {
+      OnePay.of(context)
+          .appStateController
+          .add(ForegroundNotificationState.Enabled);
+      await setLocalForegroundNotificationState(
+          ForegroundNotificationState.Enabled);
+    } else {
+      OnePay.of(context)
+          .appStateController
+          .add(ForegroundNotificationState.Disabled);
+      await setLocalForegroundNotificationState(
+          ForegroundNotificationState.Disabled);
+    }
+
+    setState(() {
+      _foregroundNotificationStateProgress = false;
     });
   }
 
@@ -116,9 +158,10 @@ class _Security extends State<Security> {
                 desc:
                     "Allow OnePay to forward notification when your account state"
                     " changes even if the application is closed.",
-                onChange: _onChange,
-                value: false,
-                isChanging: false,
+                onChange: (value) =>
+                    _onForegroundNotificationStateChange(context, value),
+                value: _foregroundNotificationState,
+                isChanging: _foregroundNotificationStateProgress,
                 disabled: _dataSaverState,
               ),
               Container(

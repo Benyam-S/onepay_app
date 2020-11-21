@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/user.dart';
-import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/currency.formatter.dart';
+import 'package:onepay_app/utils/custom_icons.dart';
 
 class HistoryTile extends StatefulWidget {
   final History history;
@@ -719,7 +719,7 @@ class _HistoryTileState extends State<HistoryTile>
     }
 
     _historyAmount =
-        CurrencyInputFormatter().toCurrency(widget.history.amount.toString());
+        CurrencyInputFormatter.toCurrency(widget.history.amount.toString());
   }
 
   void _preformAnimation() {

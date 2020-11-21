@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/history.dart';
+import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
-import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/models/wallet.dart';
+import 'package:onepay_app/pages/authorized/home.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/add.account.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/manage.accounts.dart';
 import 'package:onepay_app/pages/authorized/settings/profile/profile.dart';
@@ -22,8 +24,6 @@ import 'package:onepay_app/pages/authorized/settings/security/session.management
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
-import 'package:onepay_app/pages/authorized/home.dart';
-import 'package:onepay_app/pages/login.dart';
 import 'package:onepay_app/pages/signup/signup.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -65,6 +65,9 @@ class _OnePay extends State<OnePay> {
   Stream _linkedAccountStream;
   Stream _accountProviderStream;
   Stream _dataSaverStream;
+  Stream _fNotificationStream;
+  Stream _bNotificationStream;
+
   AccessToken accessToken;
   User currentUser;
   UserPreference userPreference;
@@ -73,7 +76,11 @@ class _OnePay extends State<OnePay> {
   List<AccountProvider> accountProviders = List<AccountProvider>();
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
   DataSaverState dataSaverState;
+  ForegroundNotificationState fNotificationState;
+  BackgroundNotificationState bNotificationState;
   AppMeta appMetaData;
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final navKey = new GlobalKey<NavigatorState>();
 
   Stream get accessTokenStream => this._accessTokenStream;
 
@@ -90,6 +97,10 @@ class _OnePay extends State<OnePay> {
   Stream get linkedAccountStream => this._linkedAccountStream;
 
   Stream get dataSaverStream => this._dataSaverStream;
+
+  Stream get fNotificationStream => this._fNotificationStream;
+
+  Stream get bNotificationStream => this._bNotificationStream;
 
   StreamController get appStateController => this._appStateController;
 
@@ -115,8 +126,14 @@ class _OnePay extends State<OnePay> {
     this._linkedAccountStream = _appStateController.stream
         .where((event) => event is List<LinkedAccount>);
 
-    this._dataSaverStream = _appStateController.stream
-        .where((event) => event is DataSaverState);
+    this._dataSaverStream =
+        _appStateController.stream.where((event) => event is DataSaverState);
+
+    this._fNotificationStream = _appStateController.stream
+        .where((event) => event is ForegroundNotificationState);
+
+    this._bNotificationStream = _appStateController.stream
+        .where((event) => event is BackgroundNotificationState);
 
     this._accessTokenStream.listen((accessToken) {
       this.accessToken = accessToken as AccessToken;
@@ -148,6 +165,16 @@ class _OnePay extends State<OnePay> {
 
     this._dataSaverStream.listen((dataSaverState) {
       this.dataSaverState = dataSaverState as DataSaverState;
+    });
+
+    this._fNotificationStream.listen((fNotificationState) {
+      this.fNotificationState =
+          fNotificationState as ForegroundNotificationState;
+    });
+
+    this._bNotificationStream.listen((bNotificationState) {
+      this.bNotificationState =
+          bNotificationState as BackgroundNotificationState;
     });
   }
 
@@ -240,12 +267,42 @@ class _OnePay extends State<OnePay> {
         .sort((a, b) => a.accountProviderName.compareTo(b.accountProviderName));
   }
 
+  void _initNotificationChannel() async {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('ic_notification');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: _selectNotification);
+  }
+
+  Future _selectNotification(String payload) async {
+    bool loggedIn = await isLoggedIn();
+
+    if (loggedIn) {
+      await navKey.currentState.pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => Home(index: 3),
+          ),
+          (Route<dynamic> route) => false);
+    } else {
+      await navKey.currentState.pushNamedAndRemoveUntil(
+          AppRoutes.logInRoute, (Route<dynamic> route) => false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     getAppMeta().then((appMeta) => appMetaData = appMeta);
     getLocalDataSaverState().then((dataSaverS) => dataSaverState = dataSaverS);
+
+    _initNotificationChannel();
   }
 
   @override
@@ -254,6 +311,7 @@ class _OnePay extends State<OnePay> {
       appState: this,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
+        navigatorKey: navKey,
         theme: ThemeData(
             inputDecorationTheme: InputDecorationTheme(
               border: const OutlineInputBorder(),

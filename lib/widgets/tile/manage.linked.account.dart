@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
-import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/currency.formatter.dart';
+import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -92,8 +92,8 @@ class _ManageLinkedAccountTile extends State<ManageLinkedAccountTile> {
 
   @override
   Widget build(BuildContext context) {
-    String amount = CurrencyInputFormatter()
-        .toCurrency(widget.linkedAccount.amount?.toString());
+    String amount = CurrencyInputFormatter.toCurrency(
+        widget.linkedAccount.amount?.toString());
     double amountSize;
 
     if (amount == null) {

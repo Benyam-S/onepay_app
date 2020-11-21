@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/user.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -156,7 +157,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
   void _onVerifySuccess(Response response) {
     var jsonData = json.decode(response.body);
     var opUser = User.fromJson(jsonData);
-    var displayAmount = CurrencyInputFormatter().toCurrency(_amount);
+    var displayAmount = CurrencyInputFormatter.toCurrency(_amount);
     showReceiverVerificationDialog(context, displayAmount, opUser, _send);
   }
 
@@ -217,7 +218,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
 
     return await requester.post(context, <String, String>{
       'receiver_id': _opID,
-      'amount': CurrencyInputFormatter().toDouble(_amount),
+      'amount': CurrencyInputFormatter.toDouble(_amount),
     });
   }
 
@@ -301,7 +302,7 @@ class _ViaOnePayID extends State<ViaOnePayID> {
       if (!_amountFocusNode.hasFocus) {
         setState(() {
           _amountController.text =
-              CurrencyInputFormatter().toCurrency(_amountController.text);
+              CurrencyInputFormatter.toCurrency(_amountController.text);
           _amountHint = "100.00";
         });
       } else {

@@ -11,9 +11,9 @@ import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/history.dart';
+import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
-import 'package:onepay_app/models/data.saver.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/receive/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
@@ -23,17 +23,22 @@ import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/logout.dart';
+import 'package:onepay_app/utils/notification.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:web_socket_channel/io.dart';
 
 class Home extends StatefulWidget {
+  final int index;
+
+  Home({this.index});
+
   _Home createState() => _Home();
 }
 
 class _Home extends State<Home> {
-  int _currentIndex = 4;
+  int _currentIndex;
   Widget _appBar;
   List<Widget> _listOfSections;
   PageStorageBucket _bucket = PageStorageBucket();
@@ -206,7 +211,7 @@ class _Home extends State<Home> {
     }
   }
 
-  void _onNotificationReceived(response) {
+  void _onNotificationReceived(response) async {
     var jsonMap = json.decode(response);
     if (jsonMap["Type"] == "user") {
       var user = User.fromJson(jsonMap["Body"]);
@@ -230,6 +235,26 @@ class _Home extends State<Home> {
       var history = History.fromJson(jsonMap["Body"]);
 
       OnePay.of(context).appStateController.add([history]);
+
+      // Aborting if foreground notification is disabled
+      ForegroundNotificationState foregroundNotificationState =
+          OnePay.of(context).fNotificationState ??
+              await getLocalForegroundNotificationState();
+      if (foregroundNotificationState == ForegroundNotificationState.Disabled)
+        return;
+
+      User user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
+      var notification = makeHistoryNotification(context, history, user);
+      if (notification != null) {
+        showNotification(
+            context,
+            history.id,
+            OnePayHistoryChannelID,
+            OnePayHistoryChannelName,
+            notification.title,
+            notification.description,
+            playLoad: history.id.toString());
+      }
     }
 
     if (jsonMap["Type"] == "preference") {
@@ -284,6 +309,8 @@ class _Home extends State<Home> {
   @override
   void initState() {
     super.initState();
+
+    _currentIndex = widget.index ?? 4;
 
     _listOfSections = [
       Container(

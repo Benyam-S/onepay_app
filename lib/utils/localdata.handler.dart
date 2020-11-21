@@ -7,11 +7,11 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/linked.account.dart';
+import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:onepay_app/models/data.saver.dart';
 
 // ---------------------------- Local Access Token Management ----------------------------
 
@@ -316,5 +316,69 @@ Future<void> setLocalDataSaverState(DataSaverState dataSaverState) async {
     prefs.setBool("data_saver_state", false);
   } else {
     prefs.setBool("data_saver_state", null);
+  }
+}
+
+Future<ForegroundNotificationState>
+    getLocalForegroundNotificationState() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final foregroundNotificationStateB =
+      prefs.getBool("foreground_notification_state");
+  ForegroundNotificationState foregroundNotificationState;
+
+  // foreground notification is enabled by default so if the value is null the
+  // it has to be set to 'Enabled'.
+  if (foregroundNotificationStateB == null || foregroundNotificationStateB) {
+    foregroundNotificationState = ForegroundNotificationState.Enabled;
+  } else {
+    foregroundNotificationState = ForegroundNotificationState.Disabled;
+  }
+
+  return foregroundNotificationState;
+}
+
+Future<void> setLocalForegroundNotificationState(
+    ForegroundNotificationState foregroundNotificationState) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  if (foregroundNotificationState == ForegroundNotificationState.Enabled) {
+    prefs.setBool("foreground_notification_state", true);
+  } else if (foregroundNotificationState ==
+      ForegroundNotificationState.Disabled) {
+    prefs.setBool("foreground_notification_state", false);
+  } else {
+    prefs.setBool("foreground_notification_state", null);
+  }
+}
+
+Future<BackgroundNotificationState>
+    getLocalBackgroundNotificationState() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final backgroundNotificationStateB =
+      prefs.getBool("background_notification_state");
+  BackgroundNotificationState backgroundNotificationState;
+
+  if (backgroundNotificationStateB == null || backgroundNotificationStateB) {
+    backgroundNotificationState = BackgroundNotificationState.Enabled;
+  } else {
+    backgroundNotificationState = BackgroundNotificationState.Disabled;
+  }
+
+  return backgroundNotificationState;
+}
+
+Future<void> setLocalBackgroundNotificationState(
+    BackgroundNotificationState backgroundNotificationState) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  if (backgroundNotificationState == BackgroundNotificationState.Enabled) {
+    prefs.setBool("background_notification_state", true);
+  } else if (backgroundNotificationState ==
+      BackgroundNotificationState.Disabled) {
+    prefs.setBool("background_notification_state", false);
+  } else {
+    prefs.setBool("background_notification_state", null);
   }
 }

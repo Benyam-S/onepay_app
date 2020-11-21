@@ -9,9 +9,9 @@ import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/linked.account.dart';
+import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
 import 'package:onepay_app/utils/exceptions.dart';
-import 'package:onepay_app/utils/currency.formatter.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
@@ -87,7 +87,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
 
   Future<void> _onWithdrawSuccess(Response response) async {
     showSuccessDialog(context,
-        "You have successfully withdrawn ${CurrencyInputFormatter().toCurrency(_amount)} ETB to linked account ${_selectedLinkedAccount.accountID}.");
+        "You have successfully withdrawn ${CurrencyInputFormatter.toCurrency(_amount)} ETB to linked account ${_selectedLinkedAccount.accountID}.");
   }
 
   void _onWithdrawError(Response response) {
@@ -127,7 +127,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
     try {
       var response = await requester.put(context, {
         "linked_account": _selectedLinkedAccount.id,
-        "amount": CurrencyInputFormatter().toDouble(_amount),
+        "amount": CurrencyInputFormatter.toDouble(_amount),
       });
 
       setState(() {
@@ -301,7 +301,7 @@ class _WithdrawLinkedAccounts extends State<WithdrawLinkedAccounts> {
       if (!_amountFocusNode.hasFocus) {
         setState(() {
           _amountController.text =
-              CurrencyInputFormatter().toCurrency(_amountController.text);
+              CurrencyInputFormatter.toCurrency(_amountController.text);
           _amountHint = "100.00";
         });
       } else {

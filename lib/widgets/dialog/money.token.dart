@@ -9,8 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/money.token.dart';
-import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/currency.formatter.dart';
+import 'package:onepay_app/utils/exceptions.dart';
 import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
@@ -45,7 +45,7 @@ class MoneyTokenDialog extends StatelessWidget {
 
   void _onReclaimSuccess(Response response) {
     showSuccessDialog(context,
-        "You have successfully Reclaimed ${CurrencyInputFormatter().toCurrency(moneyToken.amount.toString())} ETB.");
+        "You have successfully Reclaimed ${CurrencyInputFormatter.toCurrency(moneyToken.amount.toString())} ETB.");
     removeMoneyToken(moneyToken);
   }
 
@@ -261,8 +261,8 @@ class MoneyTokenDialog extends StatelessWidget {
                       child: Text("Amount:",
                           style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
-                    Text(CurrencyInputFormatter()
-                            .toCurrency(moneyToken.amount.toString()) +
+                    Text(CurrencyInputFormatter.toCurrency(
+                            moneyToken.amount.toString()) +
                         " ETB"),
                   ],
                 ),
