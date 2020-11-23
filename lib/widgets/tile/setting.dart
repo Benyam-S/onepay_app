@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 class SettingTile extends StatelessWidget {
   final String title;
   final IconData icon;
+  final Icon additionalIcon;
   final Function onTap;
 
-  SettingTile(this.title, this.icon, {this.onTap});
+  SettingTile(this.title, this.icon, {this.onTap, this.additionalIcon});
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +15,10 @@ class SettingTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: Theme.of(context).iconTheme.color.withOpacity(0.1)
-            )
-          )
-        ),
+            border: Border(
+                bottom: BorderSide(
+                    color:
+                        Theme.of(context).iconTheme.color.withOpacity(0.1)))),
         child: Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -39,10 +38,7 @@ class SettingTile extends StatelessWidget {
                 ),
               ],
             ),
-
-            Icon(
-              Icons.chevron_right
-            )
+            additionalIcon != null ? additionalIcon : Icon(Icons.chevron_right)
           ],
         ),
       ),

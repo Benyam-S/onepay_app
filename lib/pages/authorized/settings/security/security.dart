@@ -19,28 +19,16 @@ class _Security extends State<Security> {
   bool _dataSaverState = false;
   bool _dataSaverStateProgress = false;
 
-  bool _foregroundNotificationState = false;
-  bool _foregroundNotificationStateProgress = false;
-
   Future<void> _initInAppSettings() async {
     UserPreference userPreference =
         OnePay.of(context).userPreference ?? await getLocalUserPreference();
     DataSaverState dataSaverState =
         OnePay.of(context).dataSaverState ?? await getLocalDataSaverState();
-    ForegroundNotificationState foregroundNotificationState =
-        OnePay.of(context).fNotificationState ??
-            await getLocalForegroundNotificationState();
 
     if (dataSaverState == DataSaverState.Enabled) {
       _dataSaverState = true;
     } else {
       _dataSaverState = false;
-    }
-
-    if (foregroundNotificationState == ForegroundNotificationState.Enabled) {
-      _foregroundNotificationState = true;
-    } else {
-      _foregroundNotificationState = false;
     }
 
     setState(() {
@@ -72,14 +60,6 @@ class _Security extends State<Security> {
     if (value) {
       OnePay.of(context).appStateController.add(DataSaverState.Enabled);
       await setLocalDataSaverState(DataSaverState.Enabled);
-
-      //  When data saver is on we should close the notification
-      _foregroundNotificationState = false;
-      OnePay.of(context)
-          .appStateController
-          .add(ForegroundNotificationState.Disabled);
-      await setLocalForegroundNotificationState(
-          ForegroundNotificationState.Disabled);
     } else {
       OnePay.of(context).appStateController.add(DataSaverState.Disabled);
       await setLocalDataSaverState(DataSaverState.Disabled);
@@ -87,33 +67,6 @@ class _Security extends State<Security> {
 
     setState(() {
       _dataSaverStateProgress = false;
-    });
-  }
-
-  Future<void> _onForegroundNotificationStateChange(
-      BuildContext context, bool value) async {
-    setState(() {
-      _foregroundNotificationStateProgress = true;
-    });
-
-    _foregroundNotificationState = value;
-
-    if (value) {
-      OnePay.of(context)
-          .appStateController
-          .add(ForegroundNotificationState.Enabled);
-      await setLocalForegroundNotificationState(
-          ForegroundNotificationState.Enabled);
-    } else {
-      OnePay.of(context)
-          .appStateController
-          .add(ForegroundNotificationState.Disabled);
-      await setLocalForegroundNotificationState(
-          ForegroundNotificationState.Disabled);
-    }
-
-    setState(() {
-      _foregroundNotificationStateProgress = false;
     });
   }
 
@@ -153,17 +106,6 @@ class _Security extends State<Security> {
                 value: _dataSaverState,
                 isChanging: _dataSaverStateProgress,
               ),
-              SecurityTile(
-                title: "Notification",
-                desc:
-                    "Allow OnePay to forward notification when your account state"
-                    " changes even if the application is closed.",
-                onChange: (value) =>
-                    _onForegroundNotificationStateChange(context, value),
-                value: _foregroundNotificationState,
-                isChanging: _foregroundNotificationStateProgress,
-                disabled: _dataSaverState,
-              ),
               Container(
                 child: Text(
                   "Security",
@@ -183,14 +125,27 @@ class _Security extends State<Security> {
                 onChange: (value) =>
                     _onTwoStepVerificationChange(context, value),
               ),
-              Card(
-                shape: ContinuousRectangleBorder(),
+              SizedBox(
+                height: 10,
+              ),
+              Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).iconTheme.color.withOpacity(0.1),
+                    ),
+                    top: BorderSide(
+                      color: Theme.of(context).iconTheme.color.withOpacity(0.1),
+                    ),
+                  ),
+                ),
                 child: InkWell(
                   onTap: () => Navigator.of(context)
                       .pushNamed(AppRoutes.sessionManagement),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
+                    padding: const EdgeInsets.fromLTRB(15, 20, 5, 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -207,14 +162,21 @@ class _Security extends State<Security> {
                 ),
               ),
               SizedBox(height: 5),
-              Card(
-                shape: ContinuousRectangleBorder(),
+              Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).iconTheme.color.withOpacity(0.1),
+                    ),
+                  ),
+                ),
                 child: InkWell(
                   onTap: () =>
                       Navigator.of(context).pushNamed(AppRoutes.changePassword),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
+                    padding: const EdgeInsets.fromLTRB(15, 20, 5, 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -233,13 +195,23 @@ class _Security extends State<Security> {
               SizedBox(height: 5),
               Column(
                 children: [
-                  Card(
-                    shape: ContinuousRectangleBorder(),
+                  Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context)
+                              .iconTheme
+                              .color
+                              .withOpacity(0.1),
+                        ),
+                      ),
+                    ),
                     child: InkWell(
                       onTap: () => showDeleteAccountDialog(context),
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(15, 18, 5, 18),
+                        padding: const EdgeInsets.fromLTRB(15, 20, 5, 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center,

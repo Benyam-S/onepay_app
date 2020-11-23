@@ -17,9 +17,7 @@ dependencies:
   json_annotation: ^2.0.0
   recase: ^3.0.0
   country_code_picker: ^1.4.0
-  material_design_icons_flutter: ^4.0.5555
   ff_navigation_bar: ^0.1.5
-  google_fonts: ^1.1.0
   shared_preferences: ^0.5.10
   barcode_scan: any
   qr_flutter: ^3.2.0
@@ -36,6 +34,9 @@ dependencies:
   flutter_user_agent: ^1.2.2
   path_provider: ^1.6.22
   flutter_local_notifications: ^3.0.1+4
+  notification_permissions: ^0.4.8
+#  material_design_icons_flutter: ^4.0.5555
+#  google_fonts: ^1.1.0
 
 dev_dependencies:
   flutter_test:

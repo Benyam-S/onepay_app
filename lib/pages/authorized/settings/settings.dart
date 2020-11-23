@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:notification_permissions/notification_permissions.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
@@ -12,24 +13,54 @@ class Settings extends StatefulWidget {
   _Settings createState() => _Settings();
 }
 
-class _Settings extends State<Settings> {
+class _Settings extends State<Settings> with WidgetsBindingObserver {
   User _user;
+  PermissionStatus _notificationPermissionStatus;
 
-  void _initUser() async {
+  void _initSettingStates() async {
     _user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
+    _notificationPermissionStatus =
+        await NotificationPermissions.getNotificationPermissionStatus();
+
     setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    _initUser();
+    _initSettingStates();
 
     OnePay.of(context).userStream.listen((user) {
       if (mounted) {
         setState(() {
           _user = (user as User);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    Future<PermissionStatus> notificationPermissionStatus =
+        NotificationPermissions.getNotificationPermissionStatus();
+    notificationPermissionStatus.then((status) {
+      if (status != _notificationPermissionStatus) {
+        setState(() {
+          _notificationPermissionStatus = status;
         });
       }
     });
@@ -93,8 +124,23 @@ class _Settings extends State<Settings> {
                         onTap: () =>
                             Navigator.of(context).pushNamed(AppRoutes.security),
                       ),
+                      SettingTile(
+                        "Notifications",
+                        CustomIcons.bell,
+                        onTap: () => Navigator.of(context)
+                            .pushNamed(AppRoutes.notification),
+                        additionalIcon: _notificationPermissionStatus ==
+                                    PermissionStatus.denied ||
+                                _notificationPermissionStatus ==
+                                    PermissionStatus.unknown
+                            ? Icon(
+                                Icons.error,
+                                color: Theme.of(context).errorColor,
+                              )
+                            : null,
+                      ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.23),
+                          height: MediaQuery.of(context).size.height * 0.14),
                     ],
                   ),
                 ),
