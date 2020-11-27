@@ -1,8 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
-
 part 'money.token.g.dart';
 
-@JsonSerializable()
 class MoneyToken {
   String code;
   String senderID;
@@ -11,10 +8,11 @@ class MoneyToken {
   DateTime expirationDate;
   String method;
 
-  MoneyToken(this.code, this.senderID, this.sentAt, this.amount, this.expirationDate,
-      this.method);
+  MoneyToken(this.code, this.senderID, this.sentAt, this.amount,
+      this.expirationDate, this.method);
 
-  factory MoneyToken.fromJson(Map<String, dynamic> json) => _$MoneyTokenFromJson(json);
+  factory MoneyToken.fromJson(Map<String, dynamic> json) =>
+      _$MoneyTokenFromJson(json);
 
   Map<String, dynamic> toJson() => _$MoneyTokenToJson(this);
 }

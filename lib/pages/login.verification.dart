@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/constants.dart';
@@ -12,7 +13,6 @@ import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
-import 'package:http/http.dart' as http;
 import 'package:recase/recase.dart';
 
 class LoginVerification extends StatefulWidget {
@@ -46,7 +46,7 @@ class _LoginVerification extends State<LoginVerification> {
     await setLoggedIn(true);
 
     Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.homeRoute, (Route<dynamic> route) => false);
+        AppRoutes.authorizedRoute, (Route<dynamic> route) => false);
   }
 
   void _onLoginVerifyError(BuildContext context, http.Response response) {

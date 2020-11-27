@@ -164,4 +164,13 @@ class CustomIcons {
       IconData(0xe941, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData bell_ringing =
       IconData(0xe943, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+
+  static const IconData profits =
+      IconData(0xe949, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData stats =
+      IconData(0xe948, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData trend =
+      IconData(0xe947, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData statistics =
+      IconData(0xe946, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

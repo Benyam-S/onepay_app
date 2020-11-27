@@ -2,18 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/errors.dart';
+import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
-import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
-import 'package:http/http.dart' as http;
 
 class SignUpFinish extends StatefulWidget {
   final String nonce;
@@ -111,7 +111,7 @@ class _SignUpFinish extends State<SignUpFinish> {
     // This delay is used to make the use comfortable with registration process
     Future.delayed(Duration(seconds: 4)).then((value) => Navigator.of(context)
         .pushNamedAndRemoveUntil(
-            AppRoutes.homeRoute, (Route<dynamic> route) => false));
+            AppRoutes.authorizedRoute, (Route<dynamic> route) => false));
   }
 
   Future<void> _onError(http.Response response) async {

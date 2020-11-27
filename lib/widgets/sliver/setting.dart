@@ -11,28 +11,24 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
   double _appBarHeight = AppBar().preferredSize.height;
   double _titleFontSize = 17;
   double _descFontSize = 10;
-  double _iconSize = 50;
 
   SettingAppBar({this.user});
 
   double _getTitleSize(double offSet) {
-    return (1.0 - max(0.0, (offSet - minExtent)) / (maxExtent - minExtent)) *
+    return (1.0 -
+            max(0.0, (offSet - maxExtent / 5)) / (maxExtent - minExtent)) *
         _titleFontSize;
   }
 
   double _getDescSize(double offSet) {
-    return (1.0 - max(0.0, (offSet - minExtent)) / (maxExtent - minExtent)) *
+    return (1.0 -
+            max(0.0, (offSet - maxExtent / 5)) / (maxExtent - minExtent)) *
         _descFontSize;
   }
 
-  double _getIconSize(double offSet) {
-    return (1.0 - max(0.0, (offSet - minExtent)) / (maxExtent - minExtent)) *
-        _iconSize;
-  }
-
   double _getContainerOpacity(double offSet) {
-    if (offSet > 150) return 0;
-    return 1.0 - max(0.0, offSet) / maxExtent;
+    if (offSet > 55) return 0;
+    return 1.0 - max(0.0, offSet * 2) / maxExtent;
   }
 
   @override
@@ -43,7 +39,10 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
     String id = user?.userID?.toUpperCase() ?? "";
 
     return Container(
-      color: Theme.of(context).colorScheme.primaryVariant,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryVariant,
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20)),
+      ),
       child: Stack(
         children: [
           Positioned(
@@ -51,7 +50,7 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
             left: 0,
             right: 0,
             child: AppBar(
-              title: shrinkOffset > 150 ? Text("Settings") : null,
+              title: Text("Settings"),
               elevation: 0,
               actions: [
                 IconButton(
@@ -82,47 +81,51 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
               ],
             ),
           ),
-          Center(
-            child: Opacity(
-              opacity: _getContainerOpacity(shrinkOffset),
-              child: Icon(
-                CustomIcons.onepay_logo_filled,
-                color: Colors.white,
-                size: _getIconSize(shrinkOffset),
-              ),
-            ),
-          ),
           Positioned(
+            left: 0,
+            right: 0,
             bottom: 0,
             child: Opacity(
               opacity: _getContainerOpacity(shrinkOffset),
               child: Padding(
-                padding: const EdgeInsets.only(left: 15, bottom: 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.only(right: 15, bottom: 15, left: 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
+                    Icon(
+                      CustomIcons.onepay_logo_filled,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(firstName,
+                        Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(firstName,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: _getTitleSize(shrinkOffset),
+                                    fontFamily: 'Roboto')),
+                            SizedBox(width: 5),
+                            Text(lastName,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: _getTitleSize(shrinkOffset),
+                                    fontFamily: 'Roboto')),
+                          ],
+                        ),
+                        SizedBox(height: 3),
+                        Text(id.toUpperCase(),
                             style: TextStyle(
                                 color: Colors.white,
-                                fontSize: _getTitleSize(shrinkOffset),
-                                fontFamily: 'Roboto')),
-                        SizedBox(width: 5),
-                        Text(lastName,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: _getTitleSize(shrinkOffset),
-                                fontFamily: 'Roboto')),
+                                fontSize: _getDescSize(shrinkOffset))),
                       ],
                     ),
-                    SizedBox(height: 3),
-                    Text(id.toUpperCase(),
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: _getDescSize(shrinkOffset))),
                   ],
                 ),
               ),
@@ -134,7 +137,7 @@ class SettingAppBar extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 230;
+  double get maxExtent => 150;
 
   @override
   double get minExtent => _appBarHeight;

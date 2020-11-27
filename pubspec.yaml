@@ -35,8 +35,8 @@ dependencies:
   path_provider: ^1.6.22
   flutter_local_notifications: ^3.0.1+4
   notification_permissions: ^0.4.8
-#  material_design_icons_flutter: ^4.0.5555
-#  google_fonts: ^1.1.0
+  shimmer: ^1.1.2
+  fl_chart: ^0.10.1
 
 dev_dependencies:
   flutter_test:

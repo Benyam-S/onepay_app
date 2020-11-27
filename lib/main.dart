@@ -5,12 +5,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
+import 'package:onepay_app/models/currency.rate.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/models/wallet.dart';
-import 'package:onepay_app/pages/authorized/home.dart';
+import 'package:onepay_app/pages/authorized/authorized.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/add.account.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/manage.accounts.dart';
 import 'package:onepay_app/pages/authorized/settings/notification/notifications.dart';
@@ -25,6 +26,7 @@ import 'package:onepay_app/pages/authorized/settings/security/session.management
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
+import 'package:onepay_app/pages/login.dart';
 import 'package:onepay_app/pages/signup/signup.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -76,6 +78,7 @@ class _OnePay extends State<OnePay> {
   List<History> histories = List<History>();
   List<AccountProvider> accountProviders = List<AccountProvider>();
   List<LinkedAccount> linkedAccounts = List<LinkedAccount>();
+  List<CurrencyRate> currencyRates = List<CurrencyRate>();
   DataSaverState dataSaverState;
   ForegroundNotificationState fNotificationState;
   BackgroundNotificationState bNotificationState;
@@ -287,7 +290,7 @@ class _OnePay extends State<OnePay> {
     if (loggedIn) {
       await navKey.currentState.pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (context) => Home(index: 3),
+            builder: (context) => Authorized(index: 3),
           ),
           (Route<dynamic> route) => false);
     } else {
@@ -370,10 +373,10 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Home(),
+          AppRoutes.logInRoute: (context) => Authorized(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
-          AppRoutes.homeRoute: (context) => Home(),
+          AppRoutes.authorizedRoute: (context) => Authorized(),
           AppRoutes.moneyVault: (context) => MoneyVault(),
           AppRoutes.recharge: (context) => Recharge(),
           AppRoutes.withdraw: (context) => Withdraw(),

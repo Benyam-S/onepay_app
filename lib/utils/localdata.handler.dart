@@ -6,6 +6,7 @@ import 'package:flutter_user_agent/flutter_user_agent.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
+import 'package:onepay_app/models/currency.rate.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
@@ -381,4 +382,38 @@ Future<void> setLocalBackgroundNotificationState(
   } else {
     prefs.setBool("background_notification_state", null);
   }
+}
+
+// ---------------------------- Local Currency Rate Management ----------------------------
+
+Future<List<CurrencyRate>> getRecentLocalCurrencyRates() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final jsonData = prefs.getString("currency_rates");
+  if (jsonData == null) return [];
+
+  List<dynamic> rates = json.decode(jsonData);
+  List<CurrencyRate> currencyRates = List<CurrencyRate>();
+
+  rates.forEach((rate) {
+    CurrencyRate currencyRate = CurrencyRate.fromJson(rate);
+    currencyRates.add(currencyRate);
+  });
+
+  DateTime timeStamp = currencyRates.length > 0
+      ? currencyRates[0].dates.last
+      : DateTime.fromMicrosecondsSinceEpoch(0);
+
+  // If the stored currency rates are out-dated return empty list
+  if (timeStamp.add(Duration(days: 1)).isBefore(DateTime.now())) {
+    return [];
+  }
+
+  return currencyRates;
+}
+
+Future<void> setLocalCurrencyRates(List<CurrencyRate> currencyRates) async {
+  final prefs = await SharedPreferences.getInstance();
+
+  prefs.setString("currency_rates", json.encode(currencyRates));
 }

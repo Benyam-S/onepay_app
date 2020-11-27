@@ -20,6 +20,9 @@ import 'package:onepay_app/widgets/basic/dashed.border.dart';
 import 'package:recase/recase.dart';
 
 class Receive extends StatefulWidget {
+  final String code;
+  Receive({this.code});
+
   _Receive createState() => _Receive();
 }
 
@@ -339,6 +342,8 @@ class _Receive extends State<Receive> {
         });
       }
     });
+
+    _codeController.text = widget.code;
   }
 
   @override

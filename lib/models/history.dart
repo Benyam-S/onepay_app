@@ -1,8 +1,5 @@
-import 'package:json_annotation/json_annotation.dart';
-
 part 'history.g.dart';
 
-@JsonSerializable()
 class History {
   int id;
   String senderID;

@@ -1,20 +1,25 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:barcode_scan/barcode_scan.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:ff_navigation_bar/ff_navigation_bar.dart';
 import 'package:ff_navigation_bar/ff_navigation_bar_item.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/constants.dart';
+import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/models/wallet.dart';
+import 'package:onepay_app/pages/authorized/home/home.dart';
 import 'package:onepay_app/pages/authorized/receive/receive.dart';
 import 'package:onepay_app/pages/authorized/send/send.dart';
 import 'package:onepay_app/pages/authorized/settings/settings.dart';
@@ -27,17 +32,19 @@ import 'package:onepay_app/utils/notification.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/routes.dart';
+import 'package:onepay_app/utils/show.snackbar.dart';
 import 'package:web_socket_channel/io.dart';
 
-class Home extends StatefulWidget {
+class Authorized extends StatefulWidget {
   final int index;
 
-  Home({this.index});
+  Authorized({this.index});
 
-  _Home createState() => _Home();
+  _Authorized createState() => _Authorized();
 }
 
-class _Home extends State<Home> {
+class _Authorized extends State<Authorized>
+    with SingleTickerProviderStateMixin {
   int _currentIndex;
   Widget _appBar;
   List<Widget> _listOfSections;
@@ -51,6 +58,10 @@ class _Home extends State<Home> {
   IOWebSocketChannel channel;
   StreamSubscription _pollingStreamSubscription;
   StreamSubscription _connectivitySubscription;
+
+  bool _isCameraOpened = false;
+  ScrollController _scrollController = ScrollController();
+  AnimationController _fabAnimationController;
 
   Future<void> _getUserProfile() async {
     // This is used to stop any request from starting if a request has already been sent
@@ -301,21 +312,106 @@ class _Home extends State<Home> {
   }
 
   void _changeSection(int index) {
+    // Set receive widget to default if clicked on the bottom nav
+    if (index == 2) _listOfSections[2] = Receive();
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  void _scan(BuildContext context) async {
+    if (_isCameraOpened) {
+      return;
+    }
+    try {
+      setState(() {
+        _isCameraOpened = true;
+      });
+      var qrResult = await BarcodeScanner.scan();
+      String code = qrResult.rawContent;
+      _isCameraOpened = false;
+      if (code != null && code.isNotEmpty) {
+        setState(() {
+          _listOfSections[2] = Receive(code: code);
+          _currentIndex = 2;
+        });
+      }
+    } on PlatformException catch (ex) {
+      setState(() {
+        _isCameraOpened = false;
+      });
+      var error = "";
+      if (ex.code == BarcodeScanner.cameraAccessDenied) {
+        error = "Access Denied";
+      } else {
+        error = "Unable to open qr code scanner";
+      }
+
+      showInternalError(context, error);
+    } catch (ex) {
+      setState(() {
+        _isCameraOpened = false;
+      });
+      showInternalError(context, SomethingWentWrongError);
+    }
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset > 175 &&
+        _scrollController.position.userScrollDirection ==
+            ScrollDirection.reverse) {
+      _fabAnimationController.forward();
+    } else if (_scrollController.offset > 175 &&
+        _scrollController.position.userScrollDirection ==
+            ScrollDirection.forward) {
+      _fabAnimationController.reverse();
+    }
+  }
+
+  void _initAppBar() {
+    switch (_currentIndex) {
+      case 0:
+        _appBar = null;
+        break;
+      case 1:
+        _appBar = AppBar(
+          title: Text("Send"),
+        );
+        break;
+      case 2:
+        _appBar = AppBar(
+          title: Text("Receive"),
+          elevation: 0,
+        );
+        break;
+      case 3:
+        _appBar = AppBar(
+          title: Text("Wallet"),
+          elevation: 0,
+        );
+        if (_showWalletBadge) {
+          _showWalletBadge = false;
+          markLocalUserWallet(true);
+          _markWalletAsSeen();
+        }
+        break;
+      case 4:
+        _appBar = null;
+        break;
+    }
   }
 
   @override
   void initState() {
     super.initState();
 
-    _currentIndex = widget.index ?? 4;
+    _currentIndex = widget.index ?? 0;
+    _scrollController.addListener(_scrollListener);
+    _fabAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 300));
 
     _listOfSections = [
-      Container(
-        key: PageStorageKey("exchange"),
-      ),
+      Home(_scrollController),
       Send(),
       Receive(),
       WalletView(_unseenHistoryStreamController),
@@ -358,45 +454,14 @@ class _Home extends State<Home> {
     channel.sink.close();
     _pollingStreamSubscription.cancel();
     _connectivitySubscription.cancel();
+    _scrollController.dispose();
+    _fabAnimationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    switch (_currentIndex) {
-      case 0:
-        _appBar = AppBar(
-          title: Text("OnePay"),
-          elevation: 0,
-        );
-        break;
-      case 1:
-        _appBar = AppBar(
-          title: Text("Send"),
-        );
-        break;
-      case 2:
-        _appBar = AppBar(
-          title: Text("Receive"),
-          elevation: 0,
-        );
-        break;
-      case 3:
-        _appBar = AppBar(
-          title: Text("Wallet"),
-          elevation: 0,
-        );
-        if (_showWalletBadge) {
-          _showWalletBadge = false;
-          markLocalUserWallet(true);
-          _markWalletAsSeen();
-        }
-        break;
-      case 4:
-        _appBar = null;
-        break;
-    }
-
+    _initAppBar();
     _markHistoriesAsSeen();
 
     return Scaffold(
@@ -405,6 +470,22 @@ class _Home extends State<Home> {
         child: _listOfSections[_currentIndex],
         bucket: _bucket,
       ),
+      floatingActionButton: _currentIndex == 0
+          ? Builder(builder: (context) {
+              return FadeTransition(
+                opacity: Tween(begin: 1.0, end: 0.0)
+                    .animate(_fabAnimationController),
+                child: FloatingActionButton(
+                  child: Icon(
+                    CustomIcons.barcode,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  onPressed: () => _scan(context),
+                ),
+              );
+            })
+          : null,
       backgroundColor: Theme.of(context).backgroundColor,
       bottomNavigationBar: FFNavigationBar(
         theme: FFNavigationBarTheme(
@@ -421,7 +502,7 @@ class _Home extends State<Home> {
         items: [
           FFNavigationBarItem(
             iconData: Icons.show_chart,
-            label: 'Exchange',
+            label: 'Home',
           ),
           FFNavigationBarItem(
             iconData: CustomIcons.paper_plane,

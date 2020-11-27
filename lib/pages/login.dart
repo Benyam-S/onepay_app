@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/errors.dart';
+import 'package:onepay_app/pages/login.verification.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -16,7 +17,6 @@ import 'package:onepay_app/widgets/button/loading.dart';
 import 'package:onepay_app/widgets/input/password.dart';
 import 'package:onepay_app/widgets/text/error.dart';
 import 'package:recase/recase.dart';
-import 'package:onepay_app/pages/login.verification.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -70,7 +70,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
         isLoggedIn().then((value) {
           if (value) {
             Navigator.of(context).pushNamedAndRemoveUntil(
-                AppRoutes.homeRoute, (Route<dynamic> route) => false);
+                AppRoutes.authorizedRoute, (Route<dynamic> route) => false);
           } else {
             _slideController.forward();
             _fadeController2.forward();
@@ -111,7 +111,7 @@ class _Login extends State<Login> with TickerProviderStateMixin {
       });
 
       Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.homeRoute, (Route<dynamic> route) => false);
+          AppRoutes.authorizedRoute, (Route<dynamic> route) => false);
     } else if (jsonData["type"] == "OTP") {
       print(jsonData["messageID"]);
       String nonce = jsonData["nonce"];
