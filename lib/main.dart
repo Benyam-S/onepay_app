@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
@@ -33,7 +34,10 @@ import 'package:onepay_app/utils/routes.dart';
 
 import 'models/linked.account.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterDownloader.initialize(debug: true);
+
   runApp(OnePay());
 }
 
@@ -373,7 +377,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Authorized(),
+          AppRoutes.logInRoute: (context) => Login(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.authorizedRoute: (context) => Authorized(),

@@ -405,7 +405,7 @@ class _Authorized extends State<Authorized>
   void initState() {
     super.initState();
 
-    _currentIndex = widget.index ?? 0;
+    _currentIndex = widget.index ?? 4;
     _scrollController.addListener(_scrollListener);
     _fabAnimationController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 300));

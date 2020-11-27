@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:downloads_path_provider/downloads_path_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:http/http.dart';
 import 'package:onepay_app/main.dart';
+import 'package:onepay_app/models/constants.dart';
 import 'package:onepay_app/models/errors.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/utils/custom_icons.dart';
@@ -13,7 +17,7 @@ import 'package:onepay_app/utils/logout.dart';
 import 'package:onepay_app/utils/request.maker.dart';
 import 'package:onepay_app/utils/response.dart';
 import 'package:onepay_app/utils/show.snackbar.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:recase/recase.dart';
 
 class DeleteUserAccountDialog extends StatefulWidget {
@@ -31,9 +35,7 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
   String _passwordErrorText;
   bool _loading = false;
 
-  Future<void> _onSuccess(Response response) async {
-    Navigator.of(context).pop();
-
+  void _showGoodByeDialog() {
     showDialog(
       context: widget.context,
       barrierDismissible: false,
@@ -53,7 +55,8 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
               Text("We are grateful for your time with us.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 11, color: Theme.of(context).iconTheme.color)),
+                      fontSize: 11,
+                      color: Theme.of(widget.context).iconTheme.color)),
               SizedBox(height: 5),
               Text(
                 "Sorry, but we have to say good bye!",
@@ -61,7 +64,7 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
                 style: TextStyle(
                   fontSize: 15,
                   fontFamily: 'Roboto',
-                  color: Theme.of(context).iconTheme.color,
+                  color: Theme.of(widget.context).iconTheme.color,
                 ),
               ),
               SizedBox(height: 20)
@@ -70,6 +73,29 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
         ),
       ),
     );
+
+    Future.delayed(Duration(seconds: 4)).then((_) => logout(widget.context));
+  }
+
+  Future<bool> _checkPermission() async {
+    if (Theme.of(widget.context).platform == TargetPlatform.android) {
+      final status = await Permission.storage.status;
+      if (status != PermissionStatus.granted) {
+        final result = await Permission.storage.request();
+        if (result == PermissionStatus.granted) {
+          return true;
+        }
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+    return false;
+  }
+
+  void _downloadClosingStatement(String location) async {
+    Navigator.of(widget.context).pop();
 
     User currentUser =
         OnePay.of(widget.context).currentUser ?? await getLocalUserProfile();
@@ -81,12 +107,77 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
       fileName += "_OnePay_account_statement.txt";
     }
 
-    var bytes = response.bodyBytes;
-    String dir = (await getExternalStorageDirectory()).path;
-    File file = File('$dir/$fileName');
-    await file.writeAsBytes(bytes);
+    var isPermissionGranted = await _checkPermission();
+    if (isPermissionGranted) {
+      await FlutterDownloader.enqueue(
+        url: 'http://$Host/api/v1/oauth/user/statement/$location',
+        fileName: fileName,
+        savedDir: (await DownloadsPathProvider.downloadsDirectory).path,
+        showNotification: true,
+        openFileFromNotification: true,
+      );
+    } else {
+      showInternalError(widget.context, "storage access denied");
+    }
 
-    Future.delayed(Duration(seconds: 4)).then((_) => logout(widget.context));
+    _showGoodByeDialog();
+  }
+
+  void _showStatementDialog(String location) {
+    showDialog(
+      context: widget.context,
+      barrierDismissible: false,
+      child: WillPopScope(
+        onWillPop: () {},
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "Do you wish to download your account closing statement?",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(widget.context).iconTheme.color),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => _downloadClosingStatement(location),
+                    child: Text("Sure", style: TextStyle(fontSize: 14)),
+                    minSize: 0,
+                    padding: EdgeInsets.zero,
+                  ),
+                  CupertinoButton(
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    minSize: 0,
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      Navigator.of(widget.context).pop();
+                      _showGoodByeDialog();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onSuccess(Response response) async {
+    Navigator.of(context).pop();
+
+    var jsonData = json.decode(response.body);
+    _showStatementDialog(jsonData["Location"]);
   }
 
   void _onError(Response response) {
@@ -124,7 +215,7 @@ class _DeleteUserAccountDialog extends State<DeleteUserAccountDialog> {
   }
 
   Future<void> _makeDeleteUserAccountRequest(String password) async {
-    var requester = HttpRequester(path: "/oauth/user");
+    var requester = HttpRequester(path: "/oauth/user.json");
     try {
       Response response =
           await requester.delete(context, {'password': password});
