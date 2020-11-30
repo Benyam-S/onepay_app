@@ -44,8 +44,7 @@ class CurrencyExchangeAppBar extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     String amount =
-        CurrencyInputFormatter.toCurrency(wallet?.amount?.toString()) ??
-            "0.00 ETB";
+        CurrencyInputFormatter.toCurrency(wallet?.amount?.toString()) ?? "0.00";
 
     return Container(
       color: Theme.of(context).colorScheme.primaryVariant,

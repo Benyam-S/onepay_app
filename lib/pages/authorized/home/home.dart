@@ -19,6 +19,7 @@ import 'package:onepay_app/widgets/tile/shimmer.exchange.dart';
 
 class Home extends StatefulWidget {
   final ScrollController scrollController;
+
   Home(this.scrollController);
 
   _Home createState() => _Home();

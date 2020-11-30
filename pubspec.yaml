@@ -40,6 +40,7 @@ dependencies:
   permission_handler: ^5.0.1+1
   flutter_downloader: ^1.5.2
   downloads_path_provider: ^0.1.0
+  background_fetch: ^0.6.0
 
 dev_dependencies:
   flutter_test:

@@ -129,6 +129,8 @@ class _Authorized extends State<Authorized>
           wallet.seen = true;
           _markWalletAsSeen();
         }
+      } else {
+        setLocalUserWallet(wallet);
       }
 
       // Add current user to the stream and shared preference

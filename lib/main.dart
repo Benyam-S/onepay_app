@@ -27,7 +27,6 @@ import 'package:onepay_app/pages/authorized/settings/security/session.management
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
 import 'package:onepay_app/pages/forgot.password.dart';
-import 'package:onepay_app/pages/login.dart';
 import 'package:onepay_app/pages/signup/signup.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
@@ -377,7 +376,7 @@ class _OnePay extends State<OnePay> {
                 surface: Color.fromRGBO(120, 120, 120, 1),
                 secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
         routes: {
-          AppRoutes.logInRoute: (context) => Login(),
+          AppRoutes.logInRoute: (context) => Authorized(),
           AppRoutes.singUpRoute: (context) => SignUp(),
           AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
           AppRoutes.authorizedRoute: (context) => Authorized(),

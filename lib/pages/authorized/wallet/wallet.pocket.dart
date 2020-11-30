@@ -124,7 +124,7 @@ class _WalletPocket extends State<WalletPocket>
         (await getLocalUserWallet())?.amount;
 
     setState(() {
-      _amount = CurrencyInputFormatter.toCurrency(amount.toString());
+      _amount = CurrencyInputFormatter.toCurrency(amount?.toString()) ?? "0.00";
     });
 
     await _makeRequest(Origin.initAmount);
