@@ -257,7 +257,7 @@ class _Authorized extends State<Authorized>
         return;
 
       User user = OnePay.of(context).currentUser ?? await getLocalUserProfile();
-      var notification = makeHistoryNotification(context, history, user);
+      var notification = makeHistoryNotification(history, user);
       if (notification != null) {
         showNotification(
             context,

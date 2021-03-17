@@ -28,8 +28,7 @@ Future<void> showNotification(BuildContext context, int id, String channelID,
       .show(id, title, desc, platformChannelSpecifics, payload: playLoad);
 }
 
-NotificationHistory makeHistoryNotification(
-    BuildContext context, History history, User user) {
+NotificationHistory makeHistoryNotification(History history, User user) {
   NotificationHistory notification = NotificationHistory();
 
   if (history == null || user == null) {

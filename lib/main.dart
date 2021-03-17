@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -13,6 +14,7 @@ import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
 import 'package:onepay_app/models/wallet.dart';
 import 'package:onepay_app/pages/authorized/authorized.dart';
+import 'package:onepay_app/pages/authorized/background.fetch.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/add.account.dart';
 import 'package:onepay_app/pages/authorized/settings/accounts/manage.accounts.dart';
 import 'package:onepay_app/pages/authorized/settings/notification/notifications.dart';
@@ -38,6 +40,8 @@ void main() async {
   await FlutterDownloader.initialize(debug: true);
 
   runApp(OnePay());
+
+  BackgroundFetch.registerHeadlessTask(headlessBackgroundFetch);
 }
 
 class OnePay extends StatefulWidget {
@@ -310,6 +314,25 @@ class _OnePay extends State<OnePay> {
     getLocalDataSaverState().then((dataSaverS) => dataSaverState = dataSaverS);
 
     _initNotificationChannel();
+    _initBackgroundFetchState();
+  }
+
+  Future<void> _initBackgroundFetchState() async {
+    // Configure BackgroundFetch.
+    BackgroundFetch.configure(
+        BackgroundFetchConfig(
+          minimumFetchInterval: 40,
+          forceAlarmManager: false,
+          stopOnTerminate: false,
+          startOnBoot: true,
+          enableHeadless: true,
+          requiresBatteryNotLow: false,
+          requiresCharging: false,
+          requiresStorageNotLow: false,
+          requiresDeviceIdle: false,
+          requiredNetworkType: NetworkType.ANY,
+        ),
+        (_) {});
   }
 
   @override

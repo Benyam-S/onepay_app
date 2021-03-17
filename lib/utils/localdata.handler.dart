@@ -7,6 +7,7 @@ import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/currency.rate.dart';
+import 'package:onepay_app/models/history.dart';
 import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
@@ -416,4 +417,47 @@ Future<void> setLocalCurrencyRates(List<CurrencyRate> currencyRates) async {
   final prefs = await SharedPreferences.getInstance();
 
   prefs.setString("currency_rates", json.encode(currencyRates));
+}
+
+// ---------------------------- Local History Management ----------------------------
+Future<List<History>> getRecentLocalHistories(
+    {SharedPreferences preferences}) async {
+  // For reducing redundant preference instantiating
+  if (preferences == null) {
+    preferences = await SharedPreferences.getInstance();
+  }
+
+  final jsonData = preferences.getString("recent_histories");
+  if (jsonData == null) return [];
+
+  List<dynamic> historiesMap = json.decode(jsonData);
+  List<History> histories = List<History>();
+
+  historiesMap.forEach((element) {
+    History history = History.fromJson(element);
+    histories.add(history);
+  });
+
+  return histories;
+}
+
+Future<void> setRecentLocalHistories(List<History> histories,
+    {SharedPreferences preferences}) async {
+  if (preferences == null) {
+    preferences = await SharedPreferences.getInstance();
+  }
+
+  List<History> recentHistories =
+      await getRecentLocalHistories(preferences: preferences);
+  if (recentHistories.length + histories.length > 360) {
+    int index = -1;
+    recentHistories.removeWhere((history) {
+      index++;
+      if (index > 360 - (histories.length + 1)) return true;
+      return false;
+    });
+  }
+
+  histories.addAll(recentHistories);
+  preferences.setString("recent_histories", json.encode(histories));
 }
