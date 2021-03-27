@@ -2,13 +2,20 @@ import 'dart:async';
 
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:onepay_app/authentication/bloc/authentication_bloc.dart';
+import 'package:onepay_app/authentication/data_provider/authentication_data.dart';
+import 'package:onepay_app/authentication/repository/authentication_repository.dart';
+import 'package:onepay_app/authentication/screens/forgot_password.dart';
+import 'package:onepay_app/authentication/screens/login.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/account.provider.dart';
 import 'package:onepay_app/models/app.meta.dart';
 import 'package:onepay_app/models/currency.rate.dart';
 import 'package:onepay_app/models/history.dart';
+import 'package:onepay_app/models/linked.account.dart';
 import 'package:onepay_app/models/preferences.state.dart';
 import 'package:onepay_app/models/user.dart';
 import 'package:onepay_app/models/user.preference.dart';
@@ -28,23 +35,37 @@ import 'package:onepay_app/pages/authorized/settings/security/security.dart';
 import 'package:onepay_app/pages/authorized/settings/security/session.management.dart';
 import 'package:onepay_app/pages/authorized/settings/vault/vault.dart';
 import 'package:onepay_app/pages/authorized/settings/withdraw/withdraw.dart';
-import 'package:onepay_app/pages/forgot.password.dart';
-import 'package:onepay_app/pages/signup/signup.dart';
+import 'package:onepay_app/user/bloc/user_bloc.dart';
+import 'package:onepay_app/user/data_provider/user_data.dart';
+import 'package:onepay_app/user/repository/user_repository.dart';
+import 'package:onepay_app/user/screens/signup.dart';
 import 'package:onepay_app/utils/localdata.handler.dart';
 import 'package:onepay_app/utils/routes.dart';
-
-import 'models/linked.account.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(debug: true);
 
-  runApp(OnePay());
+  AuthenticationRepository authenticationRepo =
+      AuthenticationRepository(dataProvider: AuthenticationDataProvider());
+
+  UserRepository signUpRepo = UserRepository(dataProvider: UserDataProvider());
+
+  runApp(OnePay(
+    authenticationRepository: authenticationRepo,
+    signUpRepository: signUpRepo,
+  ));
 
   BackgroundFetch.registerHeadlessTask(headlessBackgroundFetch);
 }
 
 class OnePay extends StatefulWidget {
+  final AuthenticationRepository authenticationRepository;
+  final UserRepository signUpRepository;
+
+  OnePay({this.authenticationRepository, this.signUpRepository})
+      : assert(authenticationRepository != null && signUpRepository != null);
+
   @override
   _OnePay createState() => _OnePay();
 
@@ -337,86 +358,98 @@ class _OnePay extends State<OnePay> {
 
   @override
   Widget build(BuildContext context) {
-    return _AppState(
-      appState: this,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        navigatorKey: navKey,
-        theme: ThemeData(
-            inputDecorationTheme: InputDecorationTheme(
-              border: const OutlineInputBorder(),
-              labelStyle: TextStyle(color: Color.fromRGBO(4, 148, 255, 1)),
-              errorStyle: TextStyle(fontSize: 9, fontFamily: "Segoe UI"),
-            ),
-            snackBarTheme: SnackBarThemeData(
-                backgroundColor: Color.fromRGBO(78, 78, 78, 1),
-                contentTextStyle: TextStyle(fontSize: 11)),
-            appBarTheme: AppBarTheme(color: Color.fromRGBO(6, 103, 208, 1)),
-            tabBarTheme: TabBarTheme(
-                labelPadding: EdgeInsets.zero,
-                unselectedLabelColor: Color.fromRGBO(4, 148, 255, 1),
-                labelStyle: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "Raleway"),
-                unselectedLabelStyle: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "Raleway")),
-            iconTheme: IconThemeData(color: Color.fromRGBO(120, 120, 120, 1)),
-            primaryColor: Color.fromRGBO(4, 148, 255, 1),
-            backgroundColor: Color.fromRGBO(249, 250, 254, 1),
-            textTheme: TextTheme(
-                bodyText2: TextStyle(
-                    fontSize: 11,
-                    color: Colors.black87,
-                    fontFamily: "Segoe UI"),
-                subtitle1:
-                    TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-                overline: TextStyle(fontSize: 9),
-                headline3: Theme.of(context)
-                    .textTheme
-                    .headline6
-                    .copyWith(fontSize: 10, fontFamily: "Segoe UI"),
-                headline5: Theme.of(context)
-                    .textTheme
-                    .headline6
-                    .copyWith(fontSize: 15, fontFamily: "Segoe UI"),
-                headline6: Theme.of(context)
-                    .textTheme
-                    .headline6
-                    .copyWith(fontSize: 14, fontFamily: "Segoe UI")),
-            buttonTheme: Theme.of(context).buttonTheme.copyWith(
-                buttonColor: Color.fromRGBO(4, 148, 255, 1),
-                disabledColor: Color.fromRGBO(4, 148, 255, 0.7),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                )),
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: Color.fromRGBO(4, 148, 255, 1),
-                primaryVariant: Color.fromRGBO(6, 103, 208, 1),
-                secondary: Color.fromRGBO(209, 87, 17, 1),
-                surface: Color.fromRGBO(120, 120, 120, 1),
-                secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
-        routes: {
-          AppRoutes.logInRoute: (context) => Authorized(),
-          AppRoutes.singUpRoute: (context) => SignUp(),
-          AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
-          AppRoutes.authorizedRoute: (context) => Authorized(),
-          AppRoutes.moneyVault: (context) => MoneyVault(),
-          AppRoutes.recharge: (context) => Recharge(),
-          AppRoutes.withdraw: (context) => Withdraw(),
-          AppRoutes.accounts: (context) => ManageAccounts(),
-          AppRoutes.addAccount: (context) => AddLinkedAccount(),
-          AppRoutes.profile: (context) => Profile(),
-          AppRoutes.updateBasicInfo: (context) => UpdateBasicInfo(),
-          AppRoutes.updateEmail: (context) => UpdateEmail(),
-          AppRoutes.updatePhoneNumber: (context) => UpdatePhoneNumber(),
-          AppRoutes.security: (context) => Security(),
-          AppRoutes.notification: (context) => Notifications(),
-          AppRoutes.changePassword: (context) => ChangePassword(),
-          AppRoutes.sessionManagement: (context) => SessionManagement(),
-        },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthenticationBloc>(
+          create: (context) => AuthenticationBloc(
+              authenticationRepository: this.widget.authenticationRepository),
+        ),
+        BlocProvider<UserBloc>(
+          create: (context) =>
+              UserBloc(userRepository: this.widget.signUpRepository),
+        ),
+      ],
+      child: _AppState(
+        appState: this,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          navigatorKey: navKey,
+          theme: ThemeData(
+              inputDecorationTheme: InputDecorationTheme(
+                border: const OutlineInputBorder(),
+                labelStyle: TextStyle(color: Color.fromRGBO(4, 148, 255, 1)),
+                errorStyle: TextStyle(fontSize: 9, fontFamily: "Segoe UI"),
+              ),
+              snackBarTheme: SnackBarThemeData(
+                  backgroundColor: Color.fromRGBO(78, 78, 78, 1),
+                  contentTextStyle: TextStyle(fontSize: 11)),
+              appBarTheme: AppBarTheme(color: Color.fromRGBO(6, 103, 208, 1)),
+              tabBarTheme: TabBarTheme(
+                  labelPadding: EdgeInsets.zero,
+                  unselectedLabelColor: Color.fromRGBO(4, 148, 255, 1),
+                  labelStyle: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: "Raleway"),
+                  unselectedLabelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: "Raleway")),
+              iconTheme: IconThemeData(color: Color.fromRGBO(120, 120, 120, 1)),
+              primaryColor: Color.fromRGBO(4, 148, 255, 1),
+              backgroundColor: Color.fromRGBO(249, 250, 254, 1),
+              textTheme: TextTheme(
+                  bodyText2: TextStyle(
+                      fontSize: 11,
+                      color: Colors.black87,
+                      fontFamily: "Segoe UI"),
+                  subtitle1:
+                      TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+                  overline: TextStyle(fontSize: 9),
+                  headline3: Theme.of(context)
+                      .textTheme
+                      .headline6
+                      .copyWith(fontSize: 10, fontFamily: "Segoe UI"),
+                  headline5: Theme.of(context)
+                      .textTheme
+                      .headline6
+                      .copyWith(fontSize: 15, fontFamily: "Segoe UI"),
+                  headline6: Theme.of(context)
+                      .textTheme
+                      .headline6
+                      .copyWith(fontSize: 14, fontFamily: "Segoe UI")),
+              buttonTheme: Theme.of(context).buttonTheme.copyWith(
+                  buttonColor: Color.fromRGBO(4, 148, 255, 1),
+                  disabledColor: Color.fromRGBO(4, 148, 255, 0.7),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  )),
+              colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: Color.fromRGBO(4, 148, 255, 1),
+                  primaryVariant: Color.fromRGBO(6, 103, 208, 1),
+                  secondary: Color.fromRGBO(209, 87, 17, 1),
+                  surface: Color.fromRGBO(120, 120, 120, 1),
+                  secondaryVariant: Color.fromRGBO(153, 39, 0, 1))),
+          routes: {
+            AppRoutes.logInRoute: (context) => Login(),
+            AppRoutes.singUpRoute: (context) => SignUp(),
+            AppRoutes.forgotPasswordRoute: (context) => ForgotPassword(),
+            AppRoutes.authorizedRoute: (context) => Authorized(),
+            AppRoutes.moneyVault: (context) => MoneyVault(),
+            AppRoutes.recharge: (context) => Recharge(),
+            AppRoutes.withdraw: (context) => Withdraw(),
+            AppRoutes.accounts: (context) => ManageAccounts(),
+            AppRoutes.addAccount: (context) => AddLinkedAccount(),
+            AppRoutes.profile: (context) => Profile(),
+            AppRoutes.updateBasicInfo: (context) => UpdateBasicInfo(),
+            AppRoutes.updateEmail: (context) => UpdateEmail(),
+            AppRoutes.updatePhoneNumber: (context) => UpdatePhoneNumber(),
+            AppRoutes.security: (context) => Security(),
+            AppRoutes.notification: (context) => Notifications(),
+            AppRoutes.changePassword: (context) => ChangePassword(),
+            AppRoutes.sessionManagement: (context) => SessionManagement(),
+          },
+        ),
       ),
     );
   }

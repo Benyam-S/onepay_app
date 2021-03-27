@@ -159,10 +159,10 @@ const IdenticalPasswordError = "new password is identical with the old one";
 const FrozenReceiverAccountError = "receiver account has been frozen";
 
 /// FrozenAccountError is a constant that holds frozen account error
-const FrozenAccountError = "receiver account has been frozen";
+const FrozenAccountError = "account has been frozen";
 
 /// FrozenAPIClientError is a constant that holds api client has been frozen error
-const FrozenAPIClientError = "api client has been frozen";
+const FrozenAPIClientError = "client has been frozen";
 
 /// InvalidPasswordOrIdentifierError is a constant that holds invalid password or identifier error
 const InvalidPasswordOrIdentifierError = "invalid identifier or password used";

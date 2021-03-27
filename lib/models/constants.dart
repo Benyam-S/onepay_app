@@ -29,7 +29,7 @@ const MessageIDPrefix = "message_id-";
 
 // ++++++++++++++++++++++++++++++++++++++++++++++ Frontend Constants ++++++++++++++++++++++++++++++++++++++++++++++
 /// Host is a constant that holds the requests end point host
-const Host = "192.168.1.13:8080";
+const Host = "10.6.250.189:8080";
 
 /// OnePayHistoryChannelID is a string the hold the onepay history channel id
 const OnePayHistoryChannelID = 'onepay_history_notification_channel';
