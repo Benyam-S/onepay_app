@@ -32,18 +32,6 @@ class SignUpVerifyLoaded extends UserState {
   SignUpVerifyLoaded(this.nonce, {this.pausedStep, this.isNew});
 }
 
-class SignUpVerifySuccess extends UserState {
-  final String nonce;
-
-  SignUpVerifySuccess(this.nonce);
-}
-
-class SignUpVerifyFailure extends UserState {
-  final Map<String, dynamic> errorMap;
-
-  SignUpVerifyFailure([this.errorMap]);
-}
-
 class SignUpFinishLoaded extends UserState {
   final String nonce;
   final int pausedStep;

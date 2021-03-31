@@ -4,7 +4,9 @@ import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:onepay_app/authentication/bloc/authentication_bloc.dart';
 import 'package:onepay_app/authentication/data_provider/authentication_data.dart';
 import 'package:onepay_app/authentication/repository/authentication_repository.dart';
@@ -365,14 +367,24 @@ class _OnePay extends State<OnePay> {
               authenticationRepository: this.widget.authenticationRepository),
         ),
         BlocProvider<UserBloc>(
-          create: (context) =>
-              UserBloc(userRepository: this.widget.signUpRepository),
+          create: (context) => UserBloc(
+              userRepository: this.widget.signUpRepository,
+              authenticationRepository: this.widget.authenticationRepository),
         ),
       ],
       child: _AppState(
         appState: this,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: [
+            const Locale('en', ''), // English, no country code
+          ],
           navigatorKey: navKey,
           theme: ThemeData(
               inputDecorationTheme: InputDecorationTheme(

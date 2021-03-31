@@ -46,7 +46,7 @@ class AuthenticationDataProvider {
     });
   }
 
-  Future<http.Response> resendLoginOTP(String nonce) async {
+  Future<http.Response> resendOTP(String nonce) async {
     var requester = HttpRequester(path: "/oauth/resend");
 
     return http.post(requester.requestURL, headers: <String, String>{

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:onepay_app/authentication/bloc/bloc.dart';
 import 'package:onepay_app/authentication/data_provider/authentication_data.dart';
 import 'package:onepay_app/authentication/repository/response.dart';
+import 'package:onepay_app/models/response.dart';
 
 class AuthenticationRepository {
   final AuthenticationDataProvider dataProvider;
@@ -13,7 +14,7 @@ class AuthenticationRepository {
   AuthenticationRepository({@required this.dataProvider})
       : assert(dataProvider != null);
 
-  Future<AuthenticationRepositoryResponse> getAccessTokenOverNetwork(
+  Future<RepositoryResponse> getAccessTokenOverNetwork(
       String identifier, String password) async {
     http.Response response =
         await dataProvider.getAccessTokenFromNetwork(identifier, password);
@@ -49,14 +50,13 @@ class AuthenticationRepository {
     dataProvider.setLoggedIn(isLoggedIn);
   }
 
-  Future<AuthenticationRepositoryResponse> verifyLoginOTP(
-      String nonce, String otp) async {
+  Future<RepositoryResponse> verifyLoginOTP(String nonce, String otp) async {
     http.Response response = await dataProvider.verifyLoginOTP(nonce, otp);
 
     switch (response.statusCode) {
       case HttpStatus.ok:
         var jsonData = json.decode(response.body);
-        return ROTPVerifySuccess(AccessToken.fromJson(jsonData));
+        return ROTPVerifySuccess(accessToken: AccessToken.fromJson(jsonData));
       case HttpStatus.badRequest:
         return ROTPVerifyFailure(
             response.statusCode, {"error": "invalid code used"});
@@ -69,8 +69,8 @@ class AuthenticationRepository {
     }
   }
 
-  Future<AuthenticationRepositoryResponse> resendLoginOTP(String nonce) async {
-    http.Response response = await dataProvider.resendLoginOTP(nonce);
+  Future<RepositoryResponse> resendOTP(String nonce) async {
+    http.Response response = await dataProvider.resendOTP(nonce);
 
     switch (response.statusCode) {
       case HttpStatus.ok:
@@ -83,7 +83,7 @@ class AuthenticationRepository {
     }
   }
 
-  Future<AuthenticationRepositoryResponse> requestPasswordRest(
+  Future<RepositoryResponse> requestPasswordRest(
       String method, String identifier) async {
     http.Response response =
         await dataProvider.requestPasswordReset(method, identifier);

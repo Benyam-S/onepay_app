@@ -1,0 +1,6 @@
+{
+    "phoneNumber": "Phone number",
+    "@phoneNumber": {
+          "description": "phone number value"
+        }
+}

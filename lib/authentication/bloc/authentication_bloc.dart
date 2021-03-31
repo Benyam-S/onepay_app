@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:onepay_app/authentication/bloc/bloc.dart';
+import 'package:onepay_app/models/response.dart';
 
 class AuthenticationBloc
     extends Bloc<AuthenticationEvent, AuthenticationState> {
@@ -18,9 +19,8 @@ class AuthenticationBloc
       yield AccessTokenLoading();
 
       try {
-        AuthenticationRepositoryResponse response =
-            await authenticationRepository.getAccessTokenOverNetwork(
-                event.identifier, event.password);
+        RepositoryResponse response = await authenticationRepository
+            .getAccessTokenOverNetwork(event.identifier, event.password);
         yield _handleResponse(response);
       } catch (e) {
         yield AuthenticationException(e);
@@ -40,9 +40,8 @@ class AuthenticationBloc
       yield OTPVerifying();
 
       try {
-        AuthenticationRepositoryResponse response =
-            await authenticationRepository.verifyLoginOTP(
-                event.nonce, event.otp);
+        RepositoryResponse response = await authenticationRepository
+            .verifyLoginOTP(event.nonce, event.otp);
         yield _handleResponse(response);
       } catch (e) {
         yield AuthenticationException(e);
@@ -54,8 +53,8 @@ class AuthenticationBloc
       yield OTPResending();
 
       try {
-        AuthenticationRepositoryResponse response =
-            await authenticationRepository.resendLoginOTP(event.nonce);
+        RepositoryResponse response =
+            await authenticationRepository.resendOTP(event.nonce);
         yield _handleResponse(response);
       } catch (e) {
         yield AuthenticationException(e);
@@ -67,9 +66,8 @@ class AuthenticationBloc
       yield PasswordResetting();
 
       try {
-        AuthenticationRepositoryResponse response =
-            await authenticationRepository.requestPasswordRest(
-                event.method, event.identifier);
+        RepositoryResponse response = await authenticationRepository
+            .requestPasswordRest(event.method, event.identifier);
         yield _handleResponse(response);
       } catch (e) {
         yield AuthenticationException(e);
@@ -91,14 +89,13 @@ class AuthenticationBloc
     }
   }
 
-  AuthenticationState _handleResponse(
-      AuthenticationRepositoryResponse response) {
+  AuthenticationState _handleResponse(RepositoryResponse response) {
     AuthenticationState state;
 
     if (response is ROTPGetSuccess) {
       state = OTPGetSuccess(response.nonce);
     } else if (response is ROTPVerifySuccess) {
-      state = OTPVerifySuccess(response.accessToken);
+      state = OTPVerifySuccess(accessToken: response.accessToken);
     } else if (response is ROTPVerifyFailure) {
       state = OTPVerifyFailure(response.errorMap);
     } else if (response is ROTPResendSuccess) {

@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:onepay_app/authentication/bloc/bloc.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/errors.dart';
+import 'package:onepay_app/models/response.dart';
 import 'package:onepay_app/user/data_provider/user_data.dart';
 import 'package:onepay_app/user/repository/response.dart';
 
@@ -12,7 +14,7 @@ class UserRepository {
 
   UserRepository({this.dataProvider}) : assert(dataProvider != null);
 
-  Future<UserRepositoryResponse> signUpInit(String firstName, String lastName,
+  Future<RepositoryResponse> signUpInit(String firstName, String lastName,
       String email, String phoneNumber) async {
     http.Response response =
         await dataProvider.signUpInit(firstName, lastName, email, phoneNumber);
@@ -33,22 +35,22 @@ class UserRepository {
     }
   }
 
-  Future<UserRepositoryResponse> signUpVerify(String otp, String nonce) async {
+  Future<RepositoryResponse> signUpVerify(String otp, String nonce) async {
     http.Response response = await dataProvider.signUpVerify(otp, nonce);
 
     switch (response.statusCode) {
       case HttpStatus.ok:
         Map<String, dynamic> jsonData = json.decode(response.body);
-        return RSignUpVerifySuccess(jsonData["nonce"]);
+        return ROTPVerifySuccess(nonce: jsonData["nonce"]);
       case HttpStatus.badRequest:
-        return RSingUpVerifyFailure(
+        return ROTPVerifyFailure(
             response.statusCode, {"error": "invalid code used"});
       default:
         return RSignUpFailure(SomethingWentWrongError);
     }
   }
 
-  Future<UserRepositoryResponse> signUpFinish(
+  Future<RepositoryResponse> signUpFinish(
       String newPassword, String verifyPassword, String nonce) async {
     http.Response response =
         await dataProvider.signUpFinish(newPassword, verifyPassword, nonce);

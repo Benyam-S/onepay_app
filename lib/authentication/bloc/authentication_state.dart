@@ -1,8 +1,7 @@
 import 'package:onepay_app/authentication/bloc/bloc.dart';
+import 'package:onepay_app/user/bloc/bloc.dart';
 
-class AuthenticationState {
-  const AuthenticationState();
-}
+class AuthenticationState {}
 
 class AccessTokenLoading extends AuthenticationState {}
 
@@ -18,27 +17,28 @@ class OTPGetSuccess extends AuthenticationState {
   OTPGetSuccess(this.nonce);
 }
 
-class OTPVerifying extends AuthenticationState {}
+class OTPVerifying implements AuthenticationState, UserState {}
 
-class OTPVerifyLoaded extends AuthenticationState {}
+class OTPVerifyLoaded implements AuthenticationState, UserState {}
 
-class OTPVerifySuccess extends AuthenticationState {
+class OTPVerifySuccess implements AuthenticationState, UserState {
   final AccessToken accessToken;
+  final String nonce;
 
-  OTPVerifySuccess(this.accessToken);
+  OTPVerifySuccess({this.accessToken, this.nonce});
 }
 
-class OTPVerifyFailure extends AuthenticationState {
+class OTPVerifyFailure implements AuthenticationState, UserState {
   final Map<String, dynamic> errorMap;
 
   OTPVerifyFailure([this.errorMap]);
 }
 
-class OTPResending extends AuthenticationState {}
+class OTPResending implements AuthenticationState, UserState {}
 
-class OTPResendSuccess extends AuthenticationState {}
+class OTPResendSuccess implements AuthenticationState, UserState {}
 
-class OTPResendFailure extends AuthenticationState {
+class OTPResendFailure implements AuthenticationState, UserState {
   final Map<String, dynamic> errorMap;
 
   OTPResendFailure([this.errorMap]);

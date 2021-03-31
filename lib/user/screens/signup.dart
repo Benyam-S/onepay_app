@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:onepay_app/authentication/bloc/bloc.dart';
 import 'package:onepay_app/user/screens/screens.dart';
 
 class SignUp extends StatefulWidget {
@@ -197,7 +198,10 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
       _changeOnWillPop(true);
     }
 
-    if (state is SignUpException) {
+    if (state is OTPResendFailure) {
+      var error = state.errorMap["error"];
+      showServerError(context, error);
+    } else if (state is SignUpException) {
       var exp = state.e;
       if (exp is SocketException) {
         showUnableToConnectError(context);
@@ -220,7 +224,10 @@ class _SignUp extends State<SignUp> with TickerProviderStateMixin {
     _initAnimationControllers();
 
     UserRepository userRepo = BlocProvider.of<UserBloc>(context).userRepository;
-    _localBloc = UserBloc(userRepository: userRepo);
+    AuthenticationRepository authenticationRepo =
+        BlocProvider.of<AuthenticationBloc>(context).authenticationRepository;
+    _localBloc = UserBloc(
+        userRepository: userRepo, authenticationRepository: authenticationRepo);
 
     _listOfStepWidget = [
       SignUpInit(_localBloc, visible: true),

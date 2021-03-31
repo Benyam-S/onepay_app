@@ -18,6 +18,12 @@ class ESignUpVerify extends UserEvent {
   ESignUpVerify(this.nonce, this.otp);
 }
 
+class EResendSignUpOTP extends UserEvent {
+  final String nonce;
+
+  EResendSignUpOTP(this.nonce);
+}
+
 class ESignUpFinish extends UserEvent {
   final String newPassword;
   final String verifyPassword;

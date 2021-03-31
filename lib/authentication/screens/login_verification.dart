@@ -19,13 +19,49 @@ class _LoginVerification extends State<LoginVerification> {
   FocusNode _otpFocusNode;
   TextEditingController _otpController;
 
-  String _nonce;
-  String _otp;
   String _otpErrorText;
+  String _resendText;
+  bool _resendWait;
 
   AuthenticationBloc _localBloc;
 
-  Future<void> _onLoginVerifySuccess(OTPVerifySuccess state) async {
+  String _timer(int value) {
+    var prefix = "Resend in ";
+    if (value == 60) {
+      return prefix + "01 : 00";
+    } else if (value > 9) {
+      return prefix + "00 : " + value.toString();
+    } else if (value >= 0) {
+      return prefix + "00 : 0" + value.toString();
+    }
+
+    return "Didn't get code, resend.";
+  }
+
+  void _resendSuccess(OTPResendSuccess state) {
+    int i = 60;
+    Future.doWhile(() async {
+      if (i < 0) {
+        return false;
+      }
+
+      setState(() {
+        _resendWait = true;
+        _resendText = _timer(i);
+      });
+
+      await Future.delayed(Duration(seconds: 1));
+      i--;
+      return true;
+    }).then((value) {
+      _resendText = "Didn't get code, resend.";
+      _resendWait = false;
+      AuthenticationEvent event = EAuthenticationChangeState(OTPVerifyLoaded());
+      _localBloc.add(event);
+    });
+  }
+
+  void _onLoginVerifySuccess(OTPVerifySuccess state) {
     AuthenticationEvent event = ESetAccessToken(state.accessToken);
     BlocProvider.of<AuthenticationBloc>(context).add(event);
   }
@@ -39,6 +75,9 @@ class _LoginVerification extends State<LoginVerification> {
     }
 
     _otpErrorText = ReCase(error).sentenceCase;
+
+    AuthenticationEvent event = EAuthenticationChangeState(OTPVerifyLoaded());
+    _localBloc.add(event);
   }
 
   void _handleBuilderResponse(BuildContext context, AuthenticationState state) {
@@ -51,7 +90,9 @@ class _LoginVerification extends State<LoginVerification> {
 
   void _handleListenerResponse(
       BuildContext context, AuthenticationState state) {
-    if (state is OTPResendFailure) {
+    if (state is OTPResendSuccess) {
+      _resendSuccess(state);
+    } else if (state is OTPResendFailure) {
       var error = state.errorMap["error"];
       showServerError(context, error);
     } else if (state is AuthenticationException) {
@@ -76,14 +117,16 @@ class _LoginVerification extends State<LoginVerification> {
       return;
     }
 
-    _nonce = widget.nonce ?? "";
-    _otp = _otpController.text;
-    if (_otp.isEmpty) {
+    var nonce = widget.nonce ?? "";
+    var otp = _otpController.text;
+    if (otp.isEmpty) {
       FocusScope.of(context).requestFocus(_otpFocusNode);
       return;
     }
 
-    AuthenticationEvent event = EVerifyLoginOTP(_nonce, _otp);
+    _otpErrorText = null;
+
+    AuthenticationEvent event = EVerifyLoginOTP(nonce, otp);
     _localBloc.add(event);
   }
 
@@ -93,10 +136,11 @@ class _LoginVerification extends State<LoginVerification> {
       return;
     }
 
-    _nonce = widget.nonce ?? "";
+    var nonce = widget.nonce ?? "";
+    _otpErrorText = null;
     _otpController.clear();
 
-    AuthenticationEvent event = EResendLoginOTP(_nonce);
+    AuthenticationEvent event = EResendLoginOTP(nonce);
     _localBloc.add(event);
   }
 
@@ -110,6 +154,9 @@ class _LoginVerification extends State<LoginVerification> {
     _buttonFocusNode = FocusNode();
     _otpFocusNode = FocusNode();
     _otpController = TextEditingController();
+
+    _resendText = "Didn't get code, resend.";
+    _resendWait = false;
 
     AuthenticationRepository authenticationRepo =
         BlocProvider.of<AuthenticationBloc>(context).authenticationRepository;
@@ -166,17 +213,15 @@ class _LoginVerification extends State<LoginVerification> {
                               focusNode: _otpFocusNode,
                               controller: _otpController,
                               decoration: InputDecoration(
-                                border: const OutlineInputBorder(),
-                                labelText: "OTP",
-                                errorText: state is OTPVerifyFailure
-                                    ? _otpErrorText
-                                    : null,
-                              ),
+                                  border: const OutlineInputBorder(),
+                                  labelText: "OTP",
+                                  errorText: _otpErrorText),
                               onChanged: (_) {
-                                AuthenticationEvent event =
-                                    EAuthenticationChangeState(
-                                        OTPVerifyLoaded());
-                                _localBloc.add(event);
+                                if (_otpErrorText != null) {
+                                  setState(() {
+                                    _otpErrorText = null;
+                                  });
+                                }
                               },
                               onFieldSubmitted: (_) => _loginVerify(context),
                               keyboardType: TextInputType.visiblePassword,
@@ -196,19 +241,29 @@ class _LoginVerification extends State<LoginVerification> {
                                       height: 15,
                                     )
                                   : Text(
-                                      "Didn't get code, resend.",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headline3
-                                          .copyWith(
-                                              color: Theme.of(context)
-                                                  .primaryColor),
+                                      _resendText,
+                                      style: _resendWait
+                                          ? Theme.of(context)
+                                              .textTheme
+                                              .headline6
+                                              .copyWith(
+                                                  color: Theme.of(context)
+                                                      .iconTheme
+                                                      .color)
+                                          : Theme.of(context)
+                                              .textTheme
+                                              .headline3
+                                              .copyWith(
+                                                  color: Theme.of(context)
+                                                      .primaryColor),
                                     ),
-                              onPressed: () {
-                                FocusScope.of(context)
-                                    .requestFocus(_buttonFocusNode);
-                                _resend(context);
-                              },
+                              onPressed: state is OTPResendSuccess
+                                  ? null
+                                  : () {
+                                      FocusScope.of(context)
+                                          .requestFocus(_buttonFocusNode);
+                                      _resend(context);
+                                    },
                             ),
                           ),
                           SizedBox(height: 15),
