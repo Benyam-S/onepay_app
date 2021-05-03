@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:onepay_app/authentication/bloc/authentication_bloc.dart';
+import 'package:onepay_app/authentication/bloc/bloc.dart';
 import 'package:onepay_app/main.dart';
 import 'package:onepay_app/models/access.token.dart';
 import 'package:onepay_app/models/app.meta.dart';
@@ -22,8 +25,17 @@ class HttpRequester {
   }
 
   Future<http.Response> get(BuildContext context) async {
-    AccessToken accessToken =
-        OnePay.of(context).accessToken ?? await getLocalAccessToken();
+    AccessToken accessToken;
+    AuthenticationState accessTokenState =
+        BlocProvider.of<AuthenticationBloc>(context).state;
+
+    if (accessTokenState is AccessTokenLoaded) {
+      accessToken = accessTokenState.accessToken;
+    } else {
+      accessToken = await getLocalAccessToken();
+
+      /// TODO: Add Event to add the local accessToken to cache
+    }
 
     AppMeta appMeta = OnePay.of(context).appMetaData;
     if (appMeta == null) {
@@ -140,8 +152,7 @@ class HttpRequester {
     return await http.delete(
       requestURL + query,
       headers: <String, String>{
-        'User-Agent':
-            "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
+        'User-Agent': "${appMeta.name} ${appMeta.version} ${appMeta.userAgent}",
         'Content-Type': 'application/x-www-form-urlencoded',
         'authorization': basicAuth,
       },

@@ -4,7 +4,7 @@ import 'package:onepay_app/models/response.dart';
 class RCurrencyRateGetSuccess extends RepositoryResponse {
   final List<CurrencyRate> currencyRates;
 
-  RCurrencyRateGetSuccess(this.currencyRates) : assert(currencyRates != null);
+  RCurrencyRateGetSuccess(this.currencyRates);
 }
 
 class RCurrencyRateGetFailure extends RepositoryResponse {
